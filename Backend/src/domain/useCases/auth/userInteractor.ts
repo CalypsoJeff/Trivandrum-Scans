@@ -29,7 +29,6 @@ export default {
       }
       const otp = await generateOTP();
       console.log(`OTP: ${otp}`);
-
       const generatedAt = Date.now();
       await sendOTPEmail(userData.email, otp, userData.name);
       const savedOtp = await saveOtp(userData.email, otp, generatedAt);
@@ -63,49 +62,49 @@ export default {
     }
     return await verifyUserDb(data.email);
   },
-  otpResend:async(email:string) => {
+  otpResend: async (email: string) => {
     try {
-        const newotp = await generateOTP();
-        const generatedAt = Date.now();
-        const users = await getUserbyEMail(email)
-        if(users && users.name){
-            await sendOTPEmail(email, newotp, users.name)
-            console.log('newOtp:',newotp);
-            
-            await saveOtp(email,newotp,generatedAt)
-        }else{
-            throw new Error('Please signup again')
-        }
-        
+      const newotp = await generateOTP();
+      const generatedAt = Date.now();
+      const users = await getUserbyEMail(email);
+      if (users && users.name) {
+        await sendOTPEmail(email, newotp, users.name);
+        console.log("newOtp:", newotp);
+
+        await saveOtp(email, newotp, generatedAt);
+      } else {
+        throw new Error("Please signup again");
+      }
     } catch (error) {
-        throw new Error('Failed to resend otp')
+      throw new Error("Failed to resend otp");
     }
-},
-loginUser: async(email:string, password:string) => {
+  },
+  loginUser: async (email: string, password: string) => {
     const existingUser = await getUserbyEMail(email);
-    if(!existingUser || !existingUser.password){
-        throw new Error('User not found');
+    if (!existingUser || !existingUser.password) {
+      throw new Error("User not found");
     }
-    const isValid = await Encrypt.comparePassword(password , existingUser.password);
+    const isValid = await Encrypt.comparePassword(
+      password,
+      existingUser.password
+    );
     if (!isValid) {
-        throw new Error("Invalid password");
+      throw new Error("Invalid password");
     }
-    if(existingUser && existingUser.is_blocked){
-        throw new Error('Account is Blocked');
+    if (existingUser && existingUser.is_blocked) {
+      throw new Error("Account is Blocked");
     }
-    if(existingUser.is_verified == false){
-        throw new Error(`User is not verified.Register!`)
+    if (existingUser.is_verified == false) {
+      throw new Error(`User is not verified.Register!`);
     }
 
-    const {token,refreshToken} = await generateToken(existingUser.id , email)
+    const { token, refreshToken } = await generateToken(existingUser.id, email);
     const user = {
-        id:existingUser.id,
-        name:existingUser.name,
-        email:existingUser.email,
-        isBlocked:existingUser.is_blocked
-    }
-    return {token,user,refreshToken}
-},
-
-
+      id: existingUser.id,
+      name: existingUser.name,
+      email: existingUser.email,
+      isBlocked: existingUser.is_blocked,
+    };
+    return { token, user, refreshToken };
+  },
 };

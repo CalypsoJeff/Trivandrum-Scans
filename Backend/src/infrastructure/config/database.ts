@@ -1,15 +1,15 @@
 import { log } from "console";
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const connectDb = async (): Promise<void> => {
   try {
     const mongoUrl = process.env.MONGO_URL;
 
     if (!mongoUrl) {
-      throw new Error('MONGO_URL is not defined');
+      throw new Error("MONGO_URL is not defined");
     }
 
     const conn = await mongoose.connect(mongoUrl);

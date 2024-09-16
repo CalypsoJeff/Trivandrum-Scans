@@ -10,10 +10,9 @@ export const checkExistingUser = async (email: string, name: string) => {
   return existingUser;
 };
 
-export const getUserbyEMail = async (email:string)=> {
-  return await Users.findOne({email:email})
-}
-
+export const getUserbyEMail = async (email: string) => {
+  return await Users.findOne({ email: email });
+};
 
 export const createUser = async (
   userData: IUser,
