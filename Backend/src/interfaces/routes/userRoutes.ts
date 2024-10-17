@@ -1,0 +1,22 @@
+import { Router } from "express";
+import userController from "../controllers/userController";
+import { protectUser } from "../frameworks/webserver/middleware/userAuthMiddleware";
+const userRouter = Router();
+userRouter.post("/signup", userController.userRegistration);
+userRouter.post("/otp-verification", userController.verifyOTP);
+userRouter.post("/resend-otp", userController.resendOTP);
+userRouter.post("/login", userController.userLogin);
+userRouter.post("/googleAuth", userController.googleAuth);
+userRouter.post("/forget-password", userController.forgotPassword);
+userRouter.post("/reset-password", userController.reset_PasswordFn);
+// Protected routes
+userRouter.get("/getStatus", protectUser, userController.getStatus);
+userRouter.post("/checkAuth", protectUser, userController.checkAuth);
+userRouter.put("/updateuser/:userId", protectUser, userController.updateUser);
+userRouter.get("/serviceList", protectUser, userController.getServices);
+userRouter.get("/service/:id", protectUser, userController.getServiceDetail);
+userRouter.post("/cart/add", protectUser, userController.addToCart);
+userRouter.get("/cart/:id", protectUser, userController.fetchCart);
+userRouter.post("/cart/remove", protectUser, userController.removeCartItemById);
+userRouter.post("/booknowcheckout", protectUser, userController.bookNow);
+export default userRouter;
