@@ -56,6 +56,7 @@ function Bookings() {
                   <th className="py-3 px-6 text-center">Date</th>
                   <th className="py-3 px-6 text-center">Status</th>
                   <th className="py-3 px-6 text-center">Amount</th>
+                  <th className="py-3 px-6 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="text-gray-600 text-sm">
@@ -74,12 +75,18 @@ function Bookings() {
                       )}
                     </td>
                     <td className="py-3 px-6 text-center">
-                      <Link to={`/admin/bookings/${booking._id}`} className="text-blue-500 hover:underline">
-                        {new Date(booking.booking_date).toLocaleDateString()}
-                      </Link>
+                      {new Date(booking.booking_date).toLocaleDateString()}
                     </td>
                     <td className="py-3 px-6 text-center">{booking.status}</td>
                     <td className="py-3 px-6 text-center">₹{booking.total_amount}</td>
+                    <td className="py-3 px-6 text-center">
+                      <Link
+                        to={`/admin/bookings/${booking._id}`}
+                        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                      >
+                        View Details
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>
