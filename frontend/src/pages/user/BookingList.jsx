@@ -20,7 +20,7 @@ function BookingList() {
           setBookings(response.data);
           setLoading(false);
         }
-      // eslint-disable-next-line no-unused-vars
+        // eslint-disable-next-line no-unused-vars
       } catch (err) {
         setError("Failed to fetch bookings");
         setLoading(false);
@@ -56,10 +56,12 @@ function BookingList() {
                 className="block p-6 bg-white shadow-md rounded-lg border border-gray-200 hover:bg-gray-100 transition"
               >
                 <h3 className="text-lg font-semibold mb-2">
-                  Service: {booking.services[0]?.service_id?.name || "Unknown Service"}
+                  Service:{" "}
+                  {booking.services[0]?.service_id?.name || "Unknown Service"}
                 </h3>
                 <p className="text-gray-600 mb-1">
-                  <strong>Booked on:</strong> {new Date(booking.booking_date).toLocaleDateString()}
+                  <strong>Booked on:</strong>{" "}
+                  {new Date(booking.booking_date).toLocaleDateString()}
                 </p>
                 <p className="text-gray-600 mb-1">
                   <strong>Time Slot:</strong> {booking.booking_time_slot}

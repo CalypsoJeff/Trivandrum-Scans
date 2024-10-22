@@ -15,7 +15,7 @@ function BookingDetails() {
         const response = await axiosInstanceUser.get(`/booking/user/${id}`);
         setBooking(response.data);
         setLoading(false);
-      // eslint-disable-next-line no-unused-vars
+        // eslint-disable-next-line no-unused-vars
       } catch (err) {
         setError("Failed to fetch booking details");
         setLoading(false);

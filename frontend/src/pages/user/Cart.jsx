@@ -37,8 +37,8 @@ const CartPage = () => {
     axiosInstanceUser
       .post(`/cart/update/${user.id}`, { services: servicesToUpdate })
       .then((response) => {
-        console.log(response,'sdsdbsdhsdhvsdhvsd');
-        
+        console.log(response, "sdsdbsdhsdhvsdhvsd");
+
         navigate("/checkout", {
           state: { serviceAssignments: selectedServiceAssignments },
         });

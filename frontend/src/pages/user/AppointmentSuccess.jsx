@@ -25,7 +25,6 @@ function AppointmentSuccess() {
       appointmentTimeSlot: queryParams.get("appointment_time_slot"), // Include the appointment time slot
     };
   };
-  
 
   // Function to navigate back to the dashboard or home page
   const handleGoToDashboard = () => {
