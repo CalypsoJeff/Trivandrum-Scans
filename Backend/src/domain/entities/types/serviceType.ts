@@ -10,6 +10,11 @@ export interface IServiceRequest {
   expectedResultDuration: string;
   serviceImage: Express.Multer.File;
 }
+export interface IServiceUpdate {
+  serviceId: Types.ObjectId;
+  personIds: Types.ObjectId[];
+}
+
 
 export interface IServiceResponse {
   name: string;

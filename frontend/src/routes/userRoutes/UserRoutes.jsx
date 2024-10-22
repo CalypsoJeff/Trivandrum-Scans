@@ -8,7 +8,6 @@ import LandingPage from "../../pages/user/LandingPage";
 import ForgetPassword from "../../pages/user/ForgetPassword";
 import ResetPassword from "../../pages/user/ResetPassword";
 import UserPrivateRoutes from "./UserPrivateRoutes"; // Protected routes handler
-import UserProfile from "../../pages/user/userProfile";
 import { useDispatch } from "react-redux";
 import { setupInterceptors } from "../../services/axiosInstanceUser";
 import { logoutUser } from "../../features/auth/authSlice";
@@ -18,6 +17,9 @@ import ServiceDetailPage from "../../pages/user/ServiceDetailPage";
 import CartPage from "../../pages/user/Cart";
 import CheckoutPage from "../../pages/user/CheckoutPage";
 import AppointmentSuccess from "../../pages/user/AppointmentSuccess";
+import ProfileView from "../../pages/user/ProfileView";
+import BookingList from "../../pages/user/BookingList";
+import BookingDetails from "../../pages/user/BookingDetails";
 
 const UserRoutes = () => {
   const navigate = useNavigate();
@@ -40,12 +42,16 @@ const UserRoutes = () => {
       {/* Private (Protected) Routes */}
       <Route element={<UserPrivateRoutes />}>
         <Route path="/home" element={<Home />} />
-        <Route path="/profile" element={<UserProfile />} />
+        <Route path="/profile" element={<ProfileView />} />
         <Route path="/service" element={<Services />} />
         <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/success" element={<AppointmentSuccess />} />
+        <Route path="/appointment-success" element={<AppointmentSuccess />} />
+        <Route path="/booking" element = {<BookingList/>} />
+        <Route path="/booking/:id" element = {<BookingDetails/>} />
+        
+
       </Route>
     </Routes>
   );

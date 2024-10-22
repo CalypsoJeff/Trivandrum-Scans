@@ -1,27 +1,28 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
+import { IBooking } from "../../../domain/entities/types/bookingType";
 
-const BookingSchema = new mongoose.Schema(
+const BookingSchema: Schema = new mongoose.Schema(
   {
     user_id: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
       ref: "User",
-    }, // Ensure this is correct
-    service_id: [
-      { type: mongoose.Schema.Types.ObjectId, required: true, ref: "Service" },
-    ], // Ensure this is correct
-    booking_date: { type: Date, required: true }, // Ensure this matches with the `appointmentDate`
-    total_amount: { type: Number, required: true }, // Ensure this matches
+    },
+    services: [
+      {
+        service_id: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "Service" },
+        persons: [{ type: mongoose.Schema.Types.ObjectId, required: true, ref: "Patient" }],
+      },
+    ],
+    booking_date: { type: Date, required: true },
+    booking_time_slot: { type: String, required: true },
+    total_amount: { type: Number, required: true },
     status: { type: String, default: "pending" },
-    stripe_session_id: { type: String, required: true }, // Ensure the Stripe session ID is stored here
+    stripe_session_id: { type: String, required: true },
   },
   { timestamps: true }
 );
 
-// BookingSchema.pre("save", function (next) {
-//   this.updated_at = new Date();
-//   next();
-// });
-const BookingModel = mongoose.model("Booking", BookingSchema);
+const BookingModel = mongoose.model<IBooking>("Booking", BookingSchema);
 
 export default BookingModel;

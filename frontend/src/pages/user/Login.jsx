@@ -9,7 +9,7 @@ import { useNavigate, Link } from "react-router-dom"; // Import Link for navigat
 import { toast } from "sonner";
 import { GoogleAuthProvider } from "firebase/auth";
 import logo from "/Images/Logo.png";
-import BackgroundImgLogin from '/Images/pexels-tima-miroshnichenko-9574411.jpg';
+import BackgroundImgLogin from "/Images/pexels-tima-miroshnichenko-9574411.jpg";
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -39,9 +39,9 @@ const Login = () => {
       setSubmitting(false);
     }
   };
-  const handleForgetPassword = ()=>{
+  const handleForgetPassword = () => {
     navigate("/forget-password");
-  }
+  };
 
   // Google login using Firebase
   const handleGoogleLogin = async () => {
@@ -86,12 +86,15 @@ const Login = () => {
   });
 
   return (
-    <section className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
-    style={{backgroundImage:`url(${BackgroundImgLogin})`,
-    backgroundSize: 'cover', // Ensure the image covers the section
-    backgroundPosition: 'center', // Center the image
-    backgroundRepeat: 'no-repeat'
-    }}>
+    <section
+      className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
+      style={{
+        backgroundImage: `url(${BackgroundImgLogin})`,
+        backgroundSize: "cover", // Ensure the image covers the section
+        backgroundPosition: "center", // Center the image
+        backgroundRepeat: "no-repeat",
+      }}
+    >
       <div className="flex justify-between w-full max-w-4xl p-8 shadow-lg bg-gray-800 rounded-lg">
         {/* Left Side (Sidemark + Features) */}
         <div className="w-1/2 pr-8 text-white select-none">

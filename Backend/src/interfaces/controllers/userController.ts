@@ -2,11 +2,11 @@ import { Request, Response } from "express";
 import userInteractor from "../../domain/useCases/auth/userInteractor";
 import { Users } from "../../infrastructure/database/dbModel/userModel";
 import Stripe from "stripe";
-import { bookAppointment } from "../../infrastructure/repositories/mongoUserRepository";
+import Cart from "../../infrastructure/database/dbModel/cartModel";
+import { IServiceUpdate } from "../../domain/entities/types/serviceType";
+import BookingModel from "../../infrastructure/database/dbModel/bookingModel";
 
-const stripe = new Stripe(process.env.STRIPE_KEY as string, {
-  apiVersion: undefined,
-});
+const stripe = new Stripe(process.env.STRIPE_KEY as string, {});
 
 export default {
   getStatus: async (req: Request, res: Response) => {
@@ -242,6 +242,16 @@ export default {
       res.status(500).json({ message: "Failed to add service to user cart" });
     }
   },
+  fetchUpdatedCart: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const cart = await userInteractor.getUpdatedCart(id);
+      res.status(200).json(cart);
+    } catch (error) {
+      console.error("Failed to add service to user cart", error);
+      res.status(500).json({ message: "Failed to add service to user cart" });
+    }
+  },
   removeCartItemById: async (req: Request, res: Response) => {
     try {
       const { userId, serviceId } = req.body;
@@ -255,49 +265,243 @@ export default {
     }
   },
 
+  // bookNow: async (req: Request, res: Response) => {
+  //   try {
+  //     const { userId, services, appointmentDate, appointmentTimeSlot, totalAmount } = req.body;
+
+  //     const session = await stripe.checkout.sessions.create({
+  //       payment_method_types: ["card"],
+  //       line_items: [
+  //         {
+  //           price_data: {
+  //             currency: "inr",
+  //             product_data: { name: "Service Booking" },
+  //             unit_amount: totalAmount * 100,
+  //           },
+  //           quantity: 1,
+  //         },
+  //       ],
+  //       mode: "payment",
+  //       success_url: `${process.env.CLIENT_URL}/success`,
+  //       cancel_url: `${process.env.CLIENT_URL}/cancel`,
+  //       metadata: { userId, services: JSON.stringify(services), appointmentDate, appointmentTimeSlot },
+  //     });
+  //     console.log(session,"hddfbhfdfdbyfdb");
+
+  //     if (!session) {
+  //       throw new Error("Failed to create Stripe session.");
+  //     }
+
+  //     await bookAppointment(userId, services, appointmentDate, totalAmount, "success", session.id, appointmentTimeSlot);
+
+  //     res.json({ sessionId: session.id });
+  //   } catch (error) {
+  //     console.error("Error creating Stripe session:", error);
+  //     res.status(500).json({ error: "Failed to create Stripe session" });
+  //   }
+  // },
+
   bookNow: async (req: Request, res: Response) => {
     try {
-      const { userId, services, appointmentDate, totalAmount } = req.body;
+      const {
+        userId,
+        services,
+        appointmentDate,
+        appointmentTimeSlot,
+        totalAmount,
+      } = req.body;
 
-      // Create Stripe session
+      // Create Stripe checkout session
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: [
           {
             price_data: {
               currency: "inr",
-              product_data: {
-                name: "Service Booking",
-              },
-              unit_amount: totalAmount * 100, // Stripe expects the amount in cents
+              product_data: { name: "Service Booking" },
+              unit_amount: totalAmount * 100,
             },
             quantity: 1,
           },
         ],
         mode: "payment",
-        success_url: `${process.env.CLIENT_URL}/success`,
+        success_url: `${
+          process.env.CLIENT_URL
+        }/appointment-success?session_id={CHECKOUT_SESSION_ID}&user_id=${userId}&appointment_date=${appointmentDate}&appointment_time_slot=${appointmentTimeSlot}&services=${encodeURIComponent(
+          JSON.stringify(services)
+        )}&amount=${totalAmount}`,
+
         cancel_url: `${process.env.CLIENT_URL}/cancel`,
-        metadata: {
-          userId,
-          services: JSON.stringify(services),
-          appointmentDate,
-        },
       });
-      if (session) {
-        const booking = await bookAppointment(
-          userId,
-          services,
-          appointmentDate,
-          totalAmount,
-          "pending",
-          session.id
-        );
-        console.log(booking);
+
+      if (!session) {
+        throw new Error("Failed to create Stripe session.");
       }
+
       res.json({ sessionId: session.id });
     } catch (error) {
       console.error("Error creating Stripe session:", error);
       res.status(500).json({ error: "Failed to create Stripe session" });
     }
   },
+
+  getUserData: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const user = await Users.findById(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.status(200).json(user);
+    } catch (error) {
+      console.error("Error fetching userdata:", error);
+      res.status(500).json({ error: "Error fetching userdata" });
+    }
+  },
+  editUser: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { fieldToChange } = req.body;
+      console.log(fieldToChange, "dndhuhduhduhd");
+
+      const editedUser = await userInteractor.editUser(id, fieldToChange);
+      res.status(200).json(editedUser);
+    } catch (error) {
+      console.error("Error updating user data:", error);
+      res.status(500).json({ message: "Error updating user data" });
+    }
+  },
+  addPatient: async (req: Request, res: Response) => {
+    try {
+      const { name, relationToUser, age, gender, contactNumber, userId } =
+        req.body;
+      const patientData = {
+        name,
+        relationToUser,
+        age,
+        gender,
+        contactNumber,
+        userId,
+      };
+      const addedPatient = await userInteractor.addPatient(patientData, userId);
+      res.status(201).json(addedPatient);
+    } catch (error) {
+      console.error("Error adding patient data:", error);
+      res.status(500).json({ message: "Failed to add patient", error });
+    }
+  },
+  getFamilyData: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        return res.status(404).json({ message: "id not foundss" });
+      }
+      const familyData = await userInteractor.getFamilyData(id);
+      res.status(200).json(familyData);
+    } catch (error) {
+      console.error("Error fetching family data:", error);
+      res.status(500).json({ message: "Error fetching family data", error });
+    }
+  },
+
+  updateCart: async (req: Request, res: Response) => {
+    const { id } = req.params; // Ensure `id` is being passed correctly (userId)
+    const { services }: { services: IServiceUpdate[] } = req.body;
+
+    try {
+      // Fetch the cart by userId
+      const cart = await Cart.findOne({ userId: id });
+      if (!cart) {
+        return res.status(404).json({ message: "Cart not found" });
+      }
+
+      // Loop through each service update request
+      services.forEach((serviceUpdate: IServiceUpdate) => {
+        const { serviceId, personIds } = serviceUpdate;
+
+        if (!personIds || personIds.length === 0) {
+          return res
+            .status(400)
+            .json({ message: "No person IDs found for service" });
+        }
+        cart.services.forEach((cartService) => {
+          if (cartService.serviceId.toString() === serviceId.toString()) {
+            cartService.personIds = personIds.map((personId) => ({
+              _id: personId, // Assign the ObjectId
+              model: personId.toString() === id ? "User" : "Patient", // Check if the personId belongs to the User
+            }));
+          }
+        });
+      });
+
+      // Save the updated cart
+      await cart.save();
+      res.status(200).json(cart);
+    } catch (error) {
+      console.error("Error updating cart data:", error);
+      res.status(500).json({ message: "Error updating cart data", error });
+    }
+  },
+
+  booking: async (req: Request, res: Response) => {
+    const {
+      sessionId,
+      userId,
+      appointmentDate,
+      services,
+      amount,
+      appointmentTimeSlot,
+    } = req.body;
+    try {
+      const existingBooking = await BookingModel.findOne({
+        stripe_session_id: sessionId,
+      });
+
+      if (existingBooking) {
+        return res.status(400).json({ error: "Booking already confirmed." });
+      }
+      // Call the interactor to handle the booking logic
+      const bookingResult = await userInteractor.confirmBooking({
+        stripe_session_id: sessionId,
+        user_id: userId,
+        booking_date: appointmentDate,
+        services: services,
+        total_amount: amount,
+        booking_time_slot: appointmentTimeSlot, // Pass booking time slot
+      });
+
+      return res.status(201).json(bookingResult);
+    } catch (error) {
+      console.error("Error confirming booking:", error);
+      return res.status(500).json({ error: "Failed to confirm booking" });
+    }
+  },
+  getBookingList:async(req:Request,res:Response)=>{
+    try {
+      const {id} = req.params;
+      const bookingList = await userInteractor.getBookingList(id);
+      res.status(200).json(bookingList);
+    } catch (error) {
+      console.error("Error fetching booking details:", error);
+      return res.status(500).json({ error: "Failed to fetch booking list" });
+    }
+  },
+  getBookingDetail: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params; // Extract the booking ID from the request params
+      const booking = await userInteractor.getBookingById(id); // Pass the ID to the interactor to fetch details
+      
+      if (!booking) {
+        return res.status(404).json({ message: "Booking not found" });
+      }
+  
+      res.status(200).json(booking); // Return booking details in the response
+    } catch (error) {
+      console.error("Error fetching booking details:", error);
+      return res.status(500).json({ message: "Failed to fetch booking details" });
+    }
+  }
+  
+
+ 
 };

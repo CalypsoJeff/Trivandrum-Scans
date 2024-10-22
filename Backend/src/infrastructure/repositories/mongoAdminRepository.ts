@@ -6,6 +6,7 @@ import {
 import { IServiceResponse } from "../../domain/entities/types/serviceType";
 import { IUser, PaginatedUsers } from "../../domain/entities/types/userType";
 import { Admin } from "../database/dbModel/adminModel";
+import BookingModel from "../database/dbModel/bookingModel";
 import { Category } from "../database/dbModel/categoryModel";
 import { Department, IDepartment } from "../database/dbModel/departmentModel";
 import { Service } from "../database/dbModel/serviceModel";
@@ -331,3 +332,37 @@ export const toggleServiceByID = async (id: string) => {
     throw new Error("Error toggling services");
   }
 };
+export const getBookingsFromDb = async (page = 1, limit = 10) => {
+  try {
+    const skip = (page - 1) * limit;
+    const bookings = await BookingModel.find()
+      .populate("user_id")
+      .populate("services.service_id")
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .exec();
+
+    const totalBookings = await BookingModel.countDocuments();
+
+    return { bookings, totalBookings };
+  } catch (error) {
+    console.error("Error fetching bookings from DB:", error);
+    throw error;
+  }
+};
+export const bookingDetailsInDb = async (id: string) => {
+  try {
+    const booking = await BookingModel.findById(id)
+      .populate("user_id") // Populating user details
+      .populate("services.service_id") // Populating service details
+      .populate("services.persons", "name relationToUser age gender contactNumber") // Populating patient details
+      .lean(); // Using lean for better performance (optional)
+
+    return booking;
+  } catch (error) {
+    console.error("Error fetching booking from DB:", error);
+    throw error;
+  }
+};
+

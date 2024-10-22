@@ -17,9 +17,8 @@ const ServiceDetailPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector(selectUser);
-  const userId=user.id
+  const userId = user.id;
   console.log(user);
-  
 
   // Fetch service details by ID
   const fetchServiceDetail = async () => {
@@ -38,15 +37,14 @@ const ServiceDetailPage = () => {
       serviceId: service._id,
     };
     try {
-       await dispatch(addToCart(cartData));
+      await dispatch(addToCart(cartData));
       toast.success("Service added to cart!");
-      navigate("/cart"); 
+      navigate("/cart");
       console.log("cart pokko");
       // Redirect to the cart page after adding to cart
     } catch (error) {
       toast.error("Failed to add service to cart");
       console.error("Failed to add service to cart:", error);
-
     }
   };
 
@@ -88,18 +86,28 @@ const ServiceDetailPage = () => {
 
         {/* Service Description */}
         <div className="flex flex-col justify-center p-4 lg:p-0">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">{service.name}</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            {service.name}
+          </h1>
           <p className="text-lg font-semibold mt-2">
             Category:{" "}
-            <span className="font-normal">{service.category?.name || "N/A"}</span>
+            <span className="font-normal">
+              {service.category?.name || "N/A"}
+            </span>
           </p>
-          <p className="text-2xl font-bold text-violet-900 mt-4">₹{service.price}</p>
+          <p className="text-2xl font-bold text-violet-900 mt-4">
+            ₹{service.price}
+          </p>
           <p className="text-md font-semibold mt-4">
             Expected Result Duration:{" "}
-            <span className="font-normal">{service.expectedResultDuration}</span>
+            <span className="font-normal">
+              {service.expectedResultDuration}
+            </span>
           </p>
           {service.description && (
-            <p className="text-gray-600 mt-5 leading-7">{service.description}</p>
+            <p className="text-gray-600 mt-5 leading-7">
+              {service.description}
+            </p>
           )}
           {service.preTestPreparations?.length > 0 && (
             <div className="mt-6">

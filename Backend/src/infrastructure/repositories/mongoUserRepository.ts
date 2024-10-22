@@ -3,13 +3,18 @@ import { Encrypt } from "../../domain/helper/hashPassword";
 import { Category } from "../database/dbModel/categoryModel";
 import OTPModel from "../database/dbModel/otpModel";
 import cartModel from "../database/dbModel/cartModel";
-
 import { Service } from "../database/dbModel/serviceModel";
 import { Users } from "../database/dbModel/userModel";
 import mongoose from "mongoose";
 import Cart from "../database/dbModel/cartModel";
 import BookingModel from "../database/dbModel/bookingModel";
+import Patient from "../database/dbModel/patientModel";
+import { IPatientInput } from "../../domain/entities/types/patientType";
 // import BookingModel from "../database/dbModel/bookingModel";
+interface Service {
+  serviceId: string;
+  personIds: string[];
+}
 
 export const checkExistingUser = async (email: string, name: string) => {
   const existingUser = await Users.findOne({
@@ -235,15 +240,62 @@ export const addToCartInDb = async (userId: string, serviceId: string) => {
 };
 export const userCartInDb = async (id: string) => {
   const userId = id;
-  const cartData = await Cart.findOne({ userId }).populate(
-    "services.serviceId"
-  );
+
+  // Fetch cart data and populate both serviceId and personIds
+  const cartData = await Cart.findOne({ userId })
+    .populate("services.serviceId") // Populate service details
+    .populate("services.personIds"); // Populate user/patient details for personIds
   if (!cartData) {
-    console.error("cart not found");
-    throw new Error("cart not found");
+    console.error("Cart not found");
+    throw new Error("Cart not found");
   }
   return cartData;
 };
+export const userUpdatedCartInDb = async (id: string) => {
+  const userId = id;
+
+  // Fetch cart data and populate both serviceId and personIds
+  const cartData = await Cart.findOne({ userId })
+    .populate("services.serviceId")
+    .populate("services.personIds")
+    .exec();
+
+  if (!cartData) {
+    console.error("Cart not found");
+    throw new Error("Cart not found");
+  }
+
+  // Collect all patient data
+  let patientData: IPatientInput[] = [];
+
+  // Use for...of loop to handle async/await properly
+  for (const service of cartData.services) {
+    const patientIds = service.personIds
+      ?.filter((person) => person.model === "Patient") // Filter only patients
+      .map((person) => person._id.toString()); // Map to get the _id
+
+    console.log(patientIds, `Patient IDs for service ${service.serviceId._id}`);
+
+    // Fetch patient data based on the IDs
+    if (patientIds && patientIds.length > 0) {
+      const patients = await Patient.find({ _id: { $in: patientIds } })
+        .select("name age contactNumber relationToUser") // Select necessary fields
+        .exec();
+
+      // Merge fetched patient data into the patientData array
+      patientData = [...patientData, ...patients];
+    }
+  }
+
+  console.log(patientData, "Fetched Patient Data");
+
+  // Return both cartData and patientData to the frontend
+  return {
+    cart: cartData,
+    patients: patientData,
+  };
+};
+
 export const removeServiceFromCartinDb = async (
   userId: string,
   serviceId: string
@@ -264,51 +316,158 @@ export const removeServiceFromCartinDb = async (
   }
 };
 
-export const bookAppointment = async (
-  userId: string,
-  services: { _id: string }[], // Array of services with `_id`
-  appointmentDate: string,
-  totalAmount: number,
-  status: string, // "pending"
-  sessionId: string // Stripe session ID
+// export const bookAppointment = async (
+//   userId: string,
+//   services: { _id: string }[],
+//   appointmentDate: Date,
+//   totalAmount: number,
+//   status: string,
+//   sessionId: string,
+//   appointmentTimeSlot: string
+// ) => {
+//   try {
+//     console.log(
+//       userId,
+//       services,
+//       appointmentDate,
+//       totalAmount,
+//       status,
+//       sessionId,
+//       appointmentTimeSlot
+//     );
+//     const serviceIds = services.map(
+//       (service) => new mongoose.Types.ObjectId(service._id)
+//     );
+
+//     const newBooking = new BookingModel({
+//       user_id: new mongoose.Types.ObjectId(userId),
+//       service_id: serviceIds,
+//       booking_date: new Date(appointmentDate),
+//       booking_time_slot: appointmentTimeSlot,
+//       total_amount: totalAmount,
+//       status,
+//       stripe_session_id: sessionId,
+//     });
+
+//     // Save the booking to the database
+//     const booked = await newBooking.save();
+//     console.log("Booking saved successfully:", booked);
+//     return booked;
+//   } catch (error) {
+//     if (error instanceof Error) {
+//       console.error("Error saving booking:", error.message);
+//       throw new Error("Failed to book appointment");
+//     } else {
+//       console.error("Unexpected error:", error);
+//       throw new Error("An unexpected error occurred");
+//     }
+//   }
+// };
+
+export const editUserInDb = async (id: string, fieldToChange: object) => {
+  try {
+    const editedUser = await Users.findByIdAndUpdate(
+      id,
+      { $set: fieldToChange },
+      { new: true }
+    );
+    return editedUser;
+  } catch (error) {
+    console.error("Error updating user in the database:", error);
+
+    throw new Error("Error updating user in the database");
+  }
+};
+
+export const addPatientInDb = async (
+  patientData: IPatientInput,
+  userId: string
 ) => {
   try {
-    console.log(
-      userId,
-      services,
-      appointmentDate,
-      totalAmount,
-      status,
-      sessionId
-    );
-
-    // Convert service IDs to Mongoose ObjectIds using 'new'
-    const serviceIds = services.map(
-      (service) => new mongoose.Types.ObjectId(service._id)
-    );
-
-    // Create a new booking entry in the database
+    const newPatient = new Patient({ ...patientData, userId });
+    const addedPatient = await newPatient.save();
+    return addedPatient; // Return the saved patient data
+  } catch (error) {
+    console.error("Error saving patient to database:", error);
+    throw new Error("Error saving patient to database");
+  }
+};
+export const getFamilyDataInDb = async (id: string) => {
+  try {
+    const familyData = await Patient.find({ userId: id });
+    return familyData;
+  } catch (error) {
+    console.error("Error fetching patient from database:", error);
+    throw new Error("Error fetching patient from database");
+  }
+};
+export const saveBooking = async ({
+  stripe_session_id,
+  user_id,
+  booking_date,
+  services, // Pass the entire services array
+  total_amount,
+  booking_time_slot,
+}: {
+  stripe_session_id: string;
+  user_id: string;
+  booking_date: Date;
+  services: {
+    service_id: mongoose.Types.ObjectId;
+    persons: mongoose.Types.ObjectId[];
+  }[]; // Ensure services is an array of objects with service_id and persons
+  total_amount: number;
+  booking_time_slot: string;
+}): Promise<unknown> => {
+  try {
+    // Create a new instance of BookingModel and assign values
     const newBooking = new BookingModel({
-      user_id: new mongoose.Types.ObjectId(userId), // Ensure ObjectId for user
-      service_id: serviceIds, // Ensure ObjectId array for services
-      booking_date: new Date(appointmentDate), // Convert the date string into a Date object
-      total_amount: totalAmount,
-      status,
-      stripe_session_id: sessionId,
+      stripe_session_id,
+      user_id: new mongoose.Types.ObjectId(user_id), // Convert user_id to ObjectId
+      booking_date,
+      services, // Directly use the processed services array
+      total_amount,
+      status: "confirmed", // Assuming status is confirmed after successful payment
+      booking_time_slot, // Include the booking time slot
     });
 
     // Save the booking to the database
-    const booked = await newBooking.save();
-    console.log("Booking saved successfully:", booked);
-    return booked;
+    const savedBooking = await newBooking.save();
+    return savedBooking;
   } catch (error) {
-    // Narrow the type of 'error' to 'Error'
     if (error instanceof Error) {
-      console.error("Error saving booking:", error.message);
-      throw new Error("Failed to book appointment");
-    } else {
-      console.error("Unexpected error:", error);
-      throw new Error("An unexpected error occurred");
+      throw new Error(`Error saving booking: ${error.message}`);
     }
+    throw error;
+  }
+};
+
+export const BookingListInDb = async (id: string) => {
+  try {
+    // Find all bookings for the given user ID and populate relevant fields
+    const bookings = await BookingModel.find({ user_id: id })
+      .populate("user_id") // Populate user details
+      .populate("services.service_id") // Populate service details
+      .populate("services.persons"); // Populate patient details
+
+    // Return the bookings
+    return bookings;
+  } catch (error) {
+    console.error("Error fetching bookings from DB:", error);
+    throw error;
+  }
+};
+export const findBookingById = async (id: string) => {
+  try {
+    const booking = await BookingModel.findById(id)
+      .populate("user_id", "name email") // Populate user details
+      .populate("services.service_id", "name price") // Populate service details
+      .populate("services.persons", "name relationToUser age gender") // Populate person details
+      .lean(); // Convert mongoose object to plain JS object
+
+    return booking;
+  } catch (error) {
+    console.error("Error in mongoUserRepository:", error);
+    throw new Error("Error fetching booking from DB");
   }
 };

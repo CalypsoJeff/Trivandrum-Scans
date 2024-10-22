@@ -1,10 +1,12 @@
 import { Department } from "../../../infrastructure/database/dbModel/departmentModel";
 import {
   addCategoryToDB,
+  bookingDetailsInDb,
   deleteCategoryFromDB,
   findAdmin,
   getAllDepartments,
   getAllUsers,
+  getBookingsFromDb,
   getPaginatedCategories,
   getPaginatedServicesWithCategoryDetails,
   getPaginatedUsers,
@@ -257,7 +259,6 @@ export default {
     }
   },
 
-
   addServiceData: async (
     serviceData: IServiceRequest
   ): Promise<IServiceResponse> => {
@@ -312,10 +313,7 @@ export default {
       };
 
       // Call repository to update service by ID
-      const updatedService = await updateService(
-        id,
-        completeServiceData
-      );
+      const updatedService = await updateService(id, completeServiceData);
 
       return updatedService;
     } catch (error) {
@@ -326,21 +324,40 @@ export default {
 
   getServiceList: async (page: number, limit: number) => {
     try {
-      const services = await getPaginatedServicesWithCategoryDetails(page, limit); // Update to use the new function
+      const services = await getPaginatedServicesWithCategoryDetails(
+        page,
+        limit
+      ); // Update to use the new function
       return services;
     } catch (error) {
       console.error("Error fetching service list:", error);
       throw new Error("Error fetching service list");
     }
   },
-  toggleService:async(id:string)=>{
+  toggleService: async (id: string) => {
     try {
-      const toggleStatus = await toggleServiceByID(id)
+      const toggleStatus = await toggleServiceByID(id);
       return toggleStatus;
     } catch (error) {
       console.error("Error toggling service :", error);
       throw new Error("Error toggling service");
     }
-  }
-  
+  },
+  getBookingList: async (page = 1, limit = 10) => {
+    // eslint-disable-next-line no-useless-catch
+    try {
+      return await getBookingsFromDb(page, limit);
+    } catch (error) {
+      throw error;
+    }
+  },
+  fetchBookingDetails: async (id: string) => {
+    try {
+      const bookingDetails = await bookingDetailsInDb(id);
+      return bookingDetails;
+    } catch (error) {
+      console.error("Error fetching booking details:", error);
+      throw error;
+    }
+  },
 };

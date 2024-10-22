@@ -1,7 +1,12 @@
 import {
+  addPatientInDb,
   addToCartInDb,
+  BookingListInDb,
   checkExistingUser,
   createUser,
+  editUserInDb,
+  findBookingById,
+  getFamilyDataInDb,
   getPaginatedServices,
   getService,
   getStoredOTP,
@@ -9,9 +14,11 @@ import {
   getUserByResetToken,
   googleUser,
   removeServiceFromCartinDb,
+  saveBooking,
   saveOtp,
   updateUserPassword,
   userCartInDb,
+  userUpdatedCartInDb,
   verifyUserDb,
 } from "../../../infrastructure/repositories/mongoUserRepository";
 import { sendOTPEmail, sendVerifyMail } from "../../../utils/emailUtils";
@@ -24,8 +31,11 @@ import {
   generateToken,
   validateResetToken,
 } from "../../helper/jwtHelper";
-import {
-} from "../../../infrastructure/repositories/mongoAdminRepository";
+import {} from "../../../infrastructure/repositories/mongoAdminRepository";
+import { IPatientInput } from "../../entities/types/patientType";
+import Stripe from "stripe";
+import mongoose from "mongoose";
+const stripe = new Stripe(process.env.STRIPE_KEY as string, {});
 interface ErrorWithStatus extends Error {
   status?: number;
 }
@@ -238,29 +248,154 @@ export default {
       throw new Error("Error fetching service list");
     }
   },
-  addToCart: async(userId:string,serviceId:string)=>{
+  addToCart: async (userId: string, serviceId: string) => {
     try {
-      await addToCartInDb(userId,serviceId);
+      await addToCartInDb(userId, serviceId);
     } catch (error) {
       console.error("Unexpected error in addToCart:", error);
-        throw new Error("An unexpected error in addToCart");
+      throw new Error("An unexpected error in addToCart");
     }
   },
-  getCart:async(id:string)=>{
+  getCart: async (id: string) => {
     try {
       const cartData = await userCartInDb(id);
-      return cartData
+      return cartData;
     } catch (error) {
       console.error("Unexpected error in getCart:", error);
-        throw new Error("An unexpected error in getCart");
+      throw new Error("An unexpected error in getCart");
     }
   },
-  removeCartItem:async(userId:string,serviceId:string)=>{
+  getUpdatedCart: async (id: string) => {
     try {
-      await removeServiceFromCartinDb(userId,serviceId);
+      const cartData = await userUpdatedCartInDb(id);
+      return cartData;
+    } catch (error) {
+      console.error("Unexpected error in getCart:", error);
+      throw new Error("An unexpected error in getCart");
+    }
+  },
+  removeCartItem: async (userId: string, serviceId: string) => {
+    try {
+      await removeServiceFromCartinDb(userId, serviceId);
     } catch (error) {
       console.error("Unexpected error in removing Cart:", error);
-        throw new Error("An unexpected error in removing Cart");
+      throw new Error("An unexpected error in removing Cart");
     }
-  }
+  },
+  editUser: async (id: string, fieldToChange: object) => {
+    try {
+      const updatedUser = await editUserInDb(id, fieldToChange);
+      return updatedUser;
+    } catch (error) {
+      console.error("Error updating user", error);
+      throw new Error("Error updating user");
+    }
+  },
+  addPatient: async (patientData: IPatientInput, userId: string) => {
+    try {
+      // Call the repository to add patient to the database
+      const addedPatient = await addPatientInDb(patientData, userId);
+      return addedPatient; // Return the added patient
+    } catch (error) {
+      console.error("Error in adding patient: ", error);
+      throw new Error("Error in adding patient");
+    }
+  },
+  getFamilyData: async (id: string) => {
+    try {
+      const familyData = getFamilyDataInDb(id);
+      return familyData;
+    } catch (error) {
+      console.error("Error fetching patient: ", error);
+      throw new Error("Error fetching patient");
+    }
+  },
+  // bookAppointment: async (
+  //   user_id: string,
+  //   service_id: [],
+  //   booking_date: Date,
+  //   total_amount: number,
+  //   status: string,
+  //   stripe_session_id: string,
+  //   booking_time_slot: string
+  // ) => {
+  //   return await bookAppointment(
+  //     user_id,
+  //     service_id,
+  //     booking_date,
+  //     total_amount,
+  //     "success",
+  //     stripe_session_id,
+  //     booking_time_slot
+  //   );
+  // },
+  confirmBooking: async ({
+    stripe_session_id,
+    user_id,
+    booking_date,
+    services,
+    total_amount,
+    booking_time_slot,
+  }: {
+    stripe_session_id: string;
+    user_id: string;
+    booking_date: Date;
+    services: {
+      serviceId: string;
+      personIds: { _id: string }[];
+    }[];
+    total_amount: number;
+    booking_time_slot: string;
+  }): Promise<{ success: boolean; booking: unknown }> => {
+    try {
+      // Verify the Stripe payment session
+      const session = await stripe.checkout.sessions.retrieve(
+        stripe_session_id
+      );
+
+      if (!session || session.payment_status !== "paid") {
+        throw new Error("Payment not completed or unsuccessful.");
+      }
+      const servicesWithObjectIds = services.map((service) => ({
+        service_id: new mongoose.Types.ObjectId(service.serviceId), // Convert serviceId to ObjectId
+        persons: service.personIds.map(
+          (person) => new mongoose.Types.ObjectId(person._id)
+        ), // Convert each person._id to ObjectId
+      }));
+
+      const savedBooking = await saveBooking({
+        stripe_session_id,
+        user_id,
+        booking_date,
+        services: servicesWithObjectIds,
+        total_amount,
+        booking_time_slot,
+      });
+
+      return { success: true, booking: savedBooking };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Error confirming booking: ${error.message}`);
+      }
+      throw error;
+    }
+  },
+  getBookingList: async (id: string) => {
+    try {
+      // Call the database query function to get bookings
+      return await BookingListInDb(id);
+    } catch (error) {
+      console.error("Error in getBookingList:", error);
+      throw error;
+    }
+  },
+  getBookingById: async (id: string) => {
+    try {
+      const booking = await findBookingById(id); // Call repository to get booking details
+      return booking;
+    } catch (error) {
+      console.error("Error in userInteractor:", error);
+      throw new Error("Failed to fetch booking details");
+    }
+  },
 };

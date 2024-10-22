@@ -74,4 +74,6 @@ adminRouter.patch(
   protectAdmin,
   adminController.toggleService
 );
+adminRouter.get('/bookings',protectAdmin,adminController.bookingList)
+adminRouter.get('/bookings/:id',protectAdmin,adminController.getBookingDetails)
 export default adminRouter;

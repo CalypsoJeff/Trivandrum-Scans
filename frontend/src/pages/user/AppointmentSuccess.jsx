@@ -1,14 +1,64 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FaCheckCircle } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import axiosInstanceUser from "../../services/axiosInstanceUser";
 
 function AppointmentSuccess() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [appointmentDetails, setAppointmentDetails] = useState({
+    date: "",
+    service: "",
+    amount: "",
+  });
+
+  // Function to parse query parameters from the URL
+  const getQueryParams = (url) => {
+    const queryParams = new URLSearchParams(url.search);
+    return {
+      sessionId: queryParams.get("session_id"),
+      userId: queryParams.get("user_id"),
+      appointmentDate: queryParams.get("appointment_date"),
+      services: JSON.parse(queryParams.get("services")),
+      amount: queryParams.get("amount"),
+      appointmentTimeSlot: queryParams.get("appointment_time_slot"), // Include the appointment time slot
+    };
+  };
+  
 
   // Function to navigate back to the dashboard or home page
   const handleGoToDashboard = () => {
     navigate("/home"); // Update this route to your actual dashboard or home page route
   };
+
+  useEffect(() => {
+    const params = getQueryParams(location);
+
+    // Set appointment details based on the query params
+    setAppointmentDetails({
+      date: params.appointmentDate,
+      service: params.services[0]?.name || "Service",
+      amount: params.amount,
+    });
+
+    // Send request to confirm booking in the backend
+    axiosInstanceUser
+      .post("/confirm-booking", {
+        sessionId: params.sessionId,
+        userId: params.userId,
+        appointmentDate: params.appointmentDate,
+        services: params.services,
+        amount: params.amount,
+        appointmentTimeSlot: params.appointmentTimeSlot,
+      })
+      .then((response) => {
+        console.log("Booking confirmed:", response.data);
+      })
+      .catch((error) => {
+        console.error("Error confirming booking:", error);
+      });
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
@@ -23,23 +73,26 @@ function AppointmentSuccess() {
           Appointment Confirmed!
         </h1>
         <p className="text-gray-600 mb-6">
-          Thank you for booking your appointment. we have received your payment
+          Thank you for booking your appointment. We have received your payment
           and your appointment has been successfully scheduled.
         </p>
 
-        {/* Appointment Details (can be customized further with actual details) */}
+        {/* Appointment Details */}
         <div className="bg-gray-100 p-4 rounded-lg mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-2">
             Appointment Details:
           </h3>
           <p className="text-gray-600">
-            Date: <span className="font-semibold">14th October 2024</span>
+            Date:{" "}
+            <span className="font-semibold">{appointmentDetails.date}</span>
           </p>
           <p className="text-gray-600">
-            Service: <span className="font-semibold">Health Checkup</span>
+            Service:{" "}
+            <span className="font-semibold">{appointmentDetails.service}</span>
           </p>
           <p className="text-gray-600">
-            Amount Paid: <span className="font-semibold">₹1900</span>
+            Amount Paid:{" "}
+            <span className="font-semibold">₹{appointmentDetails.amount}</span>
           </p>
         </div>
 

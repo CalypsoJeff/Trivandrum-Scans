@@ -10,15 +10,20 @@ export interface Iuser extends Document {
   resetPasswordExpires?: Date | null;
   is_verified?: boolean;
   is_blocked?: boolean;
+  gender: 'Male' | 'Female' | 'Other';
 }
 
 const UserSchema: Schema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  address: { type: String }, 
+  address: { type: String },
   mobile: { type: String },
-  age: { type: Number }, 
+  age: { type: Number },
+  gender: {
+    type: String,
+    enum: ["Male", "Female", "Other"],
+  },
   resetPasswordToken: { type: String, default: null },
   resetPasswordExpires: { type: Date, default: null },
   is_verified: { type: Boolean, default: false },

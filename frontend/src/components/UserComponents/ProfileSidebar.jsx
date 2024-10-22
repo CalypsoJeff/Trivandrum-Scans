@@ -7,45 +7,72 @@ import { selectUser } from "../../features/auth/authSlice";
 function ProfileSidebar() {
   const user = useSelector(selectUser);
   return (
-    <div className="w-64 bg-[#F8F4EF] flex flex-col justify-between fixed top-0 left-0 h-full shadow-lg">
-      <div>
-        <div className="text-2xl gray-800 font-bold p-4">My Account</div>
-        <ul>
-          <li className="flex items-center p-4 hover:bg-[#eae7e1]">
-            <FaUser className="mr-2 text-[#a39f74]" />
-            <Link to="/profile" className="text-gray-700 hover:text-gray-900">
-              Profile
+    <div className="w-64 bg-white shadow-xl fixed top-0 left-0 h-full select-none">
+      <div className="p-6 border-b">
+        {/* User Info Section */}
+        <div className="flex items-center space-x-4">
+          <FaUser className="text-gray-500 text-4xl" />
+          <div>
+            <h1 className="text-xl font-bold text-gray-700">
+              {user?.name || "User Name"}
+            </h1>
+            <p className="text-sm text-gray-500">
+              {user?.email || "email@example.com"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Sidebar Links */}
+      <nav className="mt-4">
+        <ul className="space-y-2">
+          <li>
+            <Link
+              to="/profile"
+              className="flex items-center p-4 hover:bg-gray-200 transition"
+            >
+              <FaUser className="mr-3 text-[#a39f74]" />
+              <span className="text-gray-800">Profile</span>
             </Link>
           </li>
-          <li className="flex items-center p-4 hover:bg-[#eae7e1]">
-            <FaBook className="mr-2 text-[#a39f74]" />
-            <Link to={""} className="text-gray-700 hover:text-gray-900">
-              Booking Details
+          <li>
+            <Link
+              to="/booking" // Updated to correct path
+              className="flex items-center p-4 hover:bg-gray-200 transition"
+            >
+              <FaBook className="mr-3 text-[#a39f74]" />
+              <span className="text-gray-800">Booking Details</span>
             </Link>
           </li>
-          <li className="flex items-center p-4 hover:bg-[#eae7e1]">
-            <FaLock className="mr-2 text-[#a39f74]" />
+          <li>
             <Link
               to="/change-password"
-              className="text-gray-700 hover:text-gray-900"
+              className="flex items-center p-4 hover:bg-gray-200 transition"
             >
-              Change Password
+              <FaLock className="mr-3 text-[#a39f74]" />
+              <span className="text-gray-800">Change Password</span>
             </Link>
           </li>
-          <li className="flex items-center p-4 hover:bg-[#eae7e1]">
-            <FaHeart className="mr-2 text-[#a39f74]" />
-            <Link to="" className="text-gray-700 hover:text-gray-900">
-              Favorites
+          <li>
+            <Link
+              to="/favorites"
+              className="flex items-center p-4 hover:bg-gray-200 transition"
+            >
+              <FaHeart className="mr-3 text-[#a39f74]" />
+              <span className="text-gray-800">Favorites</span>
             </Link>
           </li>
-          <li className="flex items-center p-4 hover:bg-[#eae7e1]">
-            <FaWallet className="mr-2 text-[#a39f74]" />
-            <Link to="" className="text-gray-700 hover:text-gray-900">
-              Wallet
+          <li>
+            <Link
+              to="/wallet"
+              className="flex items-center p-4 hover:bg-gray-200 transition"
+            >
+              <FaWallet className="mr-3 text-[#a39f74]" />
+              <span className="text-gray-800">Wallet</span>
             </Link>
           </li>
         </ul>
-      </div>
+      </nav>
     </div>
   );
 }

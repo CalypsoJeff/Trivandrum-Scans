@@ -362,14 +362,50 @@ export default {
       res.status(500).json({ message: "Failed to retrieve services" });
     }
   },
-  toggleService:async(req:Request,res:Response)=>{
+  toggleService: async (req: Request, res: Response) => {
     try {
-      const {id} = req.params;
-      const toggled = adminInteractor.toggleService(id)
-      res.status(200).json(toggled)
+      const { id } = req.params;
+      const toggled = adminInteractor.toggleService(id);
+      res.status(200).json(toggled);
     } catch (error) {
       console.error("Failed to toggle services", error);
       res.status(500).json({ message: "Failed to toggle services" });
     }
-  }
+  },
+  bookingList: async (req: Request, res: Response) => {
+    try {
+      // Parse query params for page and limit
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      const { bookings, totalBookings } = await adminInteractor.getBookingList(
+        page,
+        limit
+      );
+
+      res.status(200).json({
+        bookings,
+        totalPages: Math.ceil(totalBookings / limit), // Correctly calculate total pages
+        currentPage: page,
+      });
+    } catch (error) {
+      console.error("Error fetching booking list:", error);
+      res.status(500).json({ message: "Failed to fetch bookings" });
+    }
+  },
+  getBookingDetails: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const bookingDetails = await adminInteractor.fetchBookingDetails(id); // Await this promise
+
+      if (!bookingDetails) {
+        return res.status(404).json({ message: "Booking not found" });
+      }
+
+      res.status(200).json(bookingDetails);
+    } catch (error) {
+      console.error("Error fetching booking details:", error);
+      res.status(500).json({ message: "Failed to fetch details" });
+    }
+  },
 };
