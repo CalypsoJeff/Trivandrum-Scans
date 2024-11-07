@@ -1,6 +1,7 @@
 import mongoose, { Document } from "mongoose";
 
 // Define an interface for the service in the booking
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface Service {
   service_id: mongoose.Types.ObjectId;
   persons: mongoose.Types.ObjectId[];
@@ -8,8 +9,8 @@ interface Service {
 
 // Define the interface for the Booking document
 export interface IBooking extends Document {
-  user_id: mongoose.Types.ObjectId;
-  services: Service[];
+  user_id: { email: string; name: string } | mongoose.Types.ObjectId; // `user_id` can be populated or an ObjectId
+  services: { service_id: mongoose.Types.ObjectId; persons: mongoose.Types.ObjectId[] }[];
   booking_date: Date;
   booking_time_slot: string;
   total_amount: number;

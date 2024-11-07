@@ -12,6 +12,7 @@ const BookingSchema: Schema = new mongoose.Schema(
       {
         service_id: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "Service" },
         persons: [{ type: mongoose.Schema.Types.ObjectId, required: true, ref: "Patient" }],
+        completed: { type: Boolean, default: false }, 
       },
     ],
     booking_date: { type: Date, required: true },

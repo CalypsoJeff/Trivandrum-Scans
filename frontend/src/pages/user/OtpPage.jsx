@@ -2,17 +2,13 @@ import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
-// import { useSelector } from "react-redux";
 import BackgroundImgLogin from "/Images/pexels-tima-miroshnichenko-9574411.jpg";
 import logo from "/Images/Logo.png";
 
 const UserOtp = () => {
   const inputRefs = useRef([]);
-  // const { email } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  // const { user } = useSelector((state) => state.auth);
-
   const [timer, setTimer] = useState(60);
   const [isResendEnabled, setIsResendEnabled] = useState(false);
   const intervalRef = useRef(null);
@@ -21,7 +17,6 @@ const UserOtp = () => {
     e.preventDefault();
     const otp = inputRefs.current.map((input) => input.value).join("");
     const { email } = location.state || {};
-    console.log("heyyyyyy", otp, email);
 
     if (!email) {
       return <div>Error: Email not provided</div>;
@@ -32,20 +27,18 @@ const UserOtp = () => {
         "http://localhost:5000/api/users/otp-verification",
         { otp, email }
       );
-      console.log(response.data);
       navigate("/home");
-      toast.success(response.data.message);
+      toast.success(response.data.message, {
+        style: {
+          backgroundColor: "#4CAF50", // Green for success
+          color: "#fff",
+        },
+      });
     } catch (error) {
       console.error("Error response:", error);
       if (error.response && error.response.data) {
-        // Check for "Invalid OTP" in the error response
-        if (error.response.data.error) {
-          toast.error("Invalid OTP, please try again.");
-        } else {
-          toast.error(`${error.response.data.error}`);
-        }
+        toast.error("Invalid OTP, please try again.");
       } else {
-        console.error("Error message:", error.message);
         toast.error(error.message);
       }
     }
@@ -55,7 +48,12 @@ const UserOtp = () => {
     const { email } = location.state || {};
     try {
       await axios.post("http://localhost:5000/api/users/resend-otp", { email });
-      toast.success("OTP resent successfully");
+      toast.success("OTP resent successfully", {
+        style: {
+          backgroundColor: "#4CAF50", // Green for success
+          color: "#fff",
+        },
+      });
       setTimer(60);
       setIsResendEnabled(false);
 
@@ -149,7 +147,6 @@ const UserOtp = () => {
           </div>
           <div className="max-w-[260px] mx-auto mt-4">
             <button
-              onClick={handleSubmit}
               type="submit"
               className="w-full inline-flex justify-center whitespace-nowrap rounded-lg bg-blue-600 px-3.5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-500 focus:outline-none focus:ring focus:ring-blue-300 transition-colors duration-150"
             >

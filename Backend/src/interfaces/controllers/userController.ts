@@ -5,13 +5,12 @@ import Stripe from "stripe";
 import Cart from "../../infrastructure/database/dbModel/cartModel";
 import { IServiceUpdate } from "../../domain/entities/types/serviceType";
 import BookingModel from "../../infrastructure/database/dbModel/bookingModel";
-
 const stripe = new Stripe(process.env.STRIPE_KEY as string, {});
 
 export default {
   getStatus: async (req: Request, res: Response) => {
     try {
-      if (req.user) {
+      if (req.user && req.user.user) {
         res
           .status(200)
           .json({ message: "User is authenticated", user: req.user });
@@ -119,6 +118,8 @@ export default {
   googleAuth: async (req: Request, res: Response) => {
     try {
       const response = await userInteractor.googleUser(req.body);
+      console.log(response);
+
       res.status(200).json({ message: "Google Auth Success", response });
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -325,13 +326,13 @@ export default {
           },
         ],
         mode: "payment",
-        success_url: `${
-          process.env.CLIENT_URL
-        }/appointment-success?session_id={CHECKOUT_SESSION_ID}&user_id=${userId}&appointment_date=${appointmentDate}&appointment_time_slot=${appointmentTimeSlot}&services=${encodeURIComponent(
-          JSON.stringify(services)
-        )}&amount=${totalAmount}`,
+        success_url: `${process.env.CLIENT_URL
+          }/appointment-success?session_id={CHECKOUT_SESSION_ID}&user_id=${userId}&appointment_date=${appointmentDate}&appointment_time_slot=${appointmentTimeSlot}&services=${encodeURIComponent(
+            JSON.stringify(services)
+          )}&amount=${totalAmount}`,
 
-        cancel_url: `${process.env.CLIENT_URL}/cancel`,
+        cancel_url: `${process.env.CLIENT_URL}/appointment-failure`,
+
       });
 
       if (!session) {
@@ -362,8 +363,6 @@ export default {
     try {
       const { id } = req.params;
       const { fieldToChange } = req.body;
-      console.log(fieldToChange, "dndhuhduhduhd");
-
       const editedUser = await userInteractor.editUser(id, fieldToChange);
       res.status(200).json(editedUser);
     } catch (error) {
@@ -476,9 +475,9 @@ export default {
       return res.status(500).json({ error: "Failed to confirm booking" });
     }
   },
-  getBookingList:async(req:Request,res:Response)=>{
+  getBookingList: async (req: Request, res: Response) => {
     try {
-      const {id} = req.params;
+      const { id } = req.params;
       const bookingList = await userInteractor.getBookingList(id);
       res.status(200).json(bookingList);
     } catch (error) {
@@ -490,18 +489,75 @@ export default {
     try {
       const { id } = req.params; // Extract the booking ID from the request params
       const booking = await userInteractor.getBookingById(id); // Pass the ID to the interactor to fetch details
-      
+
       if (!booking) {
         return res.status(404).json({ message: "Booking not found" });
       }
-  
       res.status(200).json(booking); // Return booking details in the response
     } catch (error) {
       console.error("Error fetching booking details:", error);
-      return res.status(500).json({ message: "Failed to fetch booking details" });
+      return res
+        .status(500)
+        .json({ message: "Failed to fetch booking details" });
+    }
+  },
+  clearCart: async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.body;
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+
+      // Call the function to clear the cart in the database
+      await userInteractor.clearCart(userId);
+
+      // Respond with success
+      res.status(200).json({ message: "Cart cleared successfully" });
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+      res.status(500).json({ message: "Error clearing cart" });
+    }
+  },
+  cancelBooking: async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const cancelledBooking = await userInteractor.cancelBooking(id);
+
+      if (!cancelledBooking) {
+        return res.status(404).json({ error: "Booking not found or already cancelled" });
+      }
+
+      res.status(200).json({ message: "Booking successfully cancelled", booking: cancelledBooking });
+    } catch (error) {
+      console.error("Error in cancelBooking controller:", error);
+      res.status(500).json({ error: "Failed to cancel booking" });
+    }
+  },
+  getCategory : async (req: Request, res: Response) => {
+    try {
+      const categories = await userInteractor.getCategories();
+      if (!categories) {
+        return res.status(404).json({ message: "No categories found" });
+      }
+      res.status(200).json({ categories });
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  },
+  reportList:async(req: Request, res: Response) => {
+    try {
+      const {id}= req.params
+      console.log(id,'zzzzzzzzzzz');
+      
+      const reportList = await userInteractor.reportList(id);
+      res.status(200).json(reportList);
+    } catch (error) {
+      console.error("Error in reportList controller:", error);
+      res.status(500).json({ message: "Failed to fetch report list" });
     }
   }
-  
 
- 
+
+
 };

@@ -7,20 +7,26 @@ import {
   getAllDepartments,
   getAllUsers,
   getBookingsFromDb,
+  getCompletedBookings,
   getPaginatedCategories,
   getPaginatedServicesWithCategoryDetails,
   getPaginatedUsers,
+  getReportsFromDb,
+  publishReportInDb,
+  saveReport,
   saveService,
   toggleServiceByID,
   updateCategoryInDB,
   updateDepartment,
+  updateReportInDb,
   updateService,
+  updateServiceBookinginDb,
   updateUserStatus,
 } from "../../../infrastructure/repositories/mongoAdminRepository";
 import { uploadToS3 } from "../../../utils/s3Uploader";
 import // ICategory,
-// PaginatedCategories,
-"../../entities/types/categoryType";
+  // PaginatedCategories,
+  "../../entities/types/categoryType";
 import {
   ICategory,
   PaginatedCategories,
@@ -50,7 +56,6 @@ export default {
       }
       const role = "admin";
       const tokenData = await generateToken(admin.id, cred.email, role);
-      console.log("JESLINNNNNN", tokenData, admin);
       return {
         admin,
         token: tokenData.token,
@@ -360,4 +365,87 @@ export default {
       throw error;
     }
   },
+  updateServiceBooking: async (bookingId: string, serviceId: string, completed: boolean) => {
+    try {
+      const updatedBooking = await updateServiceBookinginDb(bookingId, serviceId, completed);
+      return updatedBooking;
+    } catch (error) {
+      console.error("Error in service booking update:", error);
+      throw new Error("Error in service booking update");
+    }
+  },
+  CompletedBooking: async () => {
+    try {
+      const completedBookings = await getCompletedBookings();
+      return completedBookings;
+    } catch (error) {
+      console.error("Error in CompletedBooking:", error);
+      throw error;
+    }
+  },
+  addReportData: async ({ bookingId, reportFiles }: { bookingId: string; reportFiles: Express.Multer.File[] }) => {
+    const reports = [];
+
+    // Upload each file to S3 and collect its metadata
+    for (const reportFile of reportFiles) {
+      const reportData = await uploadToS3(reportFile);
+      const reportUrl = reportData.Location;
+
+      reports.push({
+        filename: reportFile.originalname,
+        mimetype: reportFile.mimetype,
+        size: reportFile.size,
+        url: reportUrl,
+      });
+    }
+
+    // Prepare the complete report data for the database
+    const completeReportData = {
+      bookingId,
+      reports,
+    };
+
+    // Save report data to the database
+    const savedReport = await saveReport(completeReportData);
+    return savedReport;
+  },
+
+  reportList: async () => {
+    return await getReportsFromDb();
+  },
+  editReportData: async ({ editReportId, bookingId, reportFiles }: { editReportId: string; bookingId: string; reportFiles: Express.Multer.File[] }) => {
+    const reports = [];
+
+    // Upload each file and store details in the reports array
+    for (const reportFile of reportFiles) {
+      const reportData = await uploadToS3(reportFile);
+      const reportUrl = reportData.Location;
+
+      reports.push({
+        filename: reportFile.originalname,
+        mimetype: reportFile.mimetype,
+        size: reportFile.size,
+        url: reportUrl,
+      });
+    }
+
+    // Prepare the updated data object
+    const updatedReportData = {
+      bookingId,
+      reports,
+    };
+
+    // Update the report in the database
+    const updatedReport = await updateReportInDb(editReportId, updatedReportData);
+    return updatedReport;
+  },
+  publishReport: async (reportId: string) => {
+    return await publishReportInDb(reportId);
+  },
+
+
+
+
+
+
 };

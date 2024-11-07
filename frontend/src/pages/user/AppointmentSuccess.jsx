@@ -1,11 +1,143 @@
-import React, { useEffect, useState } from "react";
+// import React, { useEffect, useRef, useState } from "react";
+// import { FaCheckCircle } from "react-icons/fa";
+// import { useNavigate, useLocation } from "react-router-dom";
+// import axiosInstanceUser from "../../services/axiosInstanceUser";
+// // import { useSocket } from "../../services/socketProvider";
+// // import { useSelector } from "react-redux";
+// // import { selectAdmin } from "../../features/admin/adminslice";
+
+// function AppointmentSuccess() {
+//   const navigate = useNavigate();
+//   const location = useLocation();
+//   const hasCalled = useRef(false);
+//   // const { socket } = useSocket();
+//   // const admin = useSelector(selectAdmin)
+
+//   const [appointmentDetails, setAppointmentDetails] = useState({
+//     date: "",
+//     service: "",
+//     amount: "",
+//   });
+
+//   const getQueryParams = (url) => {
+//     const queryParams = new URLSearchParams(url.search);
+//     return {
+//       sessionId: queryParams.get("session_id"),
+//       userId: queryParams.get("user_id"),
+//       appointmentDate: queryParams.get("appointment_date"),
+//       services: JSON.parse(queryParams.get("services")),
+//       amount: queryParams.get("amount"),
+//       appointmentTimeSlot: queryParams.get("appointment_time_slot"),
+//     };
+//   };
+
+//   const clearCartInBackend = async (userId) => {
+//     try {
+//       const response = await axiosInstanceUser.post(`/cart/clear`, { userId });
+//       console.log("Cart cleared:", response.data);
+//     } catch (error) {
+//       console.error("Error clearing cart:", error);
+//     }
+//   };
+
+//   const handleGoToDashboard = () => {
+//     navigate("/home"); // Update this route to your actual dashboard or home page route
+//   };
+
+//   useEffect(() => {
+//     if (!hasCalled.current) {
+//       hasCalled.current = true;
+
+//       const params = getQueryParams(location);
+
+//       setAppointmentDetails({
+//         date: params.appointmentDate,
+//         service: params.services[0]?.name || "Service",
+//         amount: params.amount,
+//       });
+
+//       axiosInstanceUser
+//         .post("/confirm-booking", {
+//           sessionId: params.sessionId,
+//           userId: params.userId,
+//           appointmentDate: params.appointmentDate,
+//           services: params.services,
+//           amount: params.amount,
+//           appointmentTimeSlot: params.appointmentTimeSlot,
+//         })
+//         .then((response) => {
+//           console.log("Booking confirmed:", response.data);
+//           clearCartInBackend(params.userId);
+
+//           // Emit chat request to admin after booking confirmation
+//           // if (socket) {
+//           //   socket.emit("chatRequest", {
+//           //     userId: params.userId,
+//           //     adminId: admin.id,
+//           //     message: "New chat request from AppointmentSuccess",
+//           //   });
+//           //   console.log("Chat request sent to admin");
+//           // }
+//         })
+//         .catch((error) => {
+//           console.error("Error confirming booking:", error);
+//         });
+//     }
+//   }, [location]);
+
+//   return (
+//     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
+//       <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-lg text-center">
+//         <div className="mb-4">
+//           <FaCheckCircle className="text-green-500 text-6xl mx-auto" />
+//         </div>
+//         <h1 className="text-3xl font-bold text-gray-800 mb-2">
+//           Appointment Confirmed!
+//         </h1>
+//         <p className="text-gray-600 mb-6">
+//           Thank you for booking your appointment. We have received your payment
+//           and your appointment has been successfully scheduled.
+//         </p>
+//         <div className="bg-gray-100 p-4 rounded-lg mb-6">
+//           <h3 className="text-lg font-semibold text-gray-700 mb-2">
+//             Appointment Details:
+//           </h3>
+//           <p className="text-gray-600">
+//             Date:{" "}
+//             <span className="font-semibold">{appointmentDetails.date}</span>
+//           </p>
+//           <p className="text-gray-600">
+//             Service:{" "}
+//             <span className="font-semibold">{appointmentDetails.service}</span>
+//           </p>
+//           <p className="text-gray-600">
+//             Amount Paid:{" "}
+//             <span className="font-semibold">₹{appointmentDetails.amount}</span>
+//           </p>
+//         </div>
+//         <button
+//           onClick={handleGoToDashboard}
+//           className="bg-teal-500 text-white py-2 px-6 rounded-lg hover:bg-teal-600 transition-all shadow-lg"
+//         >
+//           Go to Dashboard
+//         </button>
+//       </div>
+//     </div>
+//   );
+// }
+
+// export default AppointmentSuccess;
+
+import React, { useEffect, useRef, useState } from "react";
 import { FaCheckCircle } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import axiosInstanceUser from "../../services/axiosInstanceUser";
+import axiosInstance from "../../services/axiosInstance";
 
 function AppointmentSuccess() {
   const navigate = useNavigate();
   const location = useLocation();
+  const hasCalled = useRef(false);
 
   const [appointmentDetails, setAppointmentDetails] = useState({
     date: "",
@@ -13,7 +145,6 @@ function AppointmentSuccess() {
     amount: "",
   });
 
-  // Function to parse query parameters from the URL
   const getQueryParams = (url) => {
     const queryParams = new URLSearchParams(url.search);
     return {
@@ -22,52 +153,72 @@ function AppointmentSuccess() {
       appointmentDate: queryParams.get("appointment_date"),
       services: JSON.parse(queryParams.get("services")),
       amount: queryParams.get("amount"),
-      appointmentTimeSlot: queryParams.get("appointment_time_slot"), // Include the appointment time slot
+      appointmentTimeSlot: queryParams.get("appointment_time_slot"),
     };
   };
 
-  // Function to navigate back to the dashboard or home page
+  const clearCartInBackend = async (userId) => {
+    try {
+      const response = await axiosInstanceUser.post(`/cart/clear`, { userId });
+      console.log("Cart cleared:", response.data);
+    } catch (error) {
+      console.error("Error clearing cart:", error);
+    }
+  };
+
+  const initiateChat = async (userId) => {
+    try {
+      const response = await axiosInstanceUser.post(`/chat/start`, { userId });
+      console.log("Chat initiated:", response.data);
+      await axiosInstance.post(`/chat/${response.data.chatId}/send`, {
+        content: `Your booking for ${appointmentDetails.service} on ${appointmentDetails.date} has been confirmed. Thank you!`,
+      });
+      console.log("Initial confirmation message sent to user.");
+    } catch (error) {
+      console.error("Error initiating chat:", error);
+    }
+  };
   const handleGoToDashboard = () => {
-    navigate("/home"); // Update this route to your actual dashboard or home page route
+    navigate("/home");
   };
 
   useEffect(() => {
-    const params = getQueryParams(location);
+    if (!hasCalled.current) {
+      hasCalled.current = true;
+      const params = getQueryParams(location);
 
-    // Set appointment details based on the query params
-    setAppointmentDetails({
-      date: params.appointmentDate,
-      service: params.services[0]?.name || "Service",
-      amount: params.amount,
-    });
-
-    // Send request to confirm booking in the backend
-    axiosInstanceUser
-      .post("/confirm-booking", {
-        sessionId: params.sessionId,
-        userId: params.userId,
-        appointmentDate: params.appointmentDate,
-        services: params.services,
+      setAppointmentDetails({
+        date: params.appointmentDate,
+        service: params.services[0]?.name || "Service",
         amount: params.amount,
-        appointmentTimeSlot: params.appointmentTimeSlot,
-      })
-      .then((response) => {
-        console.log("Booking confirmed:", response.data);
-      })
-      .catch((error) => {
-        console.error("Error confirming booking:", error);
       });
-  }, []);
+
+      axiosInstanceUser
+        .post("/confirm-booking", {
+          sessionId: params.sessionId,
+          userId: params.userId,
+          appointmentDate: params.appointmentDate,
+          services: params.services,
+          amount: params.amount,
+          appointmentTimeSlot: params.appointmentTimeSlot,
+        })
+        .then((response) => {
+          console.log("Booking confirmed:", response.data);
+          clearCartInBackend(params.userId);
+          initiateChat(params.userId); // Start chat with admin after booking confirmation
+        })
+        .catch((error) => {
+          console.error("Error confirming booking:", error);
+        });
+    }
+  }, [location]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
       <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-lg text-center">
-        {/* Success Icon */}
         <div className="mb-4">
           <FaCheckCircle className="text-green-500 text-6xl mx-auto" />
         </div>
-
-        {/* Success Message */}
         <h1 className="text-3xl font-bold text-gray-800 mb-2">
           Appointment Confirmed!
         </h1>
@@ -75,8 +226,6 @@ function AppointmentSuccess() {
           Thank you for booking your appointment. We have received your payment
           and your appointment has been successfully scheduled.
         </p>
-
-        {/* Appointment Details */}
         <div className="bg-gray-100 p-4 rounded-lg mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-2">
             Appointment Details:
@@ -94,8 +243,6 @@ function AppointmentSuccess() {
             <span className="font-semibold">₹{appointmentDetails.amount}</span>
           </p>
         </div>
-
-        {/* Go to Dashboard Button */}
         <button
           onClick={handleGoToDashboard}
           className="bg-teal-500 text-white py-2 px-6 rounded-lg hover:bg-teal-600 transition-all shadow-lg"

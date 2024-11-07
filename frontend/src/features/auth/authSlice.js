@@ -43,7 +43,7 @@ export const GoogleAuth = createAsyncThunk(
   async (userData, { rejectWithValue }) => {
     try {
       const response = await axios.post(`${API_URL}/googleAuth`, userData);
-      Cookies.set("token", response.data);
+      Cookies.set("token", response.data.response.token);
       Cookies.set("refreshToken", response.data.response.refreshToken);
       return response.data;
     } catch (error) {

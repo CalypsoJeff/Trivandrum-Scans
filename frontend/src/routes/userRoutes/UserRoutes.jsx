@@ -20,13 +20,16 @@ import AppointmentSuccess from "../../pages/user/AppointmentSuccess";
 import ProfileView from "../../pages/user/ProfileView";
 import BookingList from "../../pages/user/BookingList";
 import BookingDetails from "../../pages/user/BookingDetails";
+import Chat from "../../pages/user/Chat";
+import AppointmentFailure from "../../pages/user/AppointmentFailure";
+import ReportList from "../../pages/user/ReportList";
 
 const UserRoutes = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   useEffect(() => {
-    setupInterceptors(navigate, dispatch, logoutUser, toast); 
+    setupInterceptors(navigate, dispatch, logoutUser, toast);
   }, [navigate, dispatch]);
 
   return (
@@ -48,10 +51,14 @@ const UserRoutes = () => {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/appointment-success" element={<AppointmentSuccess />} />
-        <Route path="/booking" element = {<BookingList/>} />
-        <Route path="/booking/:id" element = {<BookingDetails/>} />
-        
+        <Route path="/appointment-failure" element={<AppointmentFailure />} />
 
+        <Route path="/reportList" element={<ReportList />} />
+
+        <Route path="/booking" element={<BookingList />} />
+        <Route path="/booking/:id" element={<BookingDetails />} />
+        <Route path="/chat" element={<Chat />} />
+        {/* <Route path="/chats" element={<CHatdemo/>} /> */}
       </Route>
     </Routes>
   );

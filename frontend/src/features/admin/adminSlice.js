@@ -11,6 +11,8 @@ export const loginAdmin = createAsyncThunk(
       const response = await adminService.adminLogin(adminData);
       Cookies.set("admintoken", response.response.token);
       Cookies.set("adminRefreshtoken", response.response.refreshToken);
+      console.log(response,'billlllllll');
+      
       return response;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -75,9 +77,7 @@ export const deleteDepartment = createAsyncThunk(
   "admin/deleteDepartment",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.delete(
-        `/delete-department/${id}`
-      );
+      const response = await axiosInstance.delete(`/delete-department/${id}`);
       // return response.data;
       return { id, ...response.data };
     } catch (error) {
@@ -90,10 +90,7 @@ export const addCategory = createAsyncThunk(
   "admin/addCategory",
   async (categoryData, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(
-        "/add-category",
-        categoryData
-      );
+      const response = await axiosInstance.post("/add-category", categoryData);
       console.log(response.data, "gayathriiiiiiiiiiiiiiiiii");
 
       return response.data;
@@ -107,10 +104,7 @@ export const editCategory = createAsyncThunk(
   async (categoryData, { rejectWithValue }) => {
     try {
       const { id, ...data } = categoryData;
-      const response = await axiosInstance.put(
-        `/edit-category/${id}`,
-        data
-      );
+      const response = await axiosInstance.put(`/edit-category/${id}`, data);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -121,9 +115,7 @@ export const deleteCategory = createAsyncThunk(
   "admin/deleteCategory",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.delete(
-        `/delete-category/${id}`
-      );
+      const response = await axiosInstance.delete(`/delete-category/${id}`);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -134,7 +126,7 @@ export const addService = createAsyncThunk(
   "admin/addService",
   async (serviceData, { rejectWithValue }) => {
     try {
-      const response = await adminService.addService(serviceData)
+      const response = await adminService.addService(serviceData);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -154,7 +146,6 @@ export const updateService = createAsyncThunk(
   }
 );
 
-
 export const clearAdmin = createAsyncThunk(
   "admin/clearAdmin",
   async (_, { dispatch }) => {
@@ -166,15 +157,16 @@ export const clearAdmin = createAsyncThunk(
 const adminSlice = createSlice({
   name: "admin",
   initialState: {
-    admin: [],
+    admin: null,
     status: "idle",
     error: null,
-    categories: [], // Stores the list of categories
-    categoriesStatus: "idle", // Tracks the status of category operations
-    categoriesError: null, // Stores category-related errors
+    categories: [], 
+    categoriesStatus: "idle", 
+    categoriesError: null,
     departments: [],
-    departmentsStatus: "idle", // Track department actions
+    departmentsStatus: "idle",
     departmentsError: null,
+    chatRequestCount: 0,
   },
   reducers: {
     logoutAdmin(state) {
@@ -182,6 +174,9 @@ const adminSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
+    setChatRequestCount(state, action) {
+      state.chatRequestCount = action.payload;
+    }, 
   },
   extraReducers: (builder) => {
     builder
@@ -191,7 +186,9 @@ const adminSlice = createSlice({
       })
       .addCase(loginAdmin.fulfilled, (state, action) => {
         state.loading = false;
-        state.admin = action.payload;
+        state.admin = action.payload.response.admin;
+        console.log(action.payload.response.admin,'nokiyaeeeeeeeeeeee');
+        
       })
       .addCase(loginAdmin.rejected, (state, action) => {
         state.loading = false;
@@ -264,7 +261,6 @@ const adminSlice = createSlice({
       })
       .addCase(deleteDepartment.fulfilled, (state, action) => {
         state.departmentsStatus = "succeeded";
-        // Filter out the deleted department from the state
         state.departments = state.departments.filter(
           (department) => department._id !== action.payload.id
         );
@@ -275,6 +271,7 @@ const adminSlice = createSlice({
       });
   },
 });
-export const { logoutAdmin } = adminSlice.actions;
+export const { logoutAdmin,setChatRequestCount } = adminSlice.actions;
+export const selectAdmin = (state) => state.admin.admin;
 
 export default adminSlice.reducer;

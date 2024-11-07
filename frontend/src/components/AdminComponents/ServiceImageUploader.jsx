@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
-import React, { useState } from 'react';
-import Cropper from 'cropperjs';
-import 'cropperjs/dist/cropper.min.css'; // Include the cropper.css
+import React, { useState } from "react";
+import Cropper from "cropperjs";
+import "cropperjs/dist/cropper.min.css"; // Include the cropper.css
 
 const ServiceImageUploader = ({ setImageFile }) => {
   const [cropperInstance, setCropperInstance] = useState(null);
@@ -9,20 +9,15 @@ const ServiceImageUploader = ({ setImageFile }) => {
 
   const handleFileChange = (event) => {
     const file = event?.target?.files[0];
-    console.log(file,"thussssssssssssssssssss");
-    
     if (file) {
-      const imageElement = document.getElementById('image-preview');
+      const imageElement = document.getElementById("image-preview");
       const reader = new FileReader();
 
       reader.onload = (e) => {
         imageElement.src = e?.target?.result;
-
-        // Initialize the cropper when the image is loaded
         if (cropperInstance) {
           cropperInstance.destroy();
         }
-
         const cropper = new Cropper(imageElement, {
           aspectRatio: 1, // Define the crop ratio (optional)
           viewMode: 2,
@@ -39,15 +34,14 @@ const ServiceImageUploader = ({ setImageFile }) => {
     if (cropperInstance) {
       const canvas = cropperInstance.getCroppedCanvas();
       canvas.toBlob((blob) => {
-        const croppedFile = new File([blob], 'cropped-image.jpg', {
-          type: 'image/jpeg',
+        const croppedFile = new File([blob], "cropped-image.jpg", {
+          type: "image/jpeg",
         });
         setCroppedImage(croppedFile); // Correctly set the cropped image
-        setImageFile(croppedFile);    // Pass it back to parent via prop
+        setImageFile(croppedFile); // Pass it back to parent via prop
       });
     }
   };
-  
 
   return (
     <div className="w-full p-6 bg-white rounded-lg shadow-md">
@@ -90,8 +84,8 @@ const ServiceImageUploader = ({ setImageFile }) => {
           disabled={!croppedImage}
           className={`${
             croppedImage
-              ? 'bg-blue-600 hover:bg-blue-700'
-              : 'bg-blue-300 cursor-not-allowed'
+              ? "bg-blue-600 hover:bg-blue-700"
+              : "bg-blue-300 cursor-not-allowed"
           } text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200`}
         >
           Image Ready

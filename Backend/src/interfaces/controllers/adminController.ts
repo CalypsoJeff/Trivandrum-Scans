@@ -5,6 +5,8 @@ import {
   departmentCount,
   userCount,
 } from "../../infrastructure/repositories/mongoAdminRepository";
+import ChatModel from "../../infrastructure/database/dbModel/chatModel";
+import Message from "../../infrastructure/database/dbModel/messageModel";
 
 export default {
   adminLogin: async (req: Request, res: Response) => {
@@ -47,7 +49,6 @@ export default {
         Number(page),
         Number(limit)
       );
-      // console.log(categories);
       res.status(200).json(categories);
     } catch (error: unknown) {
       console.error("Error fetching categories:", error);
@@ -396,7 +397,7 @@ export default {
   getBookingDetails: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const bookingDetails = await adminInteractor.fetchBookingDetails(id); // Await this promise
+      const bookingDetails = await adminInteractor.fetchBookingDetails(id);
 
       if (!bookingDetails) {
         return res.status(404).json({ message: "Booking not found" });
@@ -408,4 +409,190 @@ export default {
       res.status(500).json({ message: "Failed to fetch details" });
     }
   },
+  // Fetch active chats for an admin
+  getActiveChats: async (req: Request, res: Response) => {
+    try {
+      const { adminId } = req.params;
+      console.log(adminId, 'adminId for active chats');
+
+      const activeChats = await ChatModel.find({
+        users: adminId,
+        is_accepted: 'accepted'
+      })
+        .populate('users', 'name')   // Populate to get names of users in the chat
+        .populate('latestMessage');   // Populate latest message details
+
+      console.log(activeChats, 'activeChats for admin');
+
+      res.status(200).json(activeChats);
+    } catch (error) {
+      console.error('Error fetching active chats for admin:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  },
+
+  // Fetch messages in a specific chat for an admin
+  getMessages: async (req: Request, res: Response) => {
+    const { chatId } = req.params;
+    console.log(chatId, 'chatId for messages');
+
+    try {
+      const messages = await Message.find({ chat: chatId })
+        .populate('sender', 'name')
+        .sort({ createdAt: 1 });  // Sort messages by creation time
+
+      res.json(messages);
+    } catch (error) {
+      console.error('Error fetching messages for chat:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  },
+  sendMessage: async (req: Request, res: Response) => {
+    try {
+      const { chatId } = req.params;
+      const { content } = req.body;
+      const adminId = '66ee588d1e1448fbea1f40bb';
+
+      const message = await Message.create({
+        chat: chatId,
+        sender: adminId,
+        senderModel: "Admin",
+        content,
+      });
+
+      res.status(200).json({ message });
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).json({ message: "Server error during message sending" });
+    }
+  },
+
+  getChats: async (req: Request, res: Response) => {
+    try {
+      const chats = await ChatModel.find({})
+        .populate({ path: "users", select: "name" })
+        .populate({
+          path: "latestMessage",
+          select: "content createdAt",
+        })
+        .sort({ "latestMessage.createdAt": -1 })
+        .exec();
+
+      res.status(200).json({ chats });
+    } catch (error) {
+      console.error("Error fetching chats:", error);
+      res.status(500).json({ message: "Server error during chat retrieval" });
+    }
+  },
+  getChatLists: async (req: Request, res: Response) => {
+    try {
+      const chats = await ChatModel.find()
+        .populate('users', 'name')
+        .populate('latestMessage', 'content createdAt')
+        .sort({ 'latestMessage.createdAt': -1 });
+
+      res.status(200).json(chats);
+    } catch (error) {
+      console.error("Error fetching chat list:", error);
+      res.status(500).json({ message: "Server error fetching chat list" });
+    }
+  },
+  updateBooking: async (req: Request, res: Response) => {
+    try {
+      const { bookingId, serviceId } = req.params;
+      const { completed } = req.body;
+      const updatedBooking = await adminInteractor.updateServiceBooking(bookingId, serviceId, completed);
+      if (!updatedBooking) {
+        return res.status(404).json({ message: "Booking or service not found" });
+      }
+      res.json({ message: "Service completion status updated", booking: updatedBooking });
+    } catch (error) {
+      console.error("Error updating Bookings:", error);
+      res.status(500).json({ message: "Server error updating Bookings" });
+    }
+  },
+
+  serviceCompleted: async (req: Request, res: Response) => {
+    try {
+      const bookings = await adminInteractor.CompletedBooking();
+      res.status(200).json({ bookings });
+    } catch (error) {
+      console.error("Error in serviceCompleted:", error);
+      res.status(500).json({ message: "Failed to fetch completed bookings." });
+    }
+  },
+
+  uploadReport: async (req: Request, res: Response) => {
+    try {
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      const { bookingId } = req.body;
+  
+      // Validate booking ID
+      if (!bookingId) {
+        return res.status(400).json({ message: "Booking ID is required" });
+      }
+  
+      // Validate files
+      if (!files || !files.report || files.report.length === 0) {
+        return res.status(400).json({ message: "No report files uploaded" });
+      }
+  
+      // Pass all files to the interactor
+      const result = await adminInteractor.addReportData({ bookingId, reportFiles: files.report });
+      res.status(200).json({ message: "Report uploaded successfully", result });
+    } catch (error) {
+      console.error("Error uploading report:", error);
+      res.status(500).json({ message: "Failed to upload report" });
+    }
+  },
+  
+  reportList: async (req: Request, res: Response) => {
+    try {
+      const reports = await adminInteractor.reportList();
+      res.status(200).json({ reports });
+    } catch (error) {
+      console.error("Error fetching report list:", error);
+      res.status(500).json({ message: "Failed to fetch report list" });
+    }
+  },
+  updateReport: async (req: Request, res: Response) => {
+    try {
+      const { editReportId } = req.params;
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      const { bookingId } = req.body;
+  
+      if (!bookingId) {
+        return res.status(400).json({ message: "Booking ID is required" });
+      }
+      if (!files || !files.report || files.report.length === 0) {
+        return res.status(400).json({ message: "No report file uploaded" });
+      }
+  
+      // Send the array of files to the interactor for uploading and saving
+      const result = await adminInteractor.editReportData({ editReportId, bookingId, reportFiles: files.report });
+      res.status(200).json({ message: "Report updated successfully", result });
+    } catch (error) {
+      console.error("Error updating report:", error);
+      res.status(500).json({ message: "Failed to update report" });
+    }
+  },
+  publishReport:async (req: Request, res: Response) => {
+    try {
+      const { reportId } = req.params;
+      const publishedReport = await adminInteractor.publishReport(reportId);
+      if (publishedReport) {
+        res.status(200).json({ message: "Report published successfully", publishedReport });
+      } else {
+        res.status(404).json({ message: "Report not found" });
+      }
+    } catch (error) {
+      console.error("Error publishing report:", error);
+      res.status(500).json({ message: "Failed to publish report" });
+    }
+  }
+  
+
+
+
+
 };

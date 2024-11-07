@@ -1,28 +1,33 @@
 import React, { useEffect, useState } from "react";
 import Header from "../../components/UserComponents/Header";
-import { Link, useNavigate } from "react-router-dom"; // Import Link and useNavigate
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import axiosInstanceUser from "../../services/axiosInstanceUser";
-import { useSelector, useDispatch } from "react-redux"; // Import useDispatch
+import { useSelector, useDispatch } from "react-redux";
 import { selectUser } from "../../features/auth/authSlice";
-import { addToCart } from "../../features/cart/cartSlice"; // Ensure this action is defined
+import { addToCart } from "../../features/cart/cartSlice";
+import SearchSortFilter from "../../components/UserComponents/SearchSortFilter";
 
 function Services() {
   const [services, setServices] = useState([]);
+  const [filteredServices, setFilteredServices] = useState([]);
+  const [categories, setCategories] = useState([]); // New state for categories
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1); // Store the total number of pages
-  const [limit] = useState(10); // You can make limit configurable if needed
+  const [totalPages, setTotalPages] = useState(1);
+  const [limit] = useState(10);
   const user = useSelector(selectUser);
-  const userId = user?.id; // Ensure userId is set safely
-  const dispatch = useDispatch(); // Initialize dispatch
-  const navigate = useNavigate(); // Initialize navigate
+  const userId = user?.id;
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const fetchServices = async (page = 1) => {
     try {
       const response = await axiosInstanceUser.get("/serviceList", {
-        params: { page, limit }, // Pass page and limit as query params
+        params: { page, limit },
       });
       setServices(response.data.services);
-      setTotalPages(response.data.totalPages); // Set total pages from response
+      setFilteredServices(response.data.services);
+      setTotalPages(response.data.totalPages);
     } catch (error) {
       if (error.response && error.response.data.message === "User is blocked") {
         toast.error("Your account has been blocked. Please contact support.");
@@ -31,6 +36,18 @@ function Services() {
       }
     }
   };
+
+  // Fetch categories
+  const fetchCategories = async () => {
+    try {
+      const response = await axiosInstanceUser.get("/categoryList");
+      setCategories(response.data.categories);
+      // eslint-disable-next-line no-unused-vars
+    } catch (error) {
+      toast.error("Failed to fetch categories");
+    }
+  };
+
   const handleAddToCart = async (service) => {
     if (!userId) {
       toast.error("You must be logged in to add items to the cart.");
@@ -43,19 +60,50 @@ function Services() {
     try {
       await dispatch(addToCart(cartData));
       toast.success("Service added to cart!");
-      navigate("/cart"); // Redirect to the cart page after adding to cart
+      navigate("/cart");
     } catch (error) {
       toast.error("Failed to add service to cart");
       console.error("Failed to add service to cart:", error);
     }
   };
+
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
     fetchServices(newPage);
   };
+
   useEffect(() => {
     fetchServices(currentPage);
+    fetchCategories(); // Call fetchCategories to load categories
   }, [currentPage]);
+
+  // Handle search functionality
+  const handleSearch = (searchText) => {
+    const filtered = services.filter((service) =>
+      service.name.toLowerCase().includes(searchText.toLowerCase())
+    );
+    setFilteredServices(filtered);
+  };
+
+  // Handle sort functionality
+  const handleSort = (sortValue) => {
+    let sortedServices = [...filteredServices];
+    if (sortValue === "price") {
+      sortedServices.sort((a, b) => a.price - b.price);
+    } else if (sortValue === "alphabetical") {
+      sortedServices.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    setFilteredServices(sortedServices);
+  };
+
+  // Handle filter functionality
+  const handleFilter = (filterValue) => {
+    const filtered = services.filter((service) =>
+      filterValue ? service.category?.name === filterValue : true
+    );
+    setFilteredServices(filtered);
+  };
+
   return (
     <div>
       <Header />
@@ -63,10 +111,26 @@ function Services() {
         <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
           Our Services
         </h1>
+
+        {/* Integrate SearchSortFilter Component */}
+        <SearchSortFilter
+          onSearch={handleSearch}
+          onSort={handleSort}
+          onFilter={handleFilter}
+          filters={categories.map((cat) => ({
+            label: cat.name,
+            value: cat.name,
+          }))}
+          sorts={[
+            { label: "Price", value: "price" },
+            { label: "Alphabetical", value: "alphabetical" },
+          ]}
+        />
+
         {/* Services Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {services.length > 0 ? (
-            services.map((service) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
+          {filteredServices.length > 0 ? (
+            filteredServices.map((service) => (
               <div
                 key={service._id}
                 className="bg-white shadow-lg rounded-lg p-6 flex flex-col justify-between"
@@ -81,7 +145,7 @@ function Services() {
                 {/* Service Details */}
                 <div className="flex-grow">
                   <Link
-                    to={`/service/${service._id}`} // Link to service detail page with service ID
+                    to={`/service/${service._id}`}
                     className="text-xl font-bold text-gray-700 hover:underline block mb-2"
                   >
                     {service.name}
@@ -98,7 +162,7 @@ function Services() {
                 <div className="mt-4">
                   <button
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg mb-2"
-                    onClick={() => handleAddToCart(service)} // Pass the current service
+                    onClick={() => handleAddToCart(service)}
                   >
                     Book Now
                   </button>
@@ -109,6 +173,7 @@ function Services() {
             <p className="text-center text-gray-500">No services available</p>
           )}
         </div>
+
         {/* Pagination Controls */}
         <div className="flex justify-center mt-8 space-x-4">
           <button

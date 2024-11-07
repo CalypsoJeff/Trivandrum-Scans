@@ -2,10 +2,13 @@ import {
   addPatientInDb,
   addToCartInDb,
   BookingListInDb,
+  cancelBookingInDb,
   checkExistingUser,
+  clearCartInDb,
   createUser,
   editUserInDb,
   findBookingById,
+  getCategories,
   getFamilyDataInDb,
   getPaginatedServices,
   getService,
@@ -14,6 +17,7 @@ import {
   getUserByResetToken,
   googleUser,
   removeServiceFromCartinDb,
+  reportListInDb,
   saveBooking,
   saveOtp,
   updateUserPassword,
@@ -22,7 +26,6 @@ import {
   verifyUserDb,
 } from "../../../infrastructure/repositories/mongoUserRepository";
 import { sendOTPEmail, sendVerifyMail } from "../../../utils/emailUtils";
-import { log } from "console";
 import { generateOTP } from "../../../utils/otpUtils";
 import { IUser } from "../../entities/types/userType";
 import { Encrypt } from "../../helper/hashPassword";
@@ -31,7 +34,7 @@ import {
   generateToken,
   validateResetToken,
 } from "../../helper/jwtHelper";
-import {} from "../../../infrastructure/repositories/mongoAdminRepository";
+import { } from "../../../infrastructure/repositories/mongoAdminRepository";
 import { IPatientInput } from "../../entities/types/patientType";
 import Stripe from "stripe";
 import mongoose from "mongoose";
@@ -48,7 +51,6 @@ function createError(message: string, status: number) {
 
 export default {
   registerUser: async (userData: IUser) => {
-    console.log("UserData usecase");
     try {
       if (!userData.email || !userData.name) {
         throw new Error("Email and name are required");
@@ -69,7 +71,6 @@ export default {
       const password = userData.password as string;
       const hashedPassword = await Encrypt.cryptPassword(password);
       const savedUser = await createUser(userData, hashedPassword);
-      console.log(savedUser);
       return savedUser;
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -83,7 +84,6 @@ export default {
   },
 
   verifyUser: async (data: { otp: string; email: string }) => {
-    console.log("body ", data);
     if (!data.otp) {
       throw new Error("no otp");
     }
@@ -174,7 +174,7 @@ export default {
           throw new Error("User not found");
         }
         if (savedUser.is_blocked) {
-          throw createError("Account is Blocked", 403); //Forbidden
+          throw createError("Account is Blocked", 403);
         }
         const role = "user";
         const { token, refreshToken } = generateToken(
@@ -182,7 +182,7 @@ export default {
           savedUser.email,
           role
         );
-        log(token, refreshToken, "refresh");
+        console.log(token, refreshToken, "refresh");
         return { user, token, refreshToken };
       }
     } catch (error: unknown) {
@@ -310,6 +310,15 @@ export default {
       throw new Error("Error fetching patient");
     }
   },
+
+  getCategories: async () => {
+    try {
+      return await getCategories();
+    } catch (error) {
+      console.error("Error in userInteractor getCategories:", error);
+      throw error; // Re-throw to be handled by the controller
+    }
+  },
   // bookAppointment: async (
   //   user_id: string,
   //   service_id: [],
@@ -398,4 +407,36 @@ export default {
       throw new Error("Failed to fetch booking details");
     }
   },
+  clearCart: async (userId: string) => {
+    try {
+      // Clear the cart in the database
+      await clearCartInDb(userId);
+    } catch (error) {
+      console.error("Error in clearing cart from interactor:", error);
+      throw error;
+    }
+  },
+  cancelBooking: async (id: string) => {
+    try {
+      const cancelledBooking = await cancelBookingInDb(id);
+      if (!cancelledBooking) {
+        throw new Error("Booking not found or already cancelled");
+      }
+      return cancelledBooking;
+    } catch (error) {
+      console.error("Error in cancelBooking:", error);
+      throw error;
+    }
+  },
+  reportList: async (id:string) => {
+    try {
+      const reportList = await reportListInDb(id);
+      return reportList;
+    } catch (error) {
+      console.error("Error in reportList interactor:", error);
+      throw new Error("Failed to fetch report list");
+    }
+  }
+
+
 };

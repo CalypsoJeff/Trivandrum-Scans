@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { IUser } from "../../domain/entities/types/userType";
 import { Encrypt } from "../../domain/helper/hashPassword";
 import { Category } from "../database/dbModel/categoryModel";
@@ -5,12 +6,12 @@ import OTPModel from "../database/dbModel/otpModel";
 import cartModel from "../database/dbModel/cartModel";
 import { Service } from "../database/dbModel/serviceModel";
 import { Users } from "../database/dbModel/userModel";
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import Cart from "../database/dbModel/cartModel";
 import BookingModel from "../database/dbModel/bookingModel";
 import Patient from "../database/dbModel/patientModel";
 import { IPatientInput } from "../../domain/entities/types/patientType";
-// import BookingModel from "../database/dbModel/bookingModel";
+import reportModel from "../database/dbModel/reportModel";
 interface Service {
   serviceId: string;
   personIds: string[];
@@ -31,7 +32,6 @@ export const createUser = async (
   userData: IUser,
   hashedPassword: string
 ): Promise<IUser> => {
-  console.log(`Saved User: ${userData}`);
   if (!userData.email || !userData.name) {
     throw new Error("Email and Name are required");
   }
@@ -195,9 +195,9 @@ export const getPaginatedServices = async (page: number, limit: number) => {
           _id: service._id.toString(), // Convert service _id to string
           category: category
             ? {
-                _id: category._id.toString(), // Convert category _id to string
-                name: category.name,
-              }
+              _id: category._id.toString(), // Convert category _id to string
+              name: category.name,
+            }
             : { _id: "Unknown", name: "Unknown" }, // Default if category not found
         };
       })
@@ -273,9 +273,6 @@ export const userUpdatedCartInDb = async (id: string) => {
     const patientIds = service.personIds
       ?.filter((person) => person.model === "Patient") // Filter only patients
       .map((person) => person._id.toString()); // Map to get the _id
-
-    console.log(patientIds, `Patient IDs for service ${service.serviceId._id}`);
-
     // Fetch patient data based on the IDs
     if (patientIds && patientIds.length > 0) {
       const patients = await Patient.find({ _id: { $in: patientIds } })
@@ -286,10 +283,6 @@ export const userUpdatedCartInDb = async (id: string) => {
       patientData = [...patientData, ...patients];
     }
   }
-
-  console.log(patientData, "Fetched Patient Data");
-
-  // Return both cartData and patientData to the frontend
   return {
     cart: cartData,
     patients: patientData,
@@ -386,7 +379,7 @@ export const addPatientInDb = async (
   try {
     const newPatient = new Patient({ ...patientData, userId });
     const addedPatient = await newPatient.save();
-    return addedPatient; // Return the saved patient data
+    return addedPatient;
   } catch (error) {
     console.error("Error saving patient to database:", error);
     throw new Error("Error saving patient to database");
@@ -405,7 +398,7 @@ export const saveBooking = async ({
   stripe_session_id,
   user_id,
   booking_date,
-  services, // Pass the entire services array
+  services,
   total_amount,
   booking_time_slot,
 }: {
@@ -415,20 +408,19 @@ export const saveBooking = async ({
   services: {
     service_id: mongoose.Types.ObjectId;
     persons: mongoose.Types.ObjectId[];
-  }[]; // Ensure services is an array of objects with service_id and persons
+  }[];
   total_amount: number;
   booking_time_slot: string;
 }): Promise<unknown> => {
   try {
-    // Create a new instance of BookingModel and assign values
     const newBooking = new BookingModel({
       stripe_session_id,
-      user_id: new mongoose.Types.ObjectId(user_id), // Convert user_id to ObjectId
+      user_id: new mongoose.Types.ObjectId(user_id),
       booking_date,
-      services, // Directly use the processed services array
+      services,
       total_amount,
-      status: "confirmed", // Assuming status is confirmed after successful payment
-      booking_time_slot, // Include the booking time slot
+      status: "confirmed",
+      booking_time_slot,
     });
 
     // Save the booking to the database
@@ -448,9 +440,8 @@ export const BookingListInDb = async (id: string) => {
     const bookings = await BookingModel.find({ user_id: id })
       .populate("user_id") // Populate user details
       .populate("services.service_id") // Populate service details
-      .populate("services.persons"); // Populate patient details
-
-    // Return the bookings
+      .populate("services.persons") // Populate patient details
+      .sort({ createdAt: -1 });
     return bookings;
   } catch (error) {
     console.error("Error fetching bookings from DB:", error);
@@ -459,15 +450,103 @@ export const BookingListInDb = async (id: string) => {
 };
 export const findBookingById = async (id: string) => {
   try {
+    // Step 1: Find booking and apply lean() to avoid Mongoose document structure
     const booking = await BookingModel.findById(id)
       .populate("user_id", "name email") // Populate user details
       .populate("services.service_id", "name price") // Populate service details
-      .populate("services.persons", "name relationToUser age gender") // Populate person details
-      .lean(); // Convert mongoose object to plain JS object
+      .lean();
 
+    if (!booking) throw new Error("Booking not found");
+
+    // Step 2: Collect person IDs from each service
+    const personIds: Types.ObjectId[] = booking.services.flatMap((service: any) => service.persons);
+
+    // Step 3: Populate persons with User and Patient models separately
+    const [users, patients] = await Promise.all([
+      Users.find({ _id: { $in: personIds } }, "name age gender").lean(),
+      Patient.find({ _id: { $in: personIds } }, "name relationToUser age gender").lean(),
+    ]);
+
+    // Step 4: Map the user and patient data by their IDs
+    const userMap = new Map(users.map((user) => [user._id.toString(), { ...user, relationToUser: "Self" }]));
+    const patientMap = new Map(patients.map((patient) => [patient._id.toString(), patient]));
+
+    // Step 5: Replace ObjectIds in `persons` with populated data
+    booking.services.forEach((service: any) => {
+      service.persons = service.persons.map((personId: Types.ObjectId) => {
+        const idStr = personId.toString();
+        return userMap.get(idStr) || patientMap.get(idStr) || { _id: personId, name: "Unknown" };
+      });
+    });
     return booking;
   } catch (error) {
-    console.error("Error in mongoUserRepository:", error);
+    console.error("Error in findBookingById:", error);
     throw new Error("Error fetching booking from DB");
   }
 };
+
+export const clearCartInDb = async (userId: string) => {
+  try {
+    // Find the cart by userId and remove all services (clear the cart)
+    await Cart.updateOne(
+      { userId: userId }, // Find the cart by the user ID
+      { $set: { services: [] } } // Set the services array to an empty array (clearing the cart)
+    );
+  } catch (error) {
+    console.error("Error clearing cart:", error);
+    throw new Error("Error clearing the cart");
+  }
+};
+export const cancelBookingInDb = async (id: string) => {
+  try {
+    const cancelledBooking = await BookingModel.findByIdAndUpdate(
+      id,
+      { status: "cancelled" },
+      { new: true }
+    );
+    return cancelledBooking;
+  } catch (error) {
+    console.error("Error cancelling booking:", error);
+    throw new Error("Failed to cancel booking");
+  }
+};
+
+export const getCategories = async () => {
+  try {
+    const categoryList = await Category.find();
+    return categoryList;
+  } catch (error) {
+    console.error("Error fetching categories from database:", error);
+    throw error; // Re-throw to be handled by calling functions
+  }
+};
+
+export const reportListInDb = async (bookingId: string): Promise<any[]> => {
+  try {
+    // Convert bookingId to ObjectId if it's a valid string
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      throw new Error("Invalid booking ID format");
+    }
+    const objectId = new mongoose.Types.ObjectId(bookingId);
+
+    // Query reports for specific bookingId and published status
+    const reports = await reportModel.find({
+      bookingId: objectId, 
+      published: true,
+    });
+
+    if (reports.length === 0) {
+      console.log(`No reports found for booking ID ${bookingId} with published status.`);
+    } else {
+      console.log("Reports fetched:", reports);
+    }
+
+    return reports;
+  } catch (error) {
+    console.error("Error fetching reports from database:", error);
+    throw new Error("Failed to retrieve reports");
+  }
+};
+
+
+

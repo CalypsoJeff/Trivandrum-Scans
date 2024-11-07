@@ -4,8 +4,6 @@ import Cookies from "js-cookie";
 
 const AdminPrivateRoutes = () => {
   const adminToken = Cookies.get("admintoken");
-  console.log("Admin Token:", adminToken);
-
   return adminToken ? <Outlet /> : <Navigate to={"/admin/login"} />;
 };
 

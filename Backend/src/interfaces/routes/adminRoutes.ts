@@ -13,6 +13,21 @@ const upload = multer({
 
 export { upload };
 
+const uploadReport = multer({
+  storage: storage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === "application/pdf") {
+      cb(null, true); // Accept file
+    } else {
+      cb(new Error("Only PDF files are allowed"));
+    }
+  },
+}).fields([{ name: "report", maxCount: 5 }]); // Adjust maxCount as needed
+
+export { uploadReport };
+
+
 adminRouter.post("/login", adminController.adminLogin);
 
 adminRouter.get("/userlist", protectAdmin, adminController.getUsers);
@@ -74,6 +89,17 @@ adminRouter.patch(
   protectAdmin,
   adminController.toggleService
 );
-adminRouter.get('/bookings',protectAdmin,adminController.bookingList)
-adminRouter.get('/bookings/:id',protectAdmin,adminController.getBookingDetails)
+adminRouter.get('/bookings', protectAdmin, adminController.bookingList);
+adminRouter.get('/bookings/:id', protectAdmin, adminController.getBookingDetails);
+adminRouter.get(`/service-Completed`, protectAdmin, adminController.serviceCompleted);
+adminRouter.patch(`/bookings/:bookingId/service/:serviceId`, adminController.updateBooking);
+adminRouter.post("/reports/upload", uploadReport, protectAdmin, adminController.uploadReport);
+adminRouter.get('/reports',protectAdmin,adminController.reportList)
+adminRouter.put(`/reports/:editReportId`,uploadReport,protectAdmin,adminController.updateReport)
+adminRouter.patch(`/reports/:reportId/publish`,protectAdmin,adminController.publishReport)
+adminRouter.post('/chat/:chatId/send', protectAdmin, adminController.sendMessage);
+adminRouter.get('/chats', adminController.getChats);
+adminRouter.get('/chatList', adminController.getChatLists);
+// adminRouter.get('/active-chats/:vendorId',adminController.getActiveChats)
+// adminRouter.get('/messages/:chatId',adminController.getMessages)
 export default adminRouter;

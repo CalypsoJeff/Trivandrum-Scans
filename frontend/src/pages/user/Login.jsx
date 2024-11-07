@@ -1,5 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { auth, provider, signInWithPopup } from "../../firebase/firebase"; // Firebase imports
 import { Formik, Field, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -15,6 +15,7 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user && !user.is_blocked) {
@@ -24,27 +25,29 @@ const Login = () => {
 
   // Handle form login submit
   const handleSubmit = async (values, { setSubmitting }) => {
+    setLoading(true);
     try {
       await dispatch(loginUser(values)).unwrap();
-      toast.success("User Login Successful");
+      toast.success("User Login Successful", {
+        style: { backgroundColor: "#4CAF50", color: "#fff" },
+      });
       navigate("/home");
+    // eslint-disable-next-line no-unused-vars
     } catch (error) {
-      const errorMessage =
-        error.error?.message ||
-        error.message ||
-        error.data?.message ||
-        "Login failed";
-      toast.error(errorMessage);
+      toast.error("Login failed. Please check your credentials.");
     } finally {
       setSubmitting(false);
+      setLoading(false);
     }
   };
+
   const handleForgetPassword = () => {
     navigate("/forget-password");
   };
 
   // Google login using Firebase
   const handleGoogleLogin = async () => {
+    setLoading(true);
     try {
       const result = await signInWithPopup(auth, provider);
       const credential = GoogleAuthProvider.credentialFromResult(result);
@@ -60,7 +63,9 @@ const Login = () => {
       dispatch(GoogleAuth(userData))
         .then((response) => {
           if (response.meta.requestStatus === "fulfilled") {
-            toast.success("User signed up with Google");
+            toast.success("User signed up with Google", {
+              style: { backgroundColor: "#4CAF50", color: "#fff" },
+            });
             navigate("/home");
           } else {
             toast.error("Google signup failed");
@@ -73,6 +78,8 @@ const Login = () => {
     } catch (error) {
       console.error("Error during Google login:", error);
       toast.error("Google login failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -90,8 +97,8 @@ const Login = () => {
       className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
       style={{
         backgroundImage: `url(${BackgroundImgLogin})`,
-        backgroundSize: "cover", // Ensure the image covers the section
-        backgroundPosition: "center", // Center the image
+        backgroundSize: "cover",
+        backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
       }}
     >
@@ -100,7 +107,6 @@ const Login = () => {
         <div className="w-1/2 pr-8 text-white select-none">
           <div className="flex items-center mb-6">
             <img src={logo} alt="Logo" className="h-32 w-auto" />
-
             <span className="ml-2 font-bold text-2xl">Trivandrum Scans</span>
           </div>
           <div className="space-y-6">
@@ -196,8 +202,9 @@ const Login = () => {
                 <button
                   type="submit"
                   className="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500"
+                  disabled={loading}
                 >
-                  Sign In
+                  {loading ? "Loading..." : "Sign In"}
                 </button>
               </Form>
             )}
@@ -211,6 +218,7 @@ const Login = () => {
                 type="button"
                 onClick={handleGoogleLogin}
                 className="text-white w-full bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center justify-center mb-2"
+                disabled={loading}
               >
                 <svg
                   className="mr-2 -ml-1 w-4 h-4"
@@ -227,7 +235,7 @@ const Login = () => {
                     d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"
                   ></path>
                 </svg>
-                Login with Google
+                {loading ? "Loading..." : "Login with Google"}
               </button>
             </div>
           </div>

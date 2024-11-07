@@ -1,11 +1,18 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FaUser, FaBook, FaLock, FaHeart, FaWallet } from "react-icons/fa";
+import {
+  FaUser,
+  FaBook,
+  FaLock,
+  FaComments,
+  FaHome,
+} from "react-icons/fa"; // Added Home icon
 import { useSelector } from "react-redux";
 import { selectUser } from "../../features/auth/authSlice";
 
 function ProfileSidebar() {
   const user = useSelector(selectUser);
+
   return (
     <div className="w-64 bg-white shadow-xl fixed top-0 left-0 h-full select-none">
       <div className="p-6 border-b">
@@ -26,6 +33,17 @@ function ProfileSidebar() {
       {/* Sidebar Links */}
       <nav className="mt-4">
         <ul className="space-y-2">
+          {/* Home Link */}
+          <li>
+            <Link
+              to="/home"
+              className="flex items-center p-4 hover:bg-gray-200 transition"
+            >
+              <FaHome className="mr-3 text-[#a39f74]" />
+              <span className="text-gray-800">Home</span>
+            </Link>
+          </li>
+
           <li>
             <Link
               to="/profile"
@@ -37,7 +55,7 @@ function ProfileSidebar() {
           </li>
           <li>
             <Link
-              to="/booking" // Updated to correct path
+              to="/booking"
               className="flex items-center p-4 hover:bg-gray-200 transition"
             >
               <FaBook className="mr-3 text-[#a39f74]" />
@@ -55,20 +73,11 @@ function ProfileSidebar() {
           </li>
           <li>
             <Link
-              to="/favorites"
+              to="/chat"
               className="flex items-center p-4 hover:bg-gray-200 transition"
             >
-              <FaHeart className="mr-3 text-[#a39f74]" />
-              <span className="text-gray-800">Favorites</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              to="/wallet"
-              className="flex items-center p-4 hover:bg-gray-200 transition"
-            >
-              <FaWallet className="mr-3 text-[#a39f74]" />
-              <span className="text-gray-800">Wallet</span>
+              <FaComments className="mr-3 text-[#a39f74]" />
+              <span className="text-gray-800">Chat</span>
             </Link>
           </li>
         </ul>
