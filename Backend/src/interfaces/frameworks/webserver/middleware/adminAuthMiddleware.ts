@@ -17,11 +17,11 @@ export const protectAdmin = async (
 ) => {
   let token = req.header("Authorization");
 
-  log(token, "tokenadmin");
+  // log(token, "tokenadmin");
 
   if (token && token.startsWith("Bearer ")) {
     token = token.split(" ")[1];
-    log(token, "tokenWithoutBearer");
+    // log(token, "tokenWithoutBearer");
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {

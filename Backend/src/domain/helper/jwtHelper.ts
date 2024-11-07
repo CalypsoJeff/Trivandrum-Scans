@@ -1,65 +1,19 @@
-// import jwt from 'jsonwebtoken';
-// const SECRET_KEY = "YOUR_SECRET_KEY"; 
-// const REFRESH_SECRET_KEY = "REFRESH_SECRET_KEY"
-
-// export const generateToken = (user: string, email: string) => {
-//     const token = jwt.sign({user: user, email: email }, SECRET_KEY, {
-//         expiresIn: '2h'
-//     });
-//     const refreshToken = jwt.sign({user: user, email: email }, REFRESH_SECRET_KEY, {
-//         expiresIn: '5d',
-//     });
-//     return {token,refreshToken}
-// };
-// export const generateAdminToken = (admin : string, email: string , role:string) => {
-//     const token = jwt.sign({admin :admin , email: email ,role:role }, SECRET_KEY, {
-//         expiresIn: '2h'
-//     });
-//     const refreshToken = jwt.sign({admin :admin, email: email ,role: role }, REFRESH_SECRET_KEY, {
-//         expiresIn: '5d',
-//     });
-//     return {token,refreshToken}
-// };
-
-
-// export const generateResetToken = (email: string) => {
-//     const resetToken = jwt.sign({ email }, SECRET_KEY, { expiresIn: '15m' });
-//     return resetToken;
-// };
-
-
-// // Token Validation Function
-// export const validateResetToken = (token: string, email: string): boolean => {
-//     try {
-//         const decoded = jwt.verify(token, SECRET_KEY) as { email: string };
-//         if (decoded.email !== email) {
-//             throw new Error("Token validation failed: Email mismatch");
-//         }
-
-//         return true; 
-//     } catch (error) {
-//         console.error("Token validation error:", error);
-//         return false;
-//     }
-// };
-
-
 import jwt from 'jsonwebtoken';
-const SECRET_KEY = "YOUR_SECRET_KEY"; 
+const SECRET_KEY = "YOUR_SECRET_KEY";
 const REFRESH_SECRET_KEY = "REFRESH_SECRET_KEY"
 
-export const generateToken = (user: string, email: string, role:string) => {
-    const token = jwt.sign({user: user, email: email, role:role }, SECRET_KEY, {
+export const generateToken = (user: string, email: string, role: string) => {
+    const token = jwt.sign({ user: user, email: email, role: role }, SECRET_KEY, {
         expiresIn: '2h'
     });
 
-    const refreshToken = jwt.sign({user: user, email: email, role:role }, REFRESH_SECRET_KEY, {
+    const refreshToken = jwt.sign({ user: user, email: email, role: role }, REFRESH_SECRET_KEY, {
         expiresIn: '5d',
     });
 
-    
 
-    return {token,refreshToken}
+
+    return { token, refreshToken }
 };
 
 export const generateResetToken = (email: string) => {

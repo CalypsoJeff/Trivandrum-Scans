@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const Footer = () => {
   return (
@@ -10,9 +10,7 @@ const Footer = () => {
         </div>
 
         {/* Right Section */}
-        <div className="text-sm text-center md:text-right">
-          MADE BY JEFF
-        </div>
+        <div className="text-sm text-center md:text-right">MADE BY JEFF</div>
       </div>
     </footer>
   );

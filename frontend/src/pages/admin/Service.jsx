@@ -7,13 +7,15 @@ import { useDispatch } from "react-redux";
 import Cropper from "cropperjs";
 import "cropperjs/dist/cropper.min.css"; // Include the cropper.css
 import { addService, updateService } from "../../features/admin/adminslice";
+import SearchSortFilter from "../../components/AdminComponents/SearchSortFilter";
 
 Modal.setAppElement("#root");
 
 function Service() {
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [categories, setCategories] = useState([]); // State to store categories
-  const [services, setServices] = useState([]); // State to store services
+  const [categories, setCategories] = useState([]); 
+  const [services, setServices] = useState([]);
+  const [filteredServices, setFilteredServices] = useState([]); // For filtered data
   const [serviceData, setServiceData] = useState({
     name: "",
     price: "",
@@ -28,13 +30,27 @@ function Service() {
   const [imageFile, setImageFile] = useState(null);
   const dispatch = useDispatch();
 
-  const fetchCategory = async (page = 1, limit = 10) => {
+  const fetchCategory = async () => {
     try {
-      const response = await axiosInstance.get(`/categoryList?page=${page}&limit=${limit}`);
+      const response = await axiosInstance.get(`/categoryList?page=1&limit=10`);
       setCategories(response.data.categories);
     } catch (error) {
       console.error("Error fetching categories:", error);
       toast.error("Error fetching categories");
+    }
+  };
+
+  const fetchService = async () => {
+    try {
+      const response = await axiosInstance.get(`/serviceList?page=1&limit=10`);
+      const { services } = response.data;
+      if (Array.isArray(services)) {
+        setServices(services);
+        setFilteredServices(services); // Initialize filteredServices with fetched data
+      }
+    } catch (error) {
+      console.error("Error fetching services:", error);
+      toast.error("Error fetching services");
     }
   };
 
@@ -43,17 +59,33 @@ function Service() {
     fetchService();
   }, []);
 
-  const fetchService = async (page = 1, limit = 10) => {
-    try {
-      const response = await axiosInstance.get(`/serviceList?page=${page}&limit=${limit}`);
-      const { services } = response.data;
-      if (Array.isArray(services)) {
-        setServices(services);
-      }
-    } catch (error) {
-      console.error("Error fetching services:", error);
-      toast.error("Error fetching services");
+  // Search, Sort, and Filter Handlers
+  const handleSearch = (searchText) => {
+    const filtered = services.filter(
+      (service) =>
+        service.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        service.category?.name.toLowerCase().includes(searchText.toLowerCase())
+    );
+    setFilteredServices(filtered);
+  };
+
+  const handleSort = (sortValue) => {
+    let sortedServices = [...filteredServices];
+    if (sortValue === "price") {
+      sortedServices.sort((a, b) => a.price - b.price);
+    } else if (sortValue === "name") {
+      sortedServices.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortValue === "category") {
+      sortedServices.sort((a, b) => a.category?.name.localeCompare(b.category?.name));
     }
+    setFilteredServices(sortedServices);
+  };
+
+  const handleFilter = (filterValue) => {
+    const filtered = services.filter(
+      (service) => filterValue ? service.category?._id === filterValue : true
+    );
+    setFilteredServices(filtered);
   };
 
   const openModal = () => {
@@ -161,7 +193,9 @@ function Service() {
   const toggleListing = async (id, isAvailable) => {
     try {
       await axiosInstance.patch(`/service/${id}/toggleListing`);
-      toast.success(`Service ${isAvailable ? "unlisted" : "listed"} successfully`);
+      toast.success(
+        `Service ${isAvailable ? "unlisted" : "listed"} successfully`
+      );
       fetchService();
     } catch (error) {
       console.error("Error toggling listing status:", error);
@@ -174,10 +208,29 @@ function Service() {
       <Sidebar />
       <div className="flex-1 p-8">
         <div className="bg-white shadow-md rounded-lg p-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">Service List</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">
+            Service List
+          </h1>
           <p className="text-gray-600 mb-6">
-            Below is a list of services available. You can add new services or manage existing ones.
+            Below is a list of services available. You can add new services or
+            manage existing ones.
           </p>
+
+          {/* Integrate SearchSortFilter Component */}
+          <SearchSortFilter
+            onSearch={handleSearch}
+            onSort={handleSort}
+            onFilter={handleFilter}
+            filters={categories.map(category => ({
+              label: category.name,
+              value: category._id
+            }))}
+            sorts={[
+              { label: "Name", value: "name" },
+              { label: "Price", value: "price" },
+              { label: "Category", value: "category" }
+            ]}
+          />
 
           {/* Add Service Button */}
           <div className="flex justify-end mb-4">
@@ -201,14 +254,21 @@ function Service() {
                 </tr>
               </thead>
               <tbody className="text-gray-600">
-                {services.length > 0 ? (
-                  services.map((service) => (
-                    <tr key={service._id} className="border-b hover:bg-gray-100">
+                {filteredServices.length > 0 ? (
+                  filteredServices.map((service) => (
+                    <tr
+                      key={service._id}
+                      className="border-b hover:bg-gray-100"
+                    >
                       <td className="py-3 px-6 text-left">{service.name}</td>
                       <td className="py-3 px-6 text-left">
-                        {service.category ? `${service.category.name} (ID: ${service.category._id})` : "Category not available"}
+                        {service.category
+                          ? `${service.category.name} (ID: ${service.category._id})`
+                          : "Category not available"}
                       </td>
-                      <td className="py-3 px-6 text-center">Rs {service.price}</td>
+                      <td className="py-3 px-6 text-center">
+                        Rs {service.price}
+                      </td>
                       <td className="py-3 px-6 text-center">
                         <button
                           onClick={() => openEditModal(service)}
@@ -217,7 +277,9 @@ function Service() {
                           Edit
                         </button>
                         <button
-                          onClick={() => toggleListing(service._id, service.isAvailable)}
+                          onClick={() =>
+                            toggleListing(service._id, service.isAvailable)
+                          }
                           className="text-yellow-500 hover:underline"
                         >
                           {service.isAvailable ? "Unlist" : "List"}
@@ -227,7 +289,10 @@ function Service() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" className="py-3 px-6 text-center text-gray-500">
+                    <td
+                      colSpan="4"
+                      className="py-3 px-6 text-center text-gray-500"
+                    >
                       No services available
                     </td>
                   </tr>
@@ -246,12 +311,16 @@ function Service() {
           overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
         >
           <div className="max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">{editingServiceId ? "Edit Service" : "Add New Service"}</h2>
+            <h2 className="text-2xl font-bold mb-4">
+              {editingServiceId ? "Edit Service" : "Add New Service"}
+            </h2>
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-2 gap-4">
                 {/* Service Name */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Service Name</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Service Name
+                  </label>
                   <input
                     type="text"
                     name="name"
@@ -264,7 +333,9 @@ function Service() {
 
                 {/* Price */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Price</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Price
+                  </label>
                   <input
                     type="number"
                     name="price"
@@ -277,7 +348,9 @@ function Service() {
 
                 {/* Category */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Category</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Category
+                  </label>
                   <select
                     name="category"
                     value={serviceData.category}
@@ -298,7 +371,9 @@ function Service() {
 
                 {/* Expected Result Duration */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Expected Result Duration</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Expected Result Duration
+                  </label>
                   <input
                     type="text"
                     name="expectedResultDuration"
@@ -311,7 +386,9 @@ function Service() {
 
                 {/* Pre-test Preparations */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Pre-test Preparations (Optional)</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Pre-test Preparations (Optional)
+                  </label>
                   <textarea
                     name="preTestPreparations"
                     value={serviceData.preTestPreparations}
@@ -322,7 +399,9 @@ function Service() {
 
                 {/* Description */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Description (Optional)</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Description (Optional)
+                  </label>
                   <textarea
                     name="description"
                     value={serviceData.description}
@@ -333,23 +412,35 @@ function Service() {
 
                 {/* Image Uploader */}
                 <div className="mb-4 col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Upload Service Image</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Upload Service Image
+                  </label>
                   <input
                     type="file"
                     onChange={handleFileChange}
                     accept="image/*"
                     className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
-                  <p className="mt-1 text-sm text-gray-500">Supported formats: JPG, PNG, WEBP</p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Supported formats: JPG, PNG, WEBP
+                  </p>
                 </div>
 
                 {/* Image Preview */}
                 <div className="mb-4 col-span-2 grid grid-cols-2 gap-4">
                   <div className="border border-gray-300 rounded-lg bg-gray-100 h-64 flex items-center justify-center">
-                    <img id="image-preview" alt="Preview" className="object-cover w-full h-full" />
+                    <img
+                      id="image-preview"
+                      alt="Preview"
+                      className="object-cover w-full h-full"
+                    />
                   </div>
                   <div className="border border-gray-300 rounded-lg bg-gray-100 h-64 flex items-center justify-center">
-                    <img id="cropped-image-preview" alt="Cropped Preview" className="object-cover w-full h-full" />
+                    <img
+                      id="cropped-image-preview"
+                      alt="Cropped Preview"
+                      className="object-cover w-full h-full"
+                    />
                   </div>
                 </div>
 
@@ -385,7 +476,10 @@ function Service() {
                 >
                   Cancel
                 </button>
-                <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded-lg">
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white py-2 px-4 rounded-lg"
+                >
                   {editingServiceId ? "Update Service" : "Add Service"}
                 </button>
               </div>

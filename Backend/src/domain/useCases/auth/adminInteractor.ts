@@ -1,24 +1,32 @@
 import { Department } from "../../../infrastructure/database/dbModel/departmentModel";
 import {
   addCategoryToDB,
+  bookingDetailsInDb,
   deleteCategoryFromDB,
   findAdmin,
   getAllDepartments,
   getAllUsers,
+  getBookingsFromDb,
+  getCompletedBookings,
   getPaginatedCategories,
   getPaginatedServicesWithCategoryDetails,
   getPaginatedUsers,
+  getReportsFromDb,
+  publishReportInDb,
+  saveReport,
   saveService,
   toggleServiceByID,
   updateCategoryInDB,
   updateDepartment,
+  updateReportInDb,
   updateService,
+  updateServiceBookinginDb,
   updateUserStatus,
 } from "../../../infrastructure/repositories/mongoAdminRepository";
 import { uploadToS3 } from "../../../utils/s3Uploader";
 import // ICategory,
-// PaginatedCategories,
-"../../entities/types/categoryType";
+  // PaginatedCategories,
+  "../../entities/types/categoryType";
 import {
   ICategory,
   PaginatedCategories,
@@ -48,7 +56,6 @@ export default {
       }
       const role = "admin";
       const tokenData = await generateToken(admin.id, cred.email, role);
-      console.log("JESLINNNNNN", tokenData, admin);
       return {
         admin,
         token: tokenData.token,
@@ -257,7 +264,6 @@ export default {
     }
   },
 
-
   addServiceData: async (
     serviceData: IServiceRequest
   ): Promise<IServiceResponse> => {
@@ -312,10 +318,7 @@ export default {
       };
 
       // Call repository to update service by ID
-      const updatedService = await updateService(
-        id,
-        completeServiceData
-      );
+      const updatedService = await updateService(id, completeServiceData);
 
       return updatedService;
     } catch (error) {
@@ -326,21 +329,123 @@ export default {
 
   getServiceList: async (page: number, limit: number) => {
     try {
-      const services = await getPaginatedServicesWithCategoryDetails(page, limit); // Update to use the new function
+      const services = await getPaginatedServicesWithCategoryDetails(
+        page,
+        limit
+      ); // Update to use the new function
       return services;
     } catch (error) {
       console.error("Error fetching service list:", error);
       throw new Error("Error fetching service list");
     }
   },
-  toggleService:async(id:string)=>{
+  toggleService: async (id: string) => {
     try {
-      const toggleStatus = await toggleServiceByID(id)
+      const toggleStatus = await toggleServiceByID(id);
       return toggleStatus;
     } catch (error) {
       console.error("Error toggling service :", error);
       throw new Error("Error toggling service");
     }
-  }
-  
+  },
+  getBookingList: async (page = 1, limit = 10) => {
+    // eslint-disable-next-line no-useless-catch
+    try {
+      return await getBookingsFromDb(page, limit);
+    } catch (error) {
+      throw error;
+    }
+  },
+  fetchBookingDetails: async (id: string) => {
+    try {
+      const bookingDetails = await bookingDetailsInDb(id);
+      return bookingDetails;
+    } catch (error) {
+      console.error("Error fetching booking details:", error);
+      throw error;
+    }
+  },
+  updateServiceBooking: async (bookingId: string, serviceId: string, completed: boolean) => {
+    try {
+      const updatedBooking = await updateServiceBookinginDb(bookingId, serviceId, completed);
+      return updatedBooking;
+    } catch (error) {
+      console.error("Error in service booking update:", error);
+      throw new Error("Error in service booking update");
+    }
+  },
+  CompletedBooking: async () => {
+    try {
+      const completedBookings = await getCompletedBookings();
+      return completedBookings;
+    } catch (error) {
+      console.error("Error in CompletedBooking:", error);
+      throw error;
+    }
+  },
+  addReportData: async ({ bookingId, reportFiles }: { bookingId: string; reportFiles: Express.Multer.File[] }) => {
+    const reports = [];
+
+    // Upload each file to S3 and collect its metadata
+    for (const reportFile of reportFiles) {
+      const reportData = await uploadToS3(reportFile);
+      const reportUrl = reportData.Location;
+
+      reports.push({
+        filename: reportFile.originalname,
+        mimetype: reportFile.mimetype,
+        size: reportFile.size,
+        url: reportUrl,
+      });
+    }
+
+    // Prepare the complete report data for the database
+    const completeReportData = {
+      bookingId,
+      reports,
+    };
+
+    // Save report data to the database
+    const savedReport = await saveReport(completeReportData);
+    return savedReport;
+  },
+
+  reportList: async () => {
+    return await getReportsFromDb();
+  },
+  editReportData: async ({ editReportId, bookingId, reportFiles }: { editReportId: string; bookingId: string; reportFiles: Express.Multer.File[] }) => {
+    const reports = [];
+
+    // Upload each file and store details in the reports array
+    for (const reportFile of reportFiles) {
+      const reportData = await uploadToS3(reportFile);
+      const reportUrl = reportData.Location;
+
+      reports.push({
+        filename: reportFile.originalname,
+        mimetype: reportFile.mimetype,
+        size: reportFile.size,
+        url: reportUrl,
+      });
+    }
+
+    // Prepare the updated data object
+    const updatedReportData = {
+      bookingId,
+      reports,
+    };
+
+    // Update the report in the database
+    const updatedReport = await updateReportInDb(editReportId, updatedReportData);
+    return updatedReport;
+  },
+  publishReport: async (reportId: string) => {
+    return await publishReportInDb(reportId);
+  },
+
+
+
+
+
+
 };

@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // import { ICategory, PaginatedCategories } from "../../domain/entities/types/categoryType";
+import  { Types } from "mongoose";
 import {
   ICategory,
   PaginatedCategories,
@@ -6,10 +8,16 @@ import {
 import { IServiceResponse } from "../../domain/entities/types/serviceType";
 import { IUser, PaginatedUsers } from "../../domain/entities/types/userType";
 import { Admin } from "../database/dbModel/adminModel";
+import BookingModel from "../database/dbModel/bookingModel";
 import { Category } from "../database/dbModel/categoryModel";
 import { Department, IDepartment } from "../database/dbModel/departmentModel";
 import { Service } from "../database/dbModel/serviceModel";
 import { Users } from "../database/dbModel/userModel";
+import Patient from "../database/dbModel/patientModel";
+import reportModel from "../database/dbModel/reportModel";
+import { sendReportPublishedEmail } from "../../utils/emailUtils";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { IBooking } from "../../domain/entities/types/bookingType";
 // import mongoose from "mongoose";
 
 // Find Admin by Email
@@ -251,10 +259,6 @@ export const updateService = async (
   try {
     // Find the service by its ID
     const existingService = await Service.findById(id);
-    console.log(
-      "reached hereeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-    );
-
     if (!existingService) {
       throw new Error("Service not found");
     }
@@ -300,9 +304,9 @@ export const getPaginatedServicesWithCategoryDetails = async (
           _id: service._id.toString(), // Convert service _id to string
           category: category
             ? {
-                _id: category._id.toString(), // Convert category _id to string
-                name: category.name,
-              }
+              _id: category._id.toString(), // Convert category _id to string
+              name: category.name,
+            }
             : { _id: "Unknown", name: "Unknown" }, // Default if category not found
         };
       })
@@ -331,3 +335,195 @@ export const toggleServiceByID = async (id: string) => {
     throw new Error("Error toggling services");
   }
 };
+export const getBookingsFromDb = async (page = 1, limit = 10) => {
+  try {
+    const skip = (page - 1) * limit;
+
+    const bookings = await BookingModel.find()
+      .populate("user_id")
+      .populate("services.service_id")
+      .sort({ booking_date: -1 })  // Sort by booking_date in descending order
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .exec();
+
+    const totalBookings = await BookingModel.countDocuments();
+
+    return { bookings, totalBookings };
+  } catch (error) {
+    console.error("Error fetching bookings from DB:", error);
+    throw error;
+  }
+};
+
+export const bookingDetailsInDb = async (id: string) => {
+  try {
+    // Fetch the booking without populating `persons`
+    const booking = await BookingModel.findById(id)
+      .populate("user_id") // Populating user details
+      .populate("services.service_id") // Populating service details
+      .lean(); // Convert to plain JS object
+
+    if (!booking) throw new Error("Booking not found");
+
+    // Collect person IDs from each service
+    const personIds: Types.ObjectId[] = booking.services.flatMap(
+      (service: any) => service.persons
+    );
+
+    // Fetch both users and patients by IDs
+    const [users, patients] = await Promise.all([
+      Users.find({ _id: { $in: personIds } }, "name age gender contactNumber").lean(),
+      Patient.find(
+        { _id: { $in: personIds } },
+        "name relationToUser age gender contactNumber"
+      ).lean(),
+    ]);
+
+    // Map users and patients by their IDs
+    const userMap = new Map(
+      users.map((user) => [user._id.toString(), { ...user, relationToUser: "Self" }])
+    );
+    const patientMap = new Map(
+      patients.map((patient) => [patient._id.toString(), patient])
+    );
+
+    // Replace ObjectIds in `persons` with populated data
+    booking.services.forEach((service: any) => {
+      service.persons = service.persons.map((personId: Types.ObjectId) => {
+        const idStr = personId.toString();
+        // Return populated User or Patient, or fallback with basic details
+        return (
+          userMap.get(idStr) ||
+          patientMap.get(idStr) || {
+            _id: personId,
+            name: "Unknown",
+            relationToUser: "N/A",
+          }
+        );
+      });
+    });
+
+    return booking;
+  } catch (error) {
+    console.error("Error fetching booking from DB:", error);
+    throw new Error("Error fetching booking from DB");
+  }
+};
+export const updateServiceBookinginDb = async (bookingId: string, serviceId: string, completed: boolean) => {
+  try {
+    const updatedBooking = await BookingModel.findOneAndUpdate(
+      { _id: bookingId, "services.service_id": serviceId },  // Match booking and service
+      { $set: { "services.$.completed": completed } },       // Use positional operator to set completion
+      { new: true }                                          // Return updated document
+    );
+
+    return updatedBooking;
+  } catch (error) {
+    console.error("Database error updating service completion status:", error);
+    throw new Error("Database error updating service completion status");
+  }
+};
+
+
+export const getCompletedBookings = async () => {
+  try {
+    const bookings = await BookingModel.find({
+      // Find bookings where every service has `completed: true`
+      services: { $all: [{ $elemMatch: { completed: true } }] }
+    })
+      .populate('user_id')
+      .populate('services.service_id')
+      .populate('services.persons');
+
+    console.log(bookings, "Filtered bookings with all services completed");
+
+    return bookings;
+  } catch (error) {
+    console.error("Error fetching completed bookings:", error);
+    throw error; // Propagate error for handling
+  }
+};
+
+export const saveReport = async (reportData: any) => {
+  const report = new reportModel(reportData);
+  return await report.save();
+};
+export const getReportsFromDb = async () => {
+  try {
+    // Fetch reports and populate booking and user data
+    const reportList = await reportModel
+      .find()
+      .populate("bookingId", "user_id booking_date")
+      .populate({
+        path: "bookingId",
+        populate: { path: "user_id", select: "name" },
+      });
+    return reportList;
+  } catch (error) {
+    console.error("Error fetching reports from database:", error);
+    throw error;
+  }
+};
+export const updateReportInDb = async (reportId: string, updatedData: any) => {
+  return await reportModel.findByIdAndUpdate(reportId, updatedData, { new: true });
+};
+// export const publishReportInDb = async (reportId:string) => {
+//   return await reportModel.findByIdAndUpdate(
+//     reportId,
+//     { published: true },
+//     { new: true } 
+//   );
+// };
+
+// Function to publish report in the database and send an email notification
+export const publishReportInDb = async (reportId: string): Promise<any> => {
+  try {
+    const updatedReport = await reportModel.findByIdAndUpdate(
+      reportId,
+      { published: true },
+      { new: true }
+    ).populate({
+      path: "bookingId",
+      populate: { path: "user_id", select: "email name" },
+    });
+
+    if (!updatedReport) {
+      throw new Error("Report not found");
+    }
+
+    const booking = updatedReport.bookingId;
+    if (!booking || !("user_id" in booking)) {
+      throw new Error("Booking data not populated correctly.");
+    }
+
+    const user = booking.user_id as { email: string; name: string };
+    if (!user.email || !user.name) {
+      throw new Error("User data is not populated correctly.");
+    }
+
+    // Retrieve the first PDF URL from the reports array
+    const reportFile = updatedReport.reports?.[0]; // You could also select a specific report if needed
+    if (!reportFile || !reportFile.url) {
+      throw new Error("No report file URL found in the reports array.");
+    }
+
+    const downloadLink = reportFile.url;
+
+    // Send email with the actual S3 download link
+    await sendReportPublishedEmail(user.email, reportId, user.name, downloadLink);
+    console.log("Report published and email with download link sent to user.");
+
+    return updatedReport;
+  } catch (error) {
+    console.error("Failed to publish report and send email:", error);
+    throw error;
+  }
+};
+
+
+
+
+
+
