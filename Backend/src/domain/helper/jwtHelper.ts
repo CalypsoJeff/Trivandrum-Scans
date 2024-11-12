@@ -6,13 +6,9 @@ export const generateToken = (user: string, email: string, role: string) => {
     const token = jwt.sign({ user: user, email: email, role: role }, SECRET_KEY, {
         expiresIn: '2h'
     });
-
     const refreshToken = jwt.sign({ user: user, email: email, role: role }, REFRESH_SECRET_KEY, {
         expiresIn: '5d',
     });
-
-
-
     return { token, refreshToken }
 };
 
@@ -20,8 +16,6 @@ export const generateResetToken = (email: string) => {
     const resetToken = jwt.sign({ email }, SECRET_KEY, { expiresIn: '15m' }); // Short expiration
     return resetToken;
 };
-
-
 // Token Validation Function
 export const validateResetToken = (token: string, email: string): boolean => {
     try {

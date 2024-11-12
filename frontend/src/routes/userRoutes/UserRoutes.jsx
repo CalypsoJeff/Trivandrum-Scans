@@ -41,7 +41,6 @@ const UserRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/forget-password" element={<ForgetPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-
       {/* Private (Protected) Routes */}
       <Route element={<UserPrivateRoutes />}>
         <Route path="/home" element={<Home />} />
@@ -52,13 +51,10 @@ const UserRoutes = () => {
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/appointment-success" element={<AppointmentSuccess />} />
         <Route path="/appointment-failure" element={<AppointmentFailure />} />
-
         <Route path="/reportList" element={<ReportList />} />
-
         <Route path="/booking" element={<BookingList />} />
         <Route path="/booking/:id" element={<BookingDetails />} />
         <Route path="/chat" element={<Chat />} />
-        {/* <Route path="/chats" element={<CHatdemo/>} /> */}
       </Route>
     </Routes>
   );

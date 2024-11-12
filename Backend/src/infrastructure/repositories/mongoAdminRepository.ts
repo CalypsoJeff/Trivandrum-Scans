@@ -18,6 +18,7 @@ import reportModel from "../database/dbModel/reportModel";
 import { sendReportPublishedEmail } from "../../utils/emailUtils";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { IBooking } from "../../domain/entities/types/bookingType";
+import Message from "../database/dbModel/messageModel";
 // import mongoose from "mongoose";
 
 // Find Admin by Email
@@ -522,6 +523,17 @@ export const publishReportInDb = async (reportId: string): Promise<any> => {
   }
 };
 
+export const successMessagetoUser= async(chatId:string,content:string)=>{
+  console.log(chatId,content,'yesssssssss');
+  
+  return await Message.create({
+    chat: chatId,
+    sender: '66ee588d1e1448fbea1f40bb', 
+    senderModel: "Admin",
+    content,
+    createdAt: new Date(),
+  });
+}
 
 
 

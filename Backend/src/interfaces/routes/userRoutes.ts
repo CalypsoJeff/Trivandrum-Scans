@@ -9,6 +9,7 @@ userRouter.post("/login", userController.userLogin);
 userRouter.post("/googleAuth", userController.googleAuth);
 userRouter.post("/forget-password", userController.forgotPassword);
 userRouter.post("/reset-password", userController.reset_PasswordFn);
+userRouter.post('/refreshtoken',userController.refreshToken)
 // Protected routes
 userRouter.get("/getStatus",protectUser,userController.getStatus);
 userRouter.get("/UserData/:id", protectUser, userController.getUserData);

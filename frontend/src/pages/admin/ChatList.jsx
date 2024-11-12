@@ -1,27 +1,26 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../../services/axiosInstance";
 import Sidebar from "../../components/AdminComponents/Sidebar";
+import { fetchChatList } from "../../services/adminService";
 
 export default function ChatList() {
   const [chats, setChats] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchChatList();
+    const getChatList = async () => {
+      try {
+        const chatData = await fetchChatList();
+        setChats(chatData);
+      } catch (error) {
+        console.error("Failed to load chat list:", error);
+      }
+    };
+    getChatList();
   }, []);
 
-  const fetchChatList = async () => {
-    try {
-      const response = await axiosInstance.get("/chatList");
-      setChats(response.data);
-    } catch (error) {
-      console.error("Error fetching chat list:", error);
-    }
-  };
-
-  const handleChatClick = (chatId) => {
-    navigate(`/admin/chat/${chatId}`);
+  const handleChatClick = (chatId, userName) => {
+    navigate(`/admin/chat/${chatId}`, { state: { userName } });
   };
 
   return (
@@ -41,7 +40,9 @@ export default function ChatList() {
                 return (
                   <div
                     key={chat._id}
-                    onClick={() => handleChatClick(chat._id)}
+                    onClick={() =>
+                      handleChatClick(chat._id, user?.name || "User")
+                    }
                     className="flex items-center space-x-4 p-4 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition duration-200 shadow-sm hover:shadow-md"
                   >
                     <img

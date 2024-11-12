@@ -1,9 +1,16 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { FaEdit, FaCloudUploadAlt } from "react-icons/fa";
 import Modal from "react-modal";
 import { toast } from "sonner";
-import axiosInstance from "../../services/axiosInstance";
 import Sidebar from "../../components/AdminComponents/Sidebar";
+import {
+  editReport,
+  fetchCompletedBookings,
+  fetchReportList,
+  publishReport,
+  uploadReport,
+} from "../../services/adminService";
 
 Modal.setAppElement("#root");
 
@@ -17,27 +24,37 @@ function ReportList() {
   const [selectedBooking, setSelectedBooking] = useState("");
   const [, setSelectedUserName] = useState("");
 
-  const fetchCompletedBookings = async () => {
+  // Function to reset modal state
+  const resetModalState = () => {
+    setShowModal(false);
+    setIsEdit(false);
+    setEditReportId(null);
+    setUploadedFiles([]);
+    setSelectedBooking("");
+    setSelectedUserName("");
+  };
+
+  const loadBookings = async () => {
     try {
-      const response = await axiosInstance.get("/service-Completed");
-      setBookings(response.data.bookings);
+      const bookingsData = await fetchCompletedBookings();
+      setBookings(bookingsData);
     } catch (error) {
-      console.error("Failed to fetch completed bookings:", error);
+      toast.error("Failed to fetch completed bookings");
     }
   };
 
-  const fetchReportList = async () => {
+  const loadReports = async () => {
     try {
-      const response = await axiosInstance.get("/reports");
-      setReports(response.data.reports);
+      const reportsData = await fetchReportList();
+      setReports(reportsData);
     } catch (error) {
-      console.error("Failed to fetch reports:", error);
+      toast.error("Failed to fetch reports");
     }
   };
 
   useEffect(() => {
-    fetchCompletedBookings();
-    fetchReportList();
+    loadBookings();
+    loadReports();
   }, []);
 
   const handleFileChange = (event) => {
@@ -82,22 +99,14 @@ function ReportList() {
 
     try {
       if (isEdit) {
-        await axiosInstance.put(`/reports/${editReportId}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        await editReport(editReportId, formData);
         toast.success("Report updated successfully!");
       } else {
-        await axiosInstance.post("/reports/upload", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        await uploadReport(formData);
         toast.success("Reports uploaded successfully!");
       }
-      setShowModal(false);
-      setUploadedFiles([]);
-      setSelectedBooking("");
-      setSelectedUserName("");
-      setIsEdit(false);
-      fetchReportList();
+      resetModalState();
+      loadReports();
     } catch (error) {
       toast.error("Failed to save report.");
       console.error("Error saving report:", error);
@@ -114,11 +123,9 @@ function ReportList() {
 
   const handlePublishClick = async (reportId) => {
     try {
-      await axiosInstance.patch(`/reports/${reportId}/publish`, {
-        published: true,
-      });
+      await publishReport(reportId);
       toast.success("Report published successfully!");
-      fetchReportList();
+      loadReports();
     } catch (error) {
       toast.error("Failed to publish report.");
       console.error("Error publishing report:", error);
@@ -144,7 +151,7 @@ function ReportList() {
         {/* Modal for Upload */}
         <Modal
           isOpen={showModal}
-          onRequestClose={() => setShowModal(false)}
+          onRequestClose={resetModalState}
           contentLabel={isEdit ? "Edit Report" : "Upload Report"}
           className="bg-white p-6 rounded-lg shadow-lg w-96 mx-auto mt-20"
           overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
@@ -178,7 +185,7 @@ function ReportList() {
 
           <div className="flex justify-end space-x-4">
             <button
-              onClick={() => setShowModal(false)}
+              onClick={resetModalState}
               className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg"
             >
               Cancel

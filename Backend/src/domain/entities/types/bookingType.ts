@@ -16,6 +16,7 @@ export interface IBooking extends Document {
   total_amount: number;
   status: string;
   stripe_session_id: string;
+  paymentIntentId?: string;
   createdAt: Date;
   updatedAt: Date;
 }

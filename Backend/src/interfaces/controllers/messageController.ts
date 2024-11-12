@@ -161,7 +161,6 @@ export default {
 
     getMessages: async (req: Request, res: Response) => {
         const { chatId } = req.params;
-
         try {
             const messages = await Message.find({ chat: chatId }).sort({ createdAt: 1 });
             res.status(200).json({ success: true, messages });

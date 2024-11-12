@@ -1,7 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { FaUsers } from 'react-icons/fa';
-import Sidebar from '../../components/AdminComponents/Sidebar';
-import axiosInstance from '../../services/axiosInstance';
+import React, { useEffect, useState } from "react";
+import { FaUsers } from "react-icons/fa";
+import Sidebar from "../../components/AdminComponents/Sidebar";
+import {
+  fetchCategoryCount,
+  fetchDepartmentCount,
+  fetchUserCount,
+} from "../../services/adminService";
 
 const Dashboard = () => {
   const [userCount, setUserCount] = useState(0);
@@ -9,44 +13,21 @@ const Dashboard = () => {
   const [categoryCount, setCatgeoryCount] = useState(0);
 
   useEffect(() => {
-    const fetchCounts = async () => {
+    const loadCounts = async () => {
       try {
-        const response = await axiosInstance.get('/count');
-        setUserCount(response.data);
+        const userCount = await fetchUserCount();
+        const departmentCount = await fetchDepartmentCount();
+        const categoryCount = await fetchCategoryCount();
+        setUserCount(userCount);
+        setDepartmentCount(departmentCount);
+        setCatgeoryCount(categoryCount);
       } catch (error) {
-        console.error('Error fetching user count:', error);
+        console.error("Error fetching counts:", error);
       }
     };
 
-    fetchCounts();
+    loadCounts();
   }, []);
-
-  useEffect(() => {
-    const fetchDepartmentCount = async () => {
-      try {
-        const response = await axiosInstance.get('/count-departments');
-        setDepartmentCount(response.data);
-      } catch (error) {
-        console.error('Error fetching department count:', error);
-      }
-    };
-
-    fetchDepartmentCount();
-  }, []);
-
-  useEffect(() => {
-    const fetchCategoryCount = async () => {
-      try {
-        const response = await axiosInstance.get('/count-categories');
-        setCatgeoryCount(response.data);
-      } catch (error) {
-        console.error('Error fetching categories count:', error);
-      }
-    };
-
-    fetchCategoryCount();
-  }, []);
-
   return (
     <div className="flex bg-gray-100 dark:bg-gray-900 min-h-screen">
       <Sidebar />
@@ -59,17 +40,25 @@ const Dashboard = () => {
           <div className="bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg p-6 flex items-center">
             <FaUsers className="w-12 h-12 text-blue-500 dark:text-blue-400" />
             <div className="ml-4">
-              <h2 className="text-lg font-semibold text-gray-600 dark:text-gray-200">Total Users</h2>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{userCount}</p>
+              <h2 className="text-lg font-semibold text-gray-600 dark:text-gray-200">
+                Total Users
+              </h2>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                {userCount}
+              </p>
             </div>
           </div>
-          
+
           {/* Total Departments */}
           <div className="bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg p-6 flex items-center">
             <FaUsers className="w-12 h-12 text-green-500 dark:text-green-400" />
             <div className="ml-4">
-              <h2 className="text-lg font-semibold text-gray-600 dark:text-gray-200">Total Departments</h2>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{departmentCount}</p>
+              <h2 className="text-lg font-semibold text-gray-600 dark:text-gray-200">
+                Total Departments
+              </h2>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                {departmentCount}
+              </p>
             </div>
           </div>
 
@@ -77,8 +66,12 @@ const Dashboard = () => {
           <div className="bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg p-6 flex items-center">
             <FaUsers className="w-12 h-12 text-red-500 dark:text-red-400" />
             <div className="ml-4">
-              <h2 className="text-lg font-semibold text-gray-600 dark:text-gray-200">Total Categories</h2>
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{categoryCount}</p>
+              <h2 className="text-lg font-semibold text-gray-600 dark:text-gray-200">
+                Total Categories
+              </h2>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                {categoryCount}
+              </p>
             </div>
           </div>
         </div>

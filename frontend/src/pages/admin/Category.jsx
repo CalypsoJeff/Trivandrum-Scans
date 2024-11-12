@@ -12,6 +12,7 @@ import {
 } from "../../features/admin/adminslice"; // Import actions
 import axiosInstance from "../../services/axiosInstance"; // Import axios for fetching departments
 import { toast, Toaster } from "sonner"; // Import Sonner for toasts
+import { fetchCategories, fetchDepartments } from "../../services/adminService";
 
 // Set the modal's root element
 Modal.setAppElement("#root");
@@ -50,37 +51,31 @@ function Category() {
   const closeDeleteModal = () => setDeleteModalIsOpen(false);
 
   // Fetch departments when the component mounts
-  const fetchDepartments = async (page = 1, limit = 10) => {
+  const loadDepartments = async () => {
     try {
-      const response = await axiosInstance.get(
-        `/departmentlist?page=${page}&limit=${limit}`
-      );
-      setDepartments(response.data);
+      const data = await fetchDepartments();
+      setDepartments(data);
     } catch (error) {
-      console.error("Error fetching departments:", error);
       toast.error("Error fetching departments");
     }
   };
 
   useEffect(() => {
-    fetchDepartments(); // Fetch departments on mount
+    loadDepartments();
   }, []);
 
   // Fetch categories
-  const fetchCategory = async (page = 1, limit = 10) => {
+  const loadCategories = async () => {
     try {
-      const response = await axiosInstance.get(
-        `/categoryList?page=${page}&limit=${limit}`
-      );
-      setCategories(response.data.categories);
+      const data = await fetchCategories();
+      setCategories(data);
     } catch (error) {
-      console.error("Error fetching categories:", error);
       toast.error("Error fetching categories");
     }
   };
 
   useEffect(() => {
-    fetchCategory();
+    loadCategories();
   }, []);
 
   // Handle adding a new category
@@ -90,7 +85,7 @@ function Category() {
       toast.success("Category added successfully");
       closeModal();
       resetForm();
-      fetchCategory(); // Refresh categories
+      loadCategories(); // Refresh categories
     } catch (error) {
       console.error("Error adding category:", error);
       toast.error("Failed to add category");
@@ -105,7 +100,7 @@ function Category() {
       ).unwrap();
       toast.success("Category updated successfully");
       closeEditModal();
-      fetchCategory(); // Refresh categories
+      loadCategories(); // Refresh categories
     } catch (error) {
       console.error("Error updating category:", error);
       toast.error("Failed to update category");
@@ -118,7 +113,7 @@ function Category() {
       await dispatch(deleteCategory(selectedCategory._id)).unwrap();
       toast.success("Category deleted successfully");
       closeDeleteModal();
-      fetchCategory(); // Refresh categories
+      loadCategories(); // Refresh categories
     } catch (error) {
       console.error("Error deleting category:", error);
       toast.error("Failed to delete category");

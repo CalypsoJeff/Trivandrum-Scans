@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import Sidebar from "../../components/AdminComponents/Sidebar";
 import axiosInstance from "../../services/axiosInstance";
 import SearchSortFilter from "../../components/AdminComponents/SearchSortFilter";
+import { fetchBookings } from "../../services/adminService";
 
 function Bookings() {
   const [bookings, setBookings] = useState([]);
@@ -14,12 +15,12 @@ function Bookings() {
   const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchBookings = async () => {
+  const loadBookings = async () => {
     try {
-      const response = await axiosInstance.get(`/bookings?page=${page}&limit=${limit}`);
-      setBookings(response.data.bookings);
-      setFilteredBookings(response.data.bookings);
-      setTotalPages(response.data.totalPages);
+      const data = await fetchBookings(page, limit);
+      setBookings(data.bookings);
+      setFilteredBookings(data.bookings);
+      setTotalPages(data.totalPages);
       setLoading(false);
     } catch (error) {
       setError("Failed to fetch bookings. Please try again.");
@@ -28,11 +29,16 @@ function Bookings() {
   };
 
   const handleSearch = (searchText) => {
-    const filtered = bookings.filter((booking) =>
-      booking.user_id?.name.toLowerCase().includes(searchText.toLowerCase()) ||
-      booking.services.some((service) =>
-        service.service_id?.name.toLowerCase().includes(searchText.toLowerCase())
-      )
+    const filtered = bookings.filter(
+      (booking) =>
+        booking.user_id?.name
+          .toLowerCase()
+          .includes(searchText.toLowerCase()) ||
+        booking.services.some((service) =>
+          service.service_id?.name
+            .toLowerCase()
+            .includes(searchText.toLowerCase())
+        )
     );
     setFilteredBookings(filtered);
   };
@@ -60,7 +66,7 @@ function Bookings() {
   };
 
   useEffect(() => {
-    fetchBookings();
+    loadBookings();
   }, [page]);
 
   if (loading) return <p>Loading booking history...</p>;
@@ -78,13 +84,13 @@ function Bookings() {
           filters={[
             { label: "Confirmed", value: "confirmed" },
             { label: "Cancelled", value: "cancelled" },
-            { label: "Pending", value: "pending" }
+            { label: "Pending", value: "pending" },
           ]}
           sorts={[
             { label: "Appointment Date", value: "booking_date" },
             { label: "Booking Date", value: "createdAt" },
             { label: "Amount", value: "amount" },
-            { label: "Status", value: "status" }
+            { label: "Status", value: "status" },
           ]}
         />
         {filteredBookings.length > 0 ? (
@@ -103,8 +109,13 @@ function Bookings() {
               </thead>
               <tbody className="text-gray-700 text-sm">
                 {filteredBookings.map((booking) => (
-                  <tr key={booking._id} className="border-b border-gray-200 hover:bg-gray-50">
-                    <td className="py-3 px-6 text-left">{booking.user_id?.name || "Unknown User"}</td>
+                  <tr
+                    key={booking._id}
+                    className="border-b border-gray-200 hover:bg-gray-50"
+                  >
+                    <td className="py-3 px-6 text-left">
+                      {booking.user_id?.name || "Unknown User"}
+                    </td>
                     <td className="py-3 px-6 text-left">
                       {booking.services.length > 0 ? (
                         booking.services.map((service) => (
@@ -138,10 +149,13 @@ function Bookings() {
                             : "border-gray-500"
                         } rounded-full`}
                       >
-                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                        {booking.status.charAt(0).toUpperCase() +
+                          booking.status.slice(1)}
                       </span>
                     </td>
-                    <td className="py-3 px-6 text-center">₹{booking.total_amount}</td>
+                    <td className="py-3 px-6 text-center">
+                      ₹{booking.total_amount}
+                    </td>
                     <td className="py-3 px-6 text-center">
                       <Link
                         to={`/admin/bookings/${booking._id}`}
@@ -163,9 +177,13 @@ function Bookings() {
               >
                 Previous
               </button>
-              <span className="text-gray-700 font-medium">Page {page} of {totalPages}</span>
+              <span className="text-gray-700 font-medium">
+                Page {page} of {totalPages}
+              </span>
               <button
-                onClick={() => setPage((prevPage) => Math.min(prevPage + 1, totalPages))}
+                onClick={() =>
+                  setPage((prevPage) => Math.min(prevPage + 1, totalPages))
+                }
                 disabled={page >= totalPages}
                 className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded"
               >

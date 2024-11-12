@@ -4,6 +4,10 @@ import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 import axiosInstance from "../../services/axiosInstance";
 import Sidebar from "../../components/AdminComponents/Sidebar";
+import {
+  fetchBookingDetail,
+  toggleServiceCompletionStatus,
+} from "../../services/adminService";
 
 function BookingDetail() {
   const { bookingId } = useParams();
@@ -11,26 +15,25 @@ function BookingDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchBookingDetail = async () => {
+  const fetchBookingData = async () => {
     try {
-      const response = await axiosInstance.get(`/bookings/${bookingId}`);
-      setBooking(response.data);
+      const data = await fetchBookingDetail(bookingId);
+      setBooking(data);
       setLoading(false);
     } catch (error) {
       setError("Failed to fetch booking details");
       setLoading(false);
     }
   };
-
-  // Update the completion status of a service
   const toggleServiceCompletion = async (serviceId, currentStatus) => {
     try {
       const updatedServiceStatus = !currentStatus;
-      await axiosInstance.patch(`/bookings/${bookingId}/service/${serviceId}`, {
-        completed: updatedServiceStatus,
-      });
+      await toggleServiceCompletionStatus(
+        bookingId,
+        serviceId,
+        updatedServiceStatus
+      );
 
-      // Update the booking state after toggling
       setBooking((prevBooking) => ({
         ...prevBooking,
         services: prevBooking.services.map((service) =>
@@ -40,8 +43,9 @@ function BookingDetail() {
         ),
       }));
 
-      // Show a toast notification on success
-      toast.success(`Service marked as ${updatedServiceStatus ? "completed" : "incomplete"}`);
+      toast.success(
+        `Service marked as ${updatedServiceStatus ? "completed" : "incomplete"}`
+      );
     } catch (error) {
       console.error("Failed to update service completion status:", error);
       toast.error("Failed to update the service status. Please try again.");
@@ -49,7 +53,7 @@ function BookingDetail() {
   };
 
   useEffect(() => {
-    fetchBookingDetail();
+    fetchBookingData();
   }, [bookingId]);
 
   if (loading) {
@@ -85,7 +89,8 @@ function BookingDetail() {
               <strong>Name:</strong> {booking.user_id?.name || "Unknown User"}
             </p>
             <p className="text-gray-600">
-              <strong>Email:</strong> {booking.user_id?.email || "Not Available"}
+              <strong>Email:</strong>{" "}
+              {booking.user_id?.email || "Not Available"}
             </p>
           </div>
 
@@ -131,7 +136,8 @@ function BookingDetail() {
                   className="bg-white p-6 rounded-lg shadow-md border border-gray-200"
                 >
                   <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                    Service {index + 1}: {service.service_id?.name || "Unknown Service"}
+                    Service {index + 1}:{" "}
+                    {service.service_id?.name || "Unknown Service"}
                   </h3>
                   <p className="text-gray-600 mb-4">
                     <strong>Price:</strong> ₹{service.service_id?.price} x{" "}
@@ -152,9 +158,11 @@ function BookingDetail() {
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-gray-500">No persons listed for this service.</p>
+                    <p className="text-gray-500">
+                      No persons listed for this service.
+                    </p>
                   )}
-                  
+
                   {/* Toggle Completion Status */}
                   <div className="mt-4 flex items-center">
                     <label className="text-gray-700 mr-2 font-semibold">
@@ -163,7 +171,12 @@ function BookingDetail() {
                     <input
                       type="checkbox"
                       checked={service.completed || false}
-                      onChange={() => toggleServiceCompletion(service.service_id?._id, service.completed)}
+                      onChange={() =>
+                        toggleServiceCompletion(
+                          service.service_id?._id,
+                          service.completed
+                        )
+                      }
                       className="w-5 h-5 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                     />
                   </div>
@@ -171,7 +184,9 @@ function BookingDetail() {
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 text-center mt-4">No services available.</p>
+            <p className="text-gray-500 text-center mt-4">
+              No services available.
+            </p>
           )}
         </div>
       </div>

@@ -28,9 +28,6 @@ function AdminRoutes() {
         <Route path ='/chat/:chatId' element={<AdminChat/>}/>
         <Route path ='/chatList' element={<ChatList/>}/>
         <Route path = '/reportList' element = {<ReportList/>} />
-
-
-
       </Route>
     </Routes>
   );

@@ -32,7 +32,7 @@ const Login = () => {
         style: { backgroundColor: "#4CAF50", color: "#fff" },
       });
       navigate("/home");
-    // eslint-disable-next-line no-unused-vars
+      // eslint-disable-next-line no-unused-vars
     } catch (error) {
       toast.error("Login failed. Please check your credentials.");
     } finally {

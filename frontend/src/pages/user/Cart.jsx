@@ -38,7 +38,6 @@ const CartPage = () => {
       .post(`/cart/update/${user.id}`, { services: servicesToUpdate })
       .then((response) => {
         console.log(response, "sdsdbsdhsdhvsdhvsd");
-
         navigate("/checkout", {
           state: { serviceAssignments: selectedServiceAssignments },
         });

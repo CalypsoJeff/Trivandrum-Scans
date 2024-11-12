@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
-import axiosInstanceUser from "../../services/axiosInstanceUser";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../features/auth/authSlice";
 import { FaEdit, FaPlus } from "react-icons/fa";
 import ProfileSidebar from "../../components/UserComponents/ProfileSidebar";
+import {
+  addFamilyMember,
+  fetchFamilyData,
+  fetchUserData,
+  updateUserDataField,
+} from "../../services/userService";
 
 const ProfileView = () => {
   const user = useSelector(selectUser);
@@ -25,8 +30,8 @@ const ProfileView = () => {
 
   const fetchUser = async () => {
     try {
-      const response = await axiosInstanceUser.get(`/UserData/${user.id}`);
-      setUserData(response.data);
+      const data = await fetchUserData(user.id);
+      setUserData(data);
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
@@ -34,8 +39,8 @@ const ProfileView = () => {
 
   const fetchFamilyMembers = async () => {
     try {
-      const response = await axiosInstanceUser.get(`/familyData/${user.id}`);
-      setFamilyMembers(response.data);
+      const data = await fetchFamilyData(user.id);
+      setFamilyMembers(data);
     } catch (error) {
       console.error("Error fetching family data:", error);
     }
@@ -54,43 +59,33 @@ const ProfileView = () => {
     setIsModalOpen(true);
   };
 
-  const updateUserData = async (field, updatedValue) => {
+  const handleSave = async () => {
     try {
-      const response = await axiosInstanceUser.put(
-        `/UserData/edit/${user.id}`,
-        {
-          fieldToChange: { [field]: updatedValue },
-        }
+      const updatedData = await updateUserDataField(
+        user.id,
+        currentField,
+        newValue
       );
-      setUserData(response.data);
+      setUserData(updatedData);
+      setIsModalOpen(false);
     } catch (error) {
       console.error("Error updating user data:", error);
     }
   };
 
-  const handleSave = () => {
-    updateUserData(currentField, newValue);
-    setIsModalOpen(false);
-  };
-
   const handleAddFamilyMember = async () => {
     try {
-      const response = await axiosInstanceUser.post(`/patients/add`, {
-        ...familyMemberData,
-        userId: user.id,
-      });
+      await addFamilyMember(familyMemberData, user.id);
       setIsAddFamilyModalOpen(false);
       fetchFamilyMembers();
     } catch (error) {
       console.error("Error adding family member:", error);
     }
   };
-
   return (
     <div className="min-h-screen flex">
       <ProfileSidebar />
       <div className="flex-grow p-6 ml-64 bg-gray-100">
-        
         {/* Profile Header */}
         <div className="flex items-center space-x-4 mb-6">
           <div className="w-24 h-24 rounded-full bg-blue-200 flex items-center justify-center text-4xl text-white font-bold">
@@ -112,8 +107,12 @@ const ProfileView = () => {
                 className="flex items-center justify-between py-2 px-4 rounded-lg border border-gray-200"
               >
                 <div className="flex flex-1 items-center">
-                  <span className="w-32 font-medium text-gray-600 capitalize mr-2">{field}:</span>
-                  <span className="font-normal text-gray-800">{userData?.[field]}</span>
+                  <span className="w-32 font-medium text-gray-600 capitalize mr-2">
+                    {field}:
+                  </span>
+                  <span className="font-normal text-gray-800">
+                    {userData?.[field]}
+                  </span>
                 </div>
                 <button
                   onClick={() => handleEditClick(field)}
@@ -141,8 +140,12 @@ const ProfileView = () => {
                 key={member._id}
                 className="bg-white shadow p-4 rounded-lg border border-gray-200 space-y-2"
               >
-                <h3 className="text-lg font-semibold text-gray-800">{member.name}</h3>
-                <p className="text-gray-600">Relation: {member.relationToUser}</p>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {member.name}
+                </h3>
+                <p className="text-gray-600">
+                  Relation: {member.relationToUser}
+                </p>
                 <p className="text-gray-600">Age: {member.age}</p>
                 <p className="text-gray-600">Gender: {member.gender}</p>
                 <p className="text-gray-600">Contact: {member.contactNumber}</p>

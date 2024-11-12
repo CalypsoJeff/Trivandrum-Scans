@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../../components/UserComponents/Header";
-import axiosInstanceUser from "../../services/axiosInstanceUser";
 import { AiOutlineHeart } from "react-icons/ai";
 import { BiShoppingBag } from "react-icons/bi";
 import ReactImageGallery from "react-image-gallery";
@@ -10,6 +9,7 @@ import "react-image-gallery/styles/css/image-gallery.css"; // Import gallery sty
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../features/cart/cartSlice";
 import { selectUser } from "../../features/auth/authSlice";
+import { fetchServiceDetail } from "../../services/userService";
 
 const ServiceDetailPage = () => {
   const { serviceId } = useParams();
@@ -18,13 +18,11 @@ const ServiceDetailPage = () => {
   const navigate = useNavigate();
   const user = useSelector(selectUser);
   const userId = user.id;
-  console.log(user);
-
   // Fetch service details by ID
-  const fetchServiceDetail = async () => {
+  const getServiceDetail = async () => {
     try {
-      const response = await axiosInstanceUser.get(`/service/${serviceId}`);
-      setService(response.data);
+      const data = await fetchServiceDetail(serviceId);
+      setService(data);
     } catch (error) {
       console.error("Error fetching service details:", error);
       toast.error("Error fetching service details");
@@ -40,7 +38,6 @@ const ServiceDetailPage = () => {
       await dispatch(addToCart(cartData));
       toast.success("Service added to cart!");
       navigate("/cart");
-      console.log("cart pokko");
       // Redirect to the cart page after adding to cart
     } catch (error) {
       toast.error("Failed to add service to cart");
@@ -49,7 +46,7 @@ const ServiceDetailPage = () => {
   };
 
   useEffect(() => {
-    fetchServiceDetail();
+    getServiceDetail();
   }, [serviceId]);
 
   if (!service) {

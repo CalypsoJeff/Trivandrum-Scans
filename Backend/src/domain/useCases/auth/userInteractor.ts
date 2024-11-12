@@ -338,6 +338,59 @@ export default {
   //     booking_time_slot
   //   );
   // },
+  // confirmBooking: async ({
+  //   stripe_session_id,
+  //   user_id,
+  //   booking_date,
+  //   services,
+  //   total_amount,
+  //   booking_time_slot,
+  // }: {
+  //   stripe_session_id: string;
+  //   user_id: string;
+  //   booking_date: Date;
+  //   services: {
+  //     serviceId: string;
+  //     personIds: { _id: string }[];
+  //   }[];
+  //   total_amount: number;
+  //   booking_time_slot: string;
+  // }): Promise<{ success: boolean; booking: unknown }> => {
+  //   try {
+  //     // Verify the Stripe payment session
+  //     const session = await stripe.checkout.sessions.retrieve(
+  //       stripe_session_id
+  //     );
+
+  //     if (!session || session.payment_status !== "paid"&& session.payment_intent) {
+  //       throw new Error("Payment not completed or unsuccessful.");
+  //     }
+  //     const servicesWithObjectIds = services.map((service) => ({
+  //       service_id: new mongoose.Types.ObjectId(service.serviceId), // Convert serviceId to ObjectId
+  //       persons: service.personIds.map(
+  //         (person) => new mongoose.Types.ObjectId(person._id)
+  //       ), // Convert each person._id to ObjectId
+  //     }));
+
+  //     const savedBooking = await saveBooking({
+  //       stripe_session_id,
+  //       paymentIntentId:session.payment_intent.toString(),
+  //       user_id,
+  //       booking_date,
+  //       services: servicesWithObjectIds,
+  //       total_amount,
+  //       booking_time_slot,
+  //     });
+
+  //     return { success: true, booking: savedBooking };
+  //   } catch (error) {
+  //     if (error instanceof Error) {
+  //       throw new Error(`Error confirming booking: ${error.message}`);
+  //     }
+  //     throw error;
+  //   }
+  // },
+
   confirmBooking: async ({
     stripe_session_id,
     user_id,
@@ -358,29 +411,43 @@ export default {
   }): Promise<{ success: boolean; booking: unknown }> => {
     try {
       // Verify the Stripe payment session
-      const session = await stripe.checkout.sessions.retrieve(
-        stripe_session_id
-      );
-
+      const session = await stripe.checkout.sessions.retrieve(stripe_session_id);
+  
+      // Ensure the session exists and the payment is successful
       if (!session || session.payment_status !== "paid") {
         throw new Error("Payment not completed or unsuccessful.");
       }
+  
+      // Extract the payment intent ID, ensuring it's not null
+      const paymentIntentId = session.payment_intent 
+        ? (typeof session.payment_intent === 'string' 
+          ? session.payment_intent 
+          : session.payment_intent.id) 
+        : null;
+  
+      if (!paymentIntentId) {
+        throw new Error("Payment Intent ID is missing.");
+      }
+  
+      // Convert service and person IDs to ObjectId for MongoDB
       const servicesWithObjectIds = services.map((service) => ({
-        service_id: new mongoose.Types.ObjectId(service.serviceId), // Convert serviceId to ObjectId
+        service_id: new mongoose.Types.ObjectId(service.serviceId),
         persons: service.personIds.map(
           (person) => new mongoose.Types.ObjectId(person._id)
-        ), // Convert each person._id to ObjectId
+        ),
       }));
-
+  
+      // Save the booking with paymentIntentId
       const savedBooking = await saveBooking({
         stripe_session_id,
+        paymentIntentId,
         user_id,
         booking_date,
         services: servicesWithObjectIds,
         total_amount,
         booking_time_slot,
       });
-
+  
       return { success: true, booking: savedBooking };
     } catch (error) {
       if (error instanceof Error) {
@@ -389,6 +456,7 @@ export default {
       throw error;
     }
   },
+  
   getBookingList: async (id: string) => {
     try {
       // Call the database query function to get bookings
@@ -419,8 +487,24 @@ export default {
   cancelBooking: async (id: string) => {
     try {
       const cancelledBooking = await cancelBookingInDb(id);
+
       if (!cancelledBooking) {
         throw new Error("Booking not found or already cancelled");
+      }
+      if(cancelledBooking.paymentIntentId){
+        try {
+          const refund =  await stripe.refunds.create({
+            payment_intent: cancelledBooking.paymentIntentId,
+          });
+          console.log(refund.id,'refund successfull ');
+          
+        } catch (error) {
+          console.error("Error in refund:", error);
+        }
+       
+      }else{
+        console.log('no payment intent id found ');
+        
       }
       return cancelledBooking;
     } catch (error) {
@@ -428,6 +512,7 @@ export default {
       throw error;
     }
   },
+ 
   reportList: async (id:string) => {
     try {
       const reportList = await reportListInDb(id);

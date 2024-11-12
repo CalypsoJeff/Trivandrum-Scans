@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -5,6 +6,7 @@ import axiosInstanceUser from "../../services/axiosInstanceUser";
 import { selectUser } from "../../features/auth/authSlice";
 import ProfileSidebar from "../../components/UserComponents/ProfileSidebar";
 import SearchSortFilter from "../../components/UserComponents/SearchSortFilter";
+import { fetchUserBookings } from "../../services/userService";
 
 function BookingList() {
   const [bookings, setBookings] = useState([]);
@@ -15,22 +17,21 @@ function BookingList() {
   const user = useSelector(selectUser);
 
   useEffect(() => {
-    const fetchBookings = async () => {
+    const loadBookings = async () => {
       try {
         if (user?.id) {
-          const response = await axiosInstanceUser.get(`/bookings/${user.id}`);
-          setBookings(response.data);
-          setFilteredBookings(response.data); // Set initial filtered data
+          const data = await fetchUserBookings(user.id);
+          setBookings(data);
+          setFilteredBookings(data);
           setLoading(false);
         }
-      // eslint-disable-next-line no-unused-vars
       } catch (err) {
         setError("Failed to fetch bookings");
         setLoading(false);
       }
     };
 
-    fetchBookings();
+    loadBookings();
   }, [user?.id]);
 
   // Search handler
@@ -82,27 +83,24 @@ function BookingList() {
         <h1 className="text-4xl font-bold mb-8 text-gray-800 text-center">
           My Bookings
         </h1>
-       <SearchSortFilter
-  onSearch={handleSearch}
-  onSort={handleSort}
-  onFilter={handleFilter}
-  filters={[
-    { label: "Status: Confirmed", value: "confirmed" },
-    { label: "Status: Cancelled", value: "cancelled" },
-    { label: "Status: Pending", value: "pending" },
-    // Add filter options for service type, if available
-  ]}
-  sorts={[
-    { label: "Amount", value: "amount" },
-    { label: "Booking Date", value: "booking_date" },
-    { label: "Appointment Date", value: "appointment_date" },
-    // Add more sort options if needed
-  ]}
-  searchPlaceholders={[
-    "Search by Service Name", 
-  ]}
-/>
-
+        <SearchSortFilter
+          onSearch={handleSearch}
+          onSort={handleSort}
+          onFilter={handleFilter}
+          filters={[
+            { label: "Status: Confirmed", value: "confirmed" },
+            { label: "Status: Cancelled", value: "cancelled" },
+            { label: "Status: Pending", value: "pending" },
+            // Add filter options for service type, if available
+          ]}
+          sorts={[
+            { label: "Amount", value: "amount" },
+            { label: "Booking Date", value: "booking_date" },
+            { label: "Appointment Date", value: "appointment_date" },
+            // Add more sort options if needed
+          ]}
+          searchPlaceholders={["Search by Service Name"]}
+        />
 
         {filteredBookings.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">

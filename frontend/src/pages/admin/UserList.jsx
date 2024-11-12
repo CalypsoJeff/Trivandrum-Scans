@@ -1,8 +1,27 @@
 import React, { useEffect, useState } from "react";
-import axiosInstance from "../../services/axiosInstance";
 import Switch from "react-switch";
 import Modal from "react-modal";
 import Sidebar from "../../components/AdminComponents/Sidebar";
+import { fetchUsers, toggleUserBlockStatus } from "../../services/adminService";
+
+const modalStyles = {
+  overlay: {
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  content: {
+    position: "relative",
+    width: "90%",
+    maxWidth: "450px",
+    padding: "30px 25px",
+    borderRadius: "12px",
+    backgroundColor: "#fefefe",
+    border: "none",
+    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+  },
+};
 
 function UserList() {
   const [users, setUsers] = useState([]);
@@ -16,24 +35,21 @@ function UserList() {
   const [confirmModalIsOpen, setConfirmModalIsOpen] = useState(false);
   const [userToToggle, setUserToToggle] = useState(null);
 
-  const fetchUsers = async (page = 1, limit = 10) => {
+  const loadUsers = async (page) => {
     setStatus("loading");
     try {
-      const response = await axiosInstance.get(
-        `/userlist?page=${page}&limit=${limit}`
-      );
-      setUsers(response.data.users);
-      setTotalPages(response.data.totalPages);
+      const { users, totalPages } = await fetchUsers(page, 10);
+      setUsers(users);
+      setTotalPages(totalPages);
       setStatus("succeeded");
     } catch (err) {
-      console.error("Failed to fetch users:", err);
       setError(err.message);
       setStatus("failed");
     }
   };
 
   useEffect(() => {
-    fetchUsers(currentPage);
+    loadUsers(currentPage);
   }, [currentPage]);
 
   useEffect(() => {
@@ -64,18 +80,14 @@ function UserList() {
     if (userToToggle) {
       const isBlocked = !blockedStatus[userToToggle._id];
       try {
-        await axiosInstance.patch(`/blockUser/${userToToggle._id}`, {
-          is_blocked: isBlocked,
-        });
-        setBlockedStatus((prevState) => ({
-          ...prevState,
+        await toggleUserBlockStatus(userToToggle._id, isBlocked);
+        setBlockedStatus((prev) => ({
+          ...prev,
           [userToToggle._id]: isBlocked,
         }));
-        setUsers((prevUsers) =>
-          prevUsers.map((user) =>
-            user._id === userToToggle._id
-              ? { ...user, is_blocked: isBlocked }
-              : user
+        setUsers((prev) =>
+          prev.map((u) =>
+            u._id === userToToggle._id ? { ...u, is_blocked: isBlocked } : u
           )
         );
         closeConfirmModal();
@@ -88,6 +100,14 @@ function UserList() {
   const handlePageChange = (newPage) => {
     if (newPage > 0 && newPage <= totalPages) setCurrentPage(newPage);
   };
+
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch = user.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "" || user.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="flex h-screen bg-white">
@@ -161,18 +181,16 @@ function UserList() {
                 <tr>
                   <td colSpan="4" className="text-center p-5 text-red-500">
                     {error}
+                    <button
+                      onClick={() => fetchUsers(currentPage)}
+                      className="ml-4 text-blue-500 underline"
+                    >
+                      Retry
+                    </button>
                   </td>
                 </tr>
-              ) : users.length > 0 ? (
-                users.map((user) => {
-                  const matchesSearch = user.name
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase());
-                  const matchesStatus =
-                    statusFilter === "" || user.status === statusFilter;
-
-                  if (!matchesSearch || !matchesStatus) return null;
-
+              ) : filteredUsers.length > 0 ? (
+                filteredUsers.map((user) => {
                   const isBlocked = blockedStatus[user._id];
                   return (
                     <tr
@@ -209,7 +227,7 @@ function UserList() {
                       <td className="px-5 py-5 border-b border-gray-200 text-sm">
                         <Switch
                           onChange={() => openConfirmModal(user)}
-                          checked={isBlocked}
+                          checked={blockedStatus[user._id] ?? false} // Default to false if undefined
                           onColor="#EF4444"
                           offColor="#A39F74"
                           uncheckedIcon={false}
@@ -260,29 +278,11 @@ function UserList() {
         </div>
 
         {/* Confirmation Modal */}
-        {/* Confirmation Modal */}
         <Modal
           isOpen={confirmModalIsOpen}
           onRequestClose={closeConfirmModal}
           contentLabel="Confirmation Modal"
-          style={{
-            overlay: {
-              backgroundColor: "rgba(0, 0, 0, 0.75)", // Semi-transparent background
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            },
-            content: {
-              position: "relative",
-              width: "90%", // For responsiveness, 90% of screen width
-              maxWidth: "450px", // Max width for larger screens
-              padding: "30px 25px", // Increased padding for a spacious look
-              borderRadius: "12px", // Rounded corners for a modern look
-              backgroundColor: "#fefefe",
-              border: "none", // Remove default border
-              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)", // Soft shadow for depth
-            },
-          }}
+          style={modalStyles}
           ariaHideApp={false}
         >
           <h2 className="text-xl font-semibold mb-4 text-gray-800">

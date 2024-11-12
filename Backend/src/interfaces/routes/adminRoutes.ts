@@ -97,9 +97,8 @@ adminRouter.post("/reports/upload", uploadReport, protectAdmin, adminController.
 adminRouter.get('/reports',protectAdmin,adminController.reportList)
 adminRouter.put(`/reports/:editReportId`,uploadReport,protectAdmin,adminController.updateReport)
 adminRouter.patch(`/reports/:reportId/publish`,protectAdmin,adminController.publishReport)
+adminRouter.post('/chat/:chatId/send', protectAdmin, adminController.successMessage);
 adminRouter.post('/chat/:chatId/send', protectAdmin, adminController.sendMessage);
 adminRouter.get('/chats', adminController.getChats);
 adminRouter.get('/chatList', adminController.getChatLists);
-// adminRouter.get('/active-chats/:vendorId',adminController.getActiveChats)
-// adminRouter.get('/messages/:chatId',adminController.getMessages)
 export default adminRouter;

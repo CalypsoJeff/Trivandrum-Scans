@@ -4,7 +4,7 @@ import "./index.css"; // Ensure this is importing Tailwind CSS
 import { Toaster } from "sonner";
 import UserRoutes from "./routes/userRoutes/UserRoutes";
 import AdminRoutes from "./routes/adminRoutes/AdminRoutes";
-function app() {
+function App() {
   return (
     <>
       <Toaster
@@ -28,4 +28,4 @@ function app() {
   );
 }
 
-export default app;
+export default App;

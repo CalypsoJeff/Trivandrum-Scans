@@ -1,10 +1,13 @@
 import { Request, Response } from "express";
+import jwt from 'jsonwebtoken';
 import userInteractor from "../../domain/useCases/auth/userInteractor";
 import { Users } from "../../infrastructure/database/dbModel/userModel";
 import Stripe from "stripe";
 import Cart from "../../infrastructure/database/dbModel/cartModel";
 import { IServiceUpdate } from "../../domain/entities/types/serviceType";
 import BookingModel from "../../infrastructure/database/dbModel/bookingModel";
+import { generateToken } from "../../domain/helper/jwtHelper";
+import { getUserbyEMail } from "../../infrastructure/repositories/mongoUserRepository";
 const stripe = new Stripe(process.env.STRIPE_KEY as string, {});
 
 export default {
@@ -179,6 +182,43 @@ export default {
     console.log("Hellooooo checkauth");
   },
 
+  refreshToken: async (req: Request, res: Response) => {
+    try {
+      const refreshToken = req.cookies.refreshToken;
+      console.log(refreshToken, 'refreshToken in request');
+      if (!refreshToken) {
+        return res.status(401).json({ message: "Refresh token not provided" });
+      }
+      try {
+        const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET_KEY!) as { user: string, email: string, role: string };
+        console.log(decoded, 'decoded refresh token data');
+
+        const user = await getUserbyEMail(decoded.email);
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        const { token: newAccessToken, refreshToken: newRefreshToken } = generateToken(user.id, decoded.email, 'user');
+        res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: true, sameSite: 'strict' });
+        res.json({ accessToken: newAccessToken });
+
+      } catch (err) {
+        if (err instanceof Error) {
+          if (err.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: "Refresh token expired" });
+          }
+          return res.status(403).json({ message: "Invalid refresh token" });
+        }
+        // Handle non-Error types if necessary
+        return res.status(500).json({ message: "An unknown error occurred" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  },
+
+
+
   updateUser: async (req: Request, res: Response) => {
     const { name, address, mobile, age } = req.body; // Destructure all fields from the request body
     const { userId } = req.params;
@@ -199,7 +239,6 @@ export default {
       res.status(500).json({ message: "Failed to update user" });
     }
   },
-
   getServiceDetail: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -265,43 +304,6 @@ export default {
         .json({ message: "Failed to remove service from user cart" });
     }
   },
-
-  // bookNow: async (req: Request, res: Response) => {
-  //   try {
-  //     const { userId, services, appointmentDate, appointmentTimeSlot, totalAmount } = req.body;
-
-  //     const session = await stripe.checkout.sessions.create({
-  //       payment_method_types: ["card"],
-  //       line_items: [
-  //         {
-  //           price_data: {
-  //             currency: "inr",
-  //             product_data: { name: "Service Booking" },
-  //             unit_amount: totalAmount * 100,
-  //           },
-  //           quantity: 1,
-  //         },
-  //       ],
-  //       mode: "payment",
-  //       success_url: `${process.env.CLIENT_URL}/success`,
-  //       cancel_url: `${process.env.CLIENT_URL}/cancel`,
-  //       metadata: { userId, services: JSON.stringify(services), appointmentDate, appointmentTimeSlot },
-  //     });
-  //     console.log(session,"hddfbhfdfdbyfdb");
-
-  //     if (!session) {
-  //       throw new Error("Failed to create Stripe session.");
-  //     }
-
-  //     await bookAppointment(userId, services, appointmentDate, totalAmount, "success", session.id, appointmentTimeSlot);
-
-  //     res.json({ sessionId: session.id });
-  //   } catch (error) {
-  //     console.error("Error creating Stripe session:", error);
-  //     res.status(500).json({ error: "Failed to create Stripe session" });
-  //   }
-  // },
-
   bookNow: async (req: Request, res: Response) => {
     try {
       const {
@@ -311,8 +313,6 @@ export default {
         appointmentTimeSlot,
         totalAmount,
       } = req.body;
-
-      // Create Stripe checkout session
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: [
@@ -338,7 +338,6 @@ export default {
       if (!session) {
         throw new Error("Failed to create Stripe session.");
       }
-
       res.json({ sessionId: session.id });
     } catch (error) {
       console.error("Error creating Stripe session:", error);
@@ -406,15 +405,12 @@ export default {
   updateCart: async (req: Request, res: Response) => {
     const { id } = req.params; // Ensure `id` is being passed correctly (userId)
     const { services }: { services: IServiceUpdate[] } = req.body;
-
     try {
       // Fetch the cart by userId
       const cart = await Cart.findOne({ userId: id });
       if (!cart) {
         return res.status(404).json({ message: "Cart not found" });
       }
-
-      // Loop through each service update request
       services.forEach((serviceUpdate: IServiceUpdate) => {
         const { serviceId, personIds } = serviceUpdate;
 
@@ -432,8 +428,6 @@ export default {
           }
         });
       });
-
-      // Save the updated cart
       await cart.save();
       res.status(200).json(cart);
     } catch (error) {
@@ -455,7 +449,6 @@ export default {
       const existingBooking = await BookingModel.findOne({
         stripe_session_id: sessionId,
       });
-
       if (existingBooking) {
         return res.status(400).json({ error: "Booking already confirmed." });
       }
@@ -468,7 +461,6 @@ export default {
         total_amount: amount,
         booking_time_slot: appointmentTimeSlot, // Pass booking time slot
       });
-
       return res.status(201).json(bookingResult);
     } catch (error) {
       console.error("Error confirming booking:", error);
@@ -489,7 +481,6 @@ export default {
     try {
       const { id } = req.params; // Extract the booking ID from the request params
       const booking = await userInteractor.getBookingById(id); // Pass the ID to the interactor to fetch details
-
       if (!booking) {
         return res.status(404).json({ message: "Booking not found" });
       }
@@ -507,11 +498,7 @@ export default {
       if (!userId) {
         return res.status(400).json({ message: "User ID is required" });
       }
-
-      // Call the function to clear the cart in the database
       await userInteractor.clearCart(userId);
-
-      // Respond with success
       res.status(200).json({ message: "Cart cleared successfully" });
     } catch (error) {
       console.error("Error clearing cart:", error);
@@ -522,18 +509,16 @@ export default {
     try {
       const { id } = req.params;
       const cancelledBooking = await userInteractor.cancelBooking(id);
-
       if (!cancelledBooking) {
         return res.status(404).json({ error: "Booking not found or already cancelled" });
       }
-
       res.status(200).json({ message: "Booking successfully cancelled", booking: cancelledBooking });
     } catch (error) {
       console.error("Error in cancelBooking controller:", error);
       res.status(500).json({ error: "Failed to cancel booking" });
     }
   },
-  getCategory : async (req: Request, res: Response) => {
+  getCategory: async (req: Request, res: Response) => {
     try {
       const categories = await userInteractor.getCategories();
       if (!categories) {
@@ -545,11 +530,9 @@ export default {
       res.status(500).json({ message: "Server error" });
     }
   },
-  reportList:async(req: Request, res: Response) => {
+  reportList: async (req: Request, res: Response) => {
     try {
-      const {id}= req.params
-      console.log(id,'zzzzzzzzzzz');
-      
+      const { id } = req.params
       const reportList = await userInteractor.reportList(id);
       res.status(200).json(reportList);
     } catch (error) {

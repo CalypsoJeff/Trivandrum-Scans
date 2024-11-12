@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import Sidebar from "../../components/AdminComponents/Sidebar";
 import Modal from "react-modal";
@@ -10,7 +9,7 @@ import {
   deleteDepartment,
   editDepartment,
 } from "../../features/admin/adminslice";
-import axiosInstance from "../../services/axiosInstance";
+import { fetchDepartment as fetchDepartmentsService } from "../../services/adminService";
 import { toast, Toaster } from "sonner";
 
 Modal.setAppElement("#root");
@@ -49,10 +48,10 @@ function Departments() {
   const closeDeleteModal = () => setDeleteModalIsOpen(false);
 
   // Fetch departments after adding/editing/deleting
-  const fetchDepartments = async (page = 1, limit = 10) => {
+  const fetchDepartments = async () => {
     try {
-      const response = await axiosInstance.get(`/departmentlist`);
-      setDepartments(response.data);
+      const data = await fetchDepartmentsService();
+      setDepartments(data);
     } catch (error) {
       console.error("Error fetching departments:", error);
       toast.error("Error fetching departments");

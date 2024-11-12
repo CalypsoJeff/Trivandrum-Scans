@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import Header from "../../components/UserComponents/Header";
 import { Link, useNavigate } from "react-router-dom";
@@ -7,6 +8,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { selectUser } from "../../features/auth/authSlice";
 import { addToCart } from "../../features/cart/cartSlice";
 import SearchSortFilter from "../../components/UserComponents/SearchSortFilter";
+import { fetchCategories, fetchServices } from "../../services/userService";
 
 function Services() {
   const [services, setServices] = useState([]);
@@ -20,14 +22,12 @@ function Services() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const fetchServices = async (page = 1) => {
+  const loadServices = async (page = 1) => {
     try {
-      const response = await axiosInstanceUser.get("/serviceList", {
-        params: { page, limit },
-      });
-      setServices(response.data.services);
-      setFilteredServices(response.data.services);
-      setTotalPages(response.data.totalPages);
+      const data = await fetchServices(page, limit);
+      setServices(data.services);
+      setFilteredServices(data.services);
+      setTotalPages(data.totalPages);
     } catch (error) {
       if (error.response && error.response.data.message === "User is blocked") {
         toast.error("Your account has been blocked. Please contact support.");
@@ -37,12 +37,10 @@ function Services() {
     }
   };
 
-  // Fetch categories
-  const fetchCategories = async () => {
+  const loadCategories = async () => {
     try {
-      const response = await axiosInstanceUser.get("/categoryList");
-      setCategories(response.data.categories);
-      // eslint-disable-next-line no-unused-vars
+      const categoriesData = await fetchCategories();
+      setCategories(categoriesData);
     } catch (error) {
       toast.error("Failed to fetch categories");
     }
@@ -69,12 +67,12 @@ function Services() {
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
-    fetchServices(newPage);
+    loadServices(newPage);
   };
 
   useEffect(() => {
-    fetchServices(currentPage);
-    fetchCategories(); // Call fetchCategories to load categories
+    loadServices(currentPage);
+    loadCategories(); // Call fetchCategories to load categories
   }, [currentPage]);
 
   // Handle search functionality

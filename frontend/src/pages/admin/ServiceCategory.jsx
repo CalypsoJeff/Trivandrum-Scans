@@ -45,10 +45,6 @@ function ServiceCategories() {
     setEditingCategory(null);
   };
 
-  const handleDeleteCategory = (categoryId) => {
-    // Handle category deletion if needed
-  };
-
   const handleSubmit = (values, { resetForm }) => {
     if (editingCategory) {
       // Dispatch updateCategory action

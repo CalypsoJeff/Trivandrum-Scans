@@ -1,31 +1,26 @@
 import React from "react";
 import { Formik, Field, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import axios from "axios";
 import { toast } from "sonner"; // Assuming you have the toast notifications
 import logo from "/Images/Logo.png";
 import BackgroundImgLogin from "/Images/pexels-tima-miroshnichenko-9574411.jpg";
+import { requestPasswordReset } from "../../services/userService";
 
 function ForgetPassword() {
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
-      // Sending request to the backend API for password reset
-      const response = await axios.post(
-        "http://localhost:5000/api/users/forget-password",
-        {
-          email: values.email,
-        }
-      );
+      const response = await requestPasswordReset(values.email);
 
-      // Check if response is successful
       if (response.status === 200) {
         toast.success("Password reset link sent! Check your email.");
       } else {
         toast.error("Failed to send reset email. Please try again.");
       }
     } catch (error) {
-      console.error("Error in forget password:", error);
-      toast.error("Something went wrong. Please try again.");
+      const errorMessage =
+        error.response?.data?.message ||
+        "Something went wrong. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }

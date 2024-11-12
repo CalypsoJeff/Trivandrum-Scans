@@ -17,7 +17,7 @@ connectDb();
 
 const app = express();
 const server = http.createServer(app);
-const io = new SocketIOServer(server, {
+export const io = new SocketIOServer(server, {
     cors: {
         origin: "http://localhost:5173",
         methods: ["GET", "POST"],
@@ -129,3 +129,4 @@ io.on("connection", (socket) => {
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+

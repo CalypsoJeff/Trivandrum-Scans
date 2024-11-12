@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/AdminComponents/Sidebar";
 import Modal from "react-modal";
@@ -8,12 +9,17 @@ import Cropper from "cropperjs";
 import "cropperjs/dist/cropper.min.css"; // Include the cropper.css
 import { addService, updateService } from "../../features/admin/adminslice";
 import SearchSortFilter from "../../components/AdminComponents/SearchSortFilter";
+import {
+  fetchCategories,
+  fetchServices,
+  toggleServiceListing,
+} from "../../services/adminService";
 
 Modal.setAppElement("#root");
 
 function Service() {
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [categories, setCategories] = useState([]); 
+  const [categories, setCategories] = useState([]);
   const [services, setServices] = useState([]);
   const [filteredServices, setFilteredServices] = useState([]); // For filtered data
   const [serviceData, setServiceData] = useState({
@@ -30,33 +36,27 @@ function Service() {
   const [imageFile, setImageFile] = useState(null);
   const dispatch = useDispatch();
 
-  const fetchCategory = async () => {
+  const loadCategories = async () => {
     try {
-      const response = await axiosInstance.get(`/categoryList?page=1&limit=10`);
-      setCategories(response.data.categories);
+      const data = await fetchCategories();
+      setCategories(data);
     } catch (error) {
-      console.error("Error fetching categories:", error);
       toast.error("Error fetching categories");
     }
   };
 
-  const fetchService = async () => {
+  const loadServices = async () => {
     try {
-      const response = await axiosInstance.get(`/serviceList?page=1&limit=10`);
-      const { services } = response.data;
-      if (Array.isArray(services)) {
-        setServices(services);
-        setFilteredServices(services); // Initialize filteredServices with fetched data
-      }
+      const services = await fetchServices(1, 10); // Pass any desired page and limit
+      setServices(services);
+      setFilteredServices(services);
     } catch (error) {
-      console.error("Error fetching services:", error);
       toast.error("Error fetching services");
     }
   };
-
   useEffect(() => {
-    fetchCategory();
-    fetchService();
+    loadCategories();
+    loadServices();
   }, []);
 
   // Search, Sort, and Filter Handlers
@@ -76,14 +76,16 @@ function Service() {
     } else if (sortValue === "name") {
       sortedServices.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortValue === "category") {
-      sortedServices.sort((a, b) => a.category?.name.localeCompare(b.category?.name));
+      sortedServices.sort((a, b) =>
+        a.category?.name.localeCompare(b.category?.name)
+      );
     }
     setFilteredServices(sortedServices);
   };
 
   const handleFilter = (filterValue) => {
-    const filtered = services.filter(
-      (service) => filterValue ? service.category?._id === filterValue : true
+    const filtered = services.filter((service) =>
+      filterValue ? service.category?._id === filterValue : true
     );
     setFilteredServices(filtered);
   };
@@ -166,7 +168,10 @@ function Service() {
     formData.append("price", serviceData.price);
     formData.append("category", serviceData.category);
     formData.append("preTestPreparations", serviceData.preTestPreparations);
-    formData.append("expectedResultDuration", serviceData.expectedResultDuration);
+    formData.append(
+      "expectedResultDuration",
+      serviceData.expectedResultDuration
+    );
     formData.append("description", serviceData.description);
 
     if (imageFile) {
@@ -181,7 +186,7 @@ function Service() {
         await dispatch(addService(formData));
         toast.success("Service added successfully");
       }
-      fetchService();
+      loadServices();
     } catch (error) {
       console.error("Error adding/updating service:", error);
       toast.error("Failed to add/update service");
@@ -192,13 +197,12 @@ function Service() {
 
   const toggleListing = async (id, isAvailable) => {
     try {
-      await axiosInstance.patch(`/service/${id}/toggleListing`);
+      await toggleServiceListing(id);
       toast.success(
         `Service ${isAvailable ? "unlisted" : "listed"} successfully`
       );
-      fetchService();
+      loadServices();
     } catch (error) {
-      console.error("Error toggling listing status:", error);
       toast.error("Failed to toggle listing status");
     }
   };
@@ -221,14 +225,14 @@ function Service() {
             onSearch={handleSearch}
             onSort={handleSort}
             onFilter={handleFilter}
-            filters={categories.map(category => ({
+            filters={categories.map((category) => ({
               label: category.name,
-              value: category._id
+              value: category._id,
             }))}
             sorts={[
               { label: "Name", value: "name" },
               { label: "Price", value: "price" },
-              { label: "Category", value: "category" }
+              { label: "Category", value: "category" },
             ]}
           />
 

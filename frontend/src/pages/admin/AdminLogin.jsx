@@ -5,7 +5,7 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { loginAdmin } from "../../features/admin/adminslice";
 import { toast, Toaster } from "sonner";
-import BackgroundImgLogin from '/Images/pexels-tima-miroshnichenko-9574411.jpg';
+import BackgroundImgLogin from "/Images/pexels-tima-miroshnichenko-9574411.jpg";
 
 const AdminLogin = () => {
   const dispatch = useDispatch();

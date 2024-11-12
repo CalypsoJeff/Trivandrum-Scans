@@ -4,8 +4,11 @@ import Header from "../../components/UserComponents/Header";
 import { selectUser } from "../../features/auth/authSlice";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import axiosInstanceUser from "../../services/axiosInstanceUser";
 import { loadStripe } from "@stripe/stripe-js";
+import {
+  createBookingSession,
+  fetchLatestCart,
+} from "../../services/userService";
 
 const stripePromise = loadStripe(
   "pk_test_51Q9p4J02sEEeH3srV1uPSqW1QISpZpbEFDQNV8cGWHBGtONEe0IpxG7EiOZrledVR7xzNnKXhLeRObuRH2ZsnYWh00oHBEyis6"
@@ -28,18 +31,15 @@ const CheckoutPage = () => {
     "5:00 PM - 6:00 PM",
   ];
 
-  // Fetch cart data
-  const fetchCartData = async (userId) => {
+  const loadCartData = async (userId) => {
     try {
-      const response = await axiosInstanceUser.get(`/cart/latest/${userId}`);
-      const { cart, patients } = response.data;
+      const { cart, patients } = await fetchLatestCart(userId);
       setCart(cart);
-      setPatients(patients); // Store patient data
+      setPatients(patients);
     } catch (error) {
-      console.error("Failed to fetch cart data:", error);
+      console.error("Failed to load cart data", error);
     }
   };
-
   // Handle date selection for appointment
   const handleDateChange = (date) => {
     setSelectedDate(date); // Set selected appointment date
@@ -71,11 +71,7 @@ const CheckoutPage = () => {
     };
 
     try {
-      const response = await axiosInstanceUser.post(
-        "/booknowcheckout",
-        bookingData
-      );
-      const { sessionId } = response.data;
+      const { sessionId } = await createBookingSession(bookingData);
 
       const stripe = await stripePromise;
       if (stripe) {
@@ -90,7 +86,7 @@ const CheckoutPage = () => {
 
   useEffect(() => {
     if (user && user.id) {
-      fetchCartData(user.id); // Fetch cart data
+      loadCartData(user.id); // Fetch cart data
     }
   }, [user]);
 

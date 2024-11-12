@@ -20,6 +20,10 @@ const BookingSchema: Schema = new mongoose.Schema(
     total_amount: { type: Number, required: true },
     status: { type: String, default: "pending" },
     stripe_session_id: { type: String, required: true },
+    paymentIntentId: {
+      type:String,
+      required: false
+    }
   },
   { timestamps: true }
 );

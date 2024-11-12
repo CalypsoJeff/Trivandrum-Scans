@@ -29,16 +29,16 @@ export default function Chat() {
       // Listen for new messages from the server only once
       const handleMessage = (newMessage) => {
         setMessages((prevMessages) => {
-          const isDuplicate = prevMessages.some((msg) => msg._id === newMessage._id);
+          const isDuplicate = prevMessages.some(
+            (msg) => msg._id === newMessage._id
+          );
           if (!isDuplicate) {
             return [...prevMessages, newMessage];
           }
           return prevMessages;
         });
       };
-
       socket.on("receiveMessage", handleMessage);
-
       // Cleanup listener and disconnect socket on component unmount or when `chatId` changes
       return () => {
         socket.off("receiveMessage", handleMessage);
@@ -50,7 +50,9 @@ export default function Chat() {
   // Fetch chat ID
   const getChatId = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000${apiBaseUrl}/chat/start/${userId}`);
+      const response = await axios.get(
+        `http://localhost:5000${apiBaseUrl}/chat/start/${userId}`
+      );
       setChatId(response.data.chat._id);
     } catch (error) {
       console.error("Error fetching chat ID:", error);
@@ -61,7 +63,9 @@ export default function Chat() {
   const fetchMessages = async () => {
     if (!chatId) return;
     try {
-      const response = await axios.get(`http://localhost:5000${apiBaseUrl}/chat/${chatId}/messages`);
+      const response = await axios.get(
+        `http://localhost:5000${apiBaseUrl}/chat/${chatId}/messages`
+      );
       setMessages(response.data.messages);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -81,11 +85,7 @@ export default function Chat() {
       // Emit the message to the server via Socket.IO
       socket.emit("sendMessage", messageData);
 
-      // Optimistically add the message to the UI with a temporary ID
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { ...messageData, _id: Date.now().toString(), isLocal: true },
-      ]);
+      // Clear the input field after sending
       setMessageInput("");
     }
   };
@@ -100,7 +100,9 @@ export default function Chat() {
             {messages.map((msg) => (
               <div
                 key={msg._id}
-                className={`flex ${msg.senderModel === "Admin" ? "" : "flex-row-reverse"} items-start space-x-3`}
+                className={`flex ${
+                  msg.senderModel === "Admin" ? "" : "flex-row-reverse"
+                } items-start space-x-3`}
               >
                 <img
                   src={
@@ -113,7 +115,9 @@ export default function Chat() {
                 />
                 <div
                   className={`max-w-xs p-3 rounded-lg ${
-                    msg.senderModel === "Admin" ? "bg-gray-200" : "bg-blue-500 text-white"
+                    msg.senderModel === "Admin"
+                      ? "bg-gray-200"
+                      : "bg-blue-500 text-white"
                   }`}
                 >
                   <p className="text-sm font-semibold">

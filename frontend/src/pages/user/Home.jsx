@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import Header from "../../components/UserComponents/Header";
 import Footer from "../../components/UserComponents/Footer";
@@ -7,15 +8,16 @@ import { useSelector, useDispatch } from "react-redux";
 import { selectUser } from "../../features/auth/authSlice";
 import { Team } from "../../components/UserComponents/Team";
 import { Features } from "../../components/UserComponents/Features";
-import axiosInstanceUser from "../../services/axiosInstanceUser";
 import { toast } from "sonner";
 import { addToCart } from "../../features/cart/cartSlice";
 import ImageCarousel from "../../components/UserComponents/ImageCarousel";
+import { fetchServices } from "../../services/userService";
 
 function Home() {
   const user = useSelector(selectUser);
   const [services, setServices] = useState([]);
-  const [, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [limit] = useState(8);
   const userId = user?.id;
   const dispatch = useDispatch();
@@ -47,21 +49,22 @@ function Home() {
     // Add more features as needed
   ];
 
-  const fetchServices = async () => {
-    try {
-      const response = await axiosInstanceUser.get("/serviceList", {
-        params: { page: 1, limit },
-      });
-      setServices(response.data.services);
-      setTotalPages(response.data.totalPages);
-    } catch (error) {
-      if (error.response && error.response.data.message === "User is blocked") {
-        toast.error("Your account has been blocked. Please contact support.");
-      } else {
-        toast.error("Failed to fetch services");
+  useEffect(() => {
+    const loadServices = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchServices(1, limit);
+        setServices(data.services);
+      } catch (err) {
+        setError(err.message);
+        toast.error(err.message);
+      } finally {
+        setLoading(false);
       }
-    }
-  };
+    };
+
+    loadServices();
+  }, []);
 
   const handleAddToCart = async (service) => {
     if (!userId) {
@@ -81,10 +84,6 @@ function Home() {
       console.error("Failed to add service to cart:", error);
     }
   };
-
-  useEffect(() => {
-    fetchServices();
-  }, []);
 
   if (!user) {
     return <Navigate to="/login" replace />;

@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from "sonner";
 import BackgroundImgLogin from "/Images/pexels-tima-miroshnichenko-9574411.jpg";
 import logo from "/Images/Logo.png";
+import { otpVerification, resendOtp } from "../../services/userService";
 
 const UserOtp = () => {
   const inputRefs = useRef([]);
@@ -23,10 +23,7 @@ const UserOtp = () => {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/users/otp-verification",
-        { otp, email }
-      );
+      const response = await otpVerification(otp, email);
       navigate("/home");
       toast.success(response.data.message, {
         style: {
@@ -47,7 +44,7 @@ const UserOtp = () => {
   const handleResend = async () => {
     const { email } = location.state || {};
     try {
-      await axios.post("http://localhost:5000/api/users/resend-otp", { email });
+      await resendOtp(email);
       toast.success("OTP resent successfully", {
         style: {
           backgroundColor: "#4CAF50", // Green for success

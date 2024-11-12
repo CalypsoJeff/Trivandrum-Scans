@@ -396,6 +396,7 @@ export const getFamilyDataInDb = async (id: string) => {
 };
 export const saveBooking = async ({
   stripe_session_id,
+  paymentIntentId,
   user_id,
   booking_date,
   services,
@@ -403,6 +404,7 @@ export const saveBooking = async ({
   booking_time_slot,
 }: {
   stripe_session_id: string;
+  paymentIntentId?:string,
   user_id: string;
   booking_date: Date;
   services: {
@@ -415,6 +417,7 @@ export const saveBooking = async ({
   try {
     const newBooking = new BookingModel({
       stripe_session_id,
+      paymentIntentId,
       user_id: new mongoose.Types.ObjectId(user_id),
       booking_date,
       services,

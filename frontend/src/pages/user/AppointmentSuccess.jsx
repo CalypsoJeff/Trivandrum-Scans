@@ -1,17 +1,16 @@
 // import React, { useEffect, useRef, useState } from "react";
 // import { FaCheckCircle } from "react-icons/fa";
 // import { useNavigate, useLocation } from "react-router-dom";
-// import axiosInstanceUser from "../../services/axiosInstanceUser";
-// // import { useSocket } from "../../services/socketProvider";
-// // import { useSelector } from "react-redux";
-// // import { selectAdmin } from "../../features/admin/adminslice";
+// import {
+//   clearCartInBackend,
+//   initiateChatWithAdmin,
+//   confirmBooking,
+// } from "../../services/userService";
 
 // function AppointmentSuccess() {
 //   const navigate = useNavigate();
 //   const location = useLocation();
 //   const hasCalled = useRef(false);
-//   // const { socket } = useSocket();
-//   // const admin = useSelector(selectAdmin)
 
 //   const [appointmentDetails, setAppointmentDetails] = useState({
 //     date: "",
@@ -19,6 +18,7 @@
 //     amount: "",
 //   });
 
+//   // Extract parameters from URL
 //   const getQueryParams = (url) => {
 //     const queryParams = new URLSearchParams(url.search);
 //     return {
@@ -31,23 +31,32 @@
 //     };
 //   };
 
-//   const clearCartInBackend = async (userId) => {
+//   // Confirm booking, clear cart, and initiate chat
+//   const handleBookingConfirmation = async (params) => {
 //     try {
-//       const response = await axiosInstanceUser.post(`/cart/clear`, { userId });
-//       console.log("Cart cleared:", response.data);
-//     } catch (error) {
-//       console.error("Error clearing cart:", error);
-//     }
-//   };
+//       // Confirm booking
+//       await confirmBooking(params);
+//       console.log("Booking confirmed.");
 
-//   const handleGoToDashboard = () => {
-//     navigate("/home"); // Update this route to your actual dashboard or home page route
+//       // Clear user's cart in backend
+//       await clearCartInBackend(params.userId);
+//       console.log("Cart cleared.");
+
+//       // Initiate chat and send confirmation message
+//       await initiateChatWithAdmin(
+//         params.userId,
+//         params.services[0]?.name || "Service",
+//         params.appointmentDate
+//       );
+//       console.log("Chat initiated with admin.");
+//     } catch (error) {
+//       console.error("Error during booking confirmation:", error);
+//     }
 //   };
 
 //   useEffect(() => {
 //     if (!hasCalled.current) {
 //       hasCalled.current = true;
-
 //       const params = getQueryParams(location);
 
 //       setAppointmentDetails({
@@ -56,32 +65,7 @@
 //         amount: params.amount,
 //       });
 
-//       axiosInstanceUser
-//         .post("/confirm-booking", {
-//           sessionId: params.sessionId,
-//           userId: params.userId,
-//           appointmentDate: params.appointmentDate,
-//           services: params.services,
-//           amount: params.amount,
-//           appointmentTimeSlot: params.appointmentTimeSlot,
-//         })
-//         .then((response) => {
-//           console.log("Booking confirmed:", response.data);
-//           clearCartInBackend(params.userId);
-
-//           // Emit chat request to admin after booking confirmation
-//           // if (socket) {
-//           //   socket.emit("chatRequest", {
-//           //     userId: params.userId,
-//           //     adminId: admin.id,
-//           //     message: "New chat request from AppointmentSuccess",
-//           //   });
-//           //   console.log("Chat request sent to admin");
-//           // }
-//         })
-//         .catch((error) => {
-//           console.error("Error confirming booking:", error);
-//         });
+//       handleBookingConfirmation(params);
 //     }
 //   }, [location]);
 
@@ -116,7 +100,7 @@
 //           </p>
 //         </div>
 //         <button
-//           onClick={handleGoToDashboard}
+//           onClick={() => navigate("/home")}
 //           className="bg-teal-500 text-white py-2 px-6 rounded-lg hover:bg-teal-600 transition-all shadow-lg"
 //         >
 //           Go to Dashboard
@@ -145,6 +129,7 @@ function AppointmentSuccess() {
     amount: "",
   });
 
+  // Extract parameters from URL
   const getQueryParams = (url) => {
     const queryParams = new URLSearchParams(url.search);
     return {
@@ -157,6 +142,7 @@ function AppointmentSuccess() {
     };
   };
 
+  // Clear user's cart in backend after booking confirmation
   const clearCartInBackend = async (userId) => {
     try {
       const response = await axiosInstanceUser.post(`/cart/clear`, { userId });
@@ -166,20 +152,44 @@ function AppointmentSuccess() {
     }
   };
 
-  const initiateChat = async (userId) => {
+  // Initiate chat and send initial confirmation message to the user
+  const initiateChatWithAdmin = async (userId, service, date) => {
     try {
-      const response = await axiosInstanceUser.post(`/chat/start`, { userId });
-      console.log("Chat initiated:", response.data);
-      await axiosInstance.post(`/chat/${response.data.chatId}/send`, {
-        content: `Your booking for ${appointmentDetails.service} on ${appointmentDetails.date} has been confirmed. Thank you!`,
+      const { data } = await axiosInstanceUser.post(`/chat/start`, { userId });
+      console.log("Chat initiated:", data);
+
+      await axiosInstance.post(`/chat/${data.chatId}/send`, {
+        content: `Your booking for ${service} on ${date} has been confirmed. Thank you!`,
       });
       console.log("Initial confirmation message sent to user.");
     } catch (error) {
       console.error("Error initiating chat:", error);
     }
   };
-  const handleGoToDashboard = () => {
-    navigate("/home");
+
+  // Confirm booking, clear cart, and initiate chat
+  const confirmBooking = async (params) => {
+    try {
+      const response = await axiosInstanceUser.post("/confirm-booking", {
+        sessionId: params.sessionId,
+        userId: params.userId,
+        appointmentDate: params.appointmentDate,
+        services: params.services,
+        amount: params.amount,
+        appointmentTimeSlot: params.appointmentTimeSlot,
+      });
+      console.log("Booking confirmed:", response.data);
+
+      // Post-confirmation tasks
+      await clearCartInBackend(params.userId);
+      await initiateChatWithAdmin(
+        params.userId,
+        params.services[0]?.name || "Service",
+        params.appointmentDate
+      );
+    } catch (error) {
+      console.error("Error confirming booking:", error);
+    }
   };
 
   useEffect(() => {
@@ -193,23 +203,7 @@ function AppointmentSuccess() {
         amount: params.amount,
       });
 
-      axiosInstanceUser
-        .post("/confirm-booking", {
-          sessionId: params.sessionId,
-          userId: params.userId,
-          appointmentDate: params.appointmentDate,
-          services: params.services,
-          amount: params.amount,
-          appointmentTimeSlot: params.appointmentTimeSlot,
-        })
-        .then((response) => {
-          console.log("Booking confirmed:", response.data);
-          clearCartInBackend(params.userId);
-          initiateChat(params.userId); // Start chat with admin after booking confirmation
-        })
-        .catch((error) => {
-          console.error("Error confirming booking:", error);
-        });
+      confirmBooking(params);
     }
   }, [location]);
 
@@ -244,7 +238,7 @@ function AppointmentSuccess() {
           </p>
         </div>
         <button
-          onClick={handleGoToDashboard}
+          onClick={() => navigate("/home")}
           className="bg-teal-500 text-white py-2 px-6 rounded-lg hover:bg-teal-600 transition-all shadow-lg"
         >
           Go to Dashboard

@@ -4,6 +4,11 @@ import { useParams } from "react-router-dom";
 import axiosInstanceUser from "../../services/axiosInstanceUser";
 import ProfileSidebar from "../../components/UserComponents/ProfileSidebar";
 import { toast } from "sonner";
+import {
+  cancelBooking,
+  fetchBookingDetails,
+  fetchReports,
+} from "../../services/userService";
 
 function BookingDetails() {
   const { id } = useParams(); // `id` is the bookingId passed in URL
@@ -15,10 +20,9 @@ function BookingDetails() {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    const fetchBookingDetails = async () => {
+    const loadBookingDetails = async () => {
       try {
-        const response = await axiosInstanceUser.get(`/booking/user/${id}`);
-        const bookingData = response.data;
+        const bookingData = await fetchBookingDetails(id);
 
         // Check if any service is completed
         const anyServiceCompleted = bookingData.services.some(
@@ -30,7 +34,9 @@ function BookingDetails() {
         const currentTime = new Date();
         const timeDifference = appointmentDate - currentTime;
 
-        setCanCancel(!anyServiceCompleted && timeDifference > 24 * 60 * 60 * 1000);
+        setCanCancel(
+          !anyServiceCompleted && timeDifference > 24 * 60 * 60 * 1000
+        );
 
         setBooking(bookingData);
         setLoading(false);
@@ -40,24 +46,22 @@ function BookingDetails() {
       }
     };
 
-    const fetchReports = async () => {
+    const loadReports = async () => {
       try {
-        // Fetch reports specific to bookingId directly
-        const response = await axiosInstanceUser.get(`/reports/${id}`);
-        setReports(response.data);
+        const reportData = await fetchReports(id);
+        setReports(reportData);
       } catch (err) {
         console.error("Error fetching reports:", err);
-        toast.error("Failed to fetch reports for this booking.");
       }
     };
 
-    fetchBookingDetails();
-    fetchReports();
+    loadBookingDetails();
+    loadReports();
   }, [id]);
 
   const handleCancelBooking = async () => {
     try {
-      await axiosInstanceUser.post(`/booking/cancel/${id}`);
+      await cancelBooking(id);
       setBooking((prevBooking) => ({
         ...prevBooking,
         status: "cancelled",
@@ -65,7 +69,6 @@ function BookingDetails() {
       setShowModal(false);
       toast.success("Money refunded to bank account!");
     } catch (error) {
-      toast.error("Failed to cancel the booking.");
       setShowModal(false);
     }
   };

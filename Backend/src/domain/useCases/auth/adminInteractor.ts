@@ -15,6 +15,7 @@ import {
   publishReportInDb,
   saveReport,
   saveService,
+  successMessagetoUser,
   toggleServiceByID,
   updateCategoryInDB,
   updateDepartment,
@@ -24,6 +25,7 @@ import {
   updateUserStatus,
 } from "../../../infrastructure/repositories/mongoAdminRepository";
 import { uploadToS3 } from "../../../utils/s3Uploader";
+import { io } from '../../../server';
 import // ICategory,
   // PaginatedCategories,
   "../../entities/types/categoryType";
@@ -442,10 +444,13 @@ export default {
   publishReport: async (reportId: string) => {
     return await publishReportInDb(reportId);
   },
+  successMessage:async(chatId:string,content:string)=>{
+     // Save the message in the database
+     const newMessage = await successMessagetoUser(chatId, content);
 
-
-
-
-
-
+     // Emit the message to the specified chat room via Socket.IO
+     io.to(chatId).emit("receiveMessage", newMessage);
+ 
+     return newMessage;
+  }
 };

@@ -526,17 +526,17 @@ export default {
     try {
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       const { bookingId } = req.body;
-  
+
       // Validate booking ID
       if (!bookingId) {
         return res.status(400).json({ message: "Booking ID is required" });
       }
-  
+
       // Validate files
       if (!files || !files.report || files.report.length === 0) {
         return res.status(400).json({ message: "No report files uploaded" });
       }
-  
+
       // Pass all files to the interactor
       const result = await adminInteractor.addReportData({ bookingId, reportFiles: files.report });
       res.status(200).json({ message: "Report uploaded successfully", result });
@@ -545,7 +545,7 @@ export default {
       res.status(500).json({ message: "Failed to upload report" });
     }
   },
-  
+
   reportList: async (req: Request, res: Response) => {
     try {
       const reports = await adminInteractor.reportList();
@@ -560,14 +560,14 @@ export default {
       const { editReportId } = req.params;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       const { bookingId } = req.body;
-  
+
       if (!bookingId) {
         return res.status(400).json({ message: "Booking ID is required" });
       }
       if (!files || !files.report || files.report.length === 0) {
         return res.status(400).json({ message: "No report file uploaded" });
       }
-  
+
       // Send the array of files to the interactor for uploading and saving
       const result = await adminInteractor.editReportData({ editReportId, bookingId, reportFiles: files.report });
       res.status(200).json({ message: "Report updated successfully", result });
@@ -576,7 +576,7 @@ export default {
       res.status(500).json({ message: "Failed to update report" });
     }
   },
-  publishReport:async (req: Request, res: Response) => {
+  publishReport: async (req: Request, res: Response) => {
     try {
       const { reportId } = req.params;
       const publishedReport = await adminInteractor.publishReport(reportId);
@@ -589,10 +589,20 @@ export default {
       console.error("Error publishing report:", error);
       res.status(500).json({ message: "Failed to publish report" });
     }
-  }
-  
+  },
+  successMessage: async (req: Request, res: Response) => {
+    console.log("reached heree");
+    
+    const { chatId } = req.params;  // Get chat ID from route parameters
+    const { content } = req.body;    // Get message content from the request body
 
-
-
-
-};
+    try {
+      // Call the interactor to send the success message
+      const newMessage = await adminInteractor.successMessage(chatId, content);
+      res.status(200).json({ message: "Message sent successfully", newMessage });
+    } catch (error) {
+      console.error("Error sending success message:", error);
+      res.status(500).json({ message: "Failed to send message"});
+    }
+  },
+}
