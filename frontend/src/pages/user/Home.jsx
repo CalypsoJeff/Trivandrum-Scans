@@ -5,19 +5,21 @@ import Footer from "../../components/UserComponents/Footer";
 
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { selectUser } from "../../features/auth/authSlice";
+import { selectUser, clearUser } from "../../features/auth/authSlice";
 import { Team } from "../../components/UserComponents/Team";
 import { Features } from "../../components/UserComponents/Features";
 import { toast } from "sonner";
 import { addToCart } from "../../features/cart/cartSlice";
 import ImageCarousel from "../../components/UserComponents/ImageCarousel";
 import { fetchServices } from "../../services/userService";
+import Modal from "../../components/UserComponents/Modal";
 
 function Home() {
   const user = useSelector(selectUser);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isBlocked, setIsBlocked] = useState(false);
   const [limit] = useState(8);
   const userId = user?.id;
   const dispatch = useDispatch();
@@ -46,10 +48,16 @@ function Home() {
       title: "Ultrasound",
       text: "State-of-the-art ultrasound services with real-time imaging.",
     },
-    // Add more features as needed
   ];
 
   useEffect(() => {
+    const checkUserBlocked = async () => {
+      if (user?.isBlocked) {
+        console.log(user.isBlocked, "qqqqqqqqqqqqq");
+        setIsBlocked(true);
+      }
+    };
+
     const loadServices = async () => {
       setLoading(true);
       try {
@@ -62,9 +70,9 @@ function Home() {
         setLoading(false);
       }
     };
-
     loadServices();
-  }, []);
+    checkUserBlocked();
+  }, [user]);
 
   const handleAddToCart = async (service) => {
     if (!userId) {
@@ -85,28 +93,28 @@ function Home() {
     }
   };
 
+  const handleModalClose = () => {
+    dispatch(clearUser());
+    navigate("/login");
+  };
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-
-  if (user.isBlocked) {
-    return <Navigate to="/login" replace />;
-  }
-
   return (
     <div>
+      {isBlocked && (
+        <Modal
+          message="Your account is temporarily blocked."
+          onClose={handleModalClose}
+        />
+      )}
       <Header />
-      {/* Pass the user's name to the ImageCarousel component */}
       <ImageCarousel userName={user.name || user.user.name} />
-
-      {/* Features Section */}
       <Features data={featuresData} />
-
       <div className="max-w-7xl mx-auto p-6">
         <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
           Our Services
         </h1>
-        {/* Services Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {services.length > 0 ? (
             services.map((service) => (
@@ -114,16 +122,14 @@ function Home() {
                 key={service._id}
                 className="bg-white shadow-lg rounded-lg p-6 flex flex-col justify-between"
               >
-                {/* Service Image */}
                 <img
                   src={service.serviceImageUrl}
                   alt={service.name}
                   className="w-full h-40 object-cover rounded-t-lg mb-4"
                 />
-                {/* Service Details */}
                 <div className="flex-grow">
                   <Link
-                    to={`/service/${service._id}`} // Link to service detail page with service ID
+                    to={`/service/${service._id}`}
                     className="text-xl font-bold text-gray-700 hover:underline block mb-2"
                   >
                     {service.name}
@@ -135,7 +141,6 @@ function Home() {
                     Price: Rs {service.price}
                   </p>
                 </div>
-                {/* Action Buttons */}
                 <div className="mt-4">
                   <button
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg mb-2"
@@ -150,7 +155,6 @@ function Home() {
             <p className="text-center text-gray-500">No services available</p>
           )}
         </div>
-        {/* "View All Services" Button */}
         <div className="flex justify-center mt-8">
           <button
             onClick={() => navigate("/service")}
@@ -160,8 +164,6 @@ function Home() {
           </button>
         </div>
       </div>
-
-      {/* Team Section */}
       <Team data={teamData} />
       <Footer />
     </div>

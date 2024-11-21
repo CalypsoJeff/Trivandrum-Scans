@@ -1,5 +1,21 @@
-import mongoose from 'mongoose';
 
+import mongoose, { Document } from 'mongoose';
+
+export interface IMessage extends Document {
+    chat: mongoose.Types.ObjectId;
+    sender: mongoose.Types.ObjectId;
+    senderModel: 'User' | 'Admin';
+    content?: string;
+    fileUrl?: string;
+    fileName?: string;
+    fileType?: string;
+    isFile?: boolean;
+    delivered?: boolean;
+    readAt?: Date;
+    read?: boolean; // Ensure this is a boolean
+    createdAt: Date;
+    deleted?: boolean;
+}
 const messageSchema = new mongoose.Schema({
     chat: {
         type: mongoose.Schema.Types.ObjectId,
@@ -13,7 +29,7 @@ const messageSchema = new mongoose.Schema({
     },
     senderModel: {
         type: String,
-        enum: ['User', 'Admin'], 
+        enum: ['User', 'Admin'],
         required: true
     },
     content: {
@@ -33,9 +49,17 @@ const messageSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    delivered: { // New Field
+        type: Boolean,
+        default: false
+    },
     read: {
         type: Boolean,
         default: false
+    },
+    readAt: {
+        type: Date,
+        default: null
     },
     createdAt: {
         type: Date,

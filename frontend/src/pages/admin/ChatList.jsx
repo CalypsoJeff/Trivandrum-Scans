@@ -19,14 +19,14 @@ export default function ChatList() {
     getChatList();
   }, []);
 
-  const handleChatClick = (chatId, userName) => {
-    navigate(`/admin/chat/${chatId}`, { state: { userName } });
+  const handleChatClick = (chatId, userId, userName) => {
+    navigate(`/admin/chat/${chatId}`, { state: { userId, userName } });
   };
 
   return (
     <div className="min-h-screen flex bg-gray-100">
       <Sidebar />
-      <div className="flex-1  p-6">
+      <div className="flex-1 p-6">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
           <h5 className="text-2xl font-semibold text-center text-gray-800 mb-6">
             Chats
@@ -35,13 +35,13 @@ export default function ChatList() {
             {chats.length > 0 ? (
               chats.map((chat) => {
                 const user = chat.users?.find(
-                  (u) => u._id !== "66ee588d1e1448fbea1f40bb"
+                  (u) => u._id !== "66ee588d1e1448fbea1f40bb" // Admin ID, replace with actual admin ID if necessary
                 );
                 return (
                   <div
                     key={chat._id}
                     onClick={() =>
-                      handleChatClick(chat._id, user?.name || "User")
+                      handleChatClick(chat._id, user?._id, user?.name || "User")
                     }
                     className="flex items-center space-x-4 p-4 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition duration-200 shadow-sm hover:shadow-md"
                   >

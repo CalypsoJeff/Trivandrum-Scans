@@ -23,6 +23,8 @@ import BookingDetails from "../../pages/user/BookingDetails";
 import Chat from "../../pages/user/Chat";
 import AppointmentFailure from "../../pages/user/AppointmentFailure";
 import ReportList from "../../pages/user/ReportList";
+import UserErrorPage from "../../pages/user/UserErrorPage";
+import ChangePassword from "../../pages/user/ChangePassword";
 
 const UserRoutes = () => {
   const navigate = useNavigate();
@@ -55,6 +57,9 @@ const UserRoutes = () => {
         <Route path="/booking" element={<BookingList />} />
         <Route path="/booking/:id" element={<BookingDetails />} />
         <Route path="/chat" element={<Chat />} />
+        <Route path="/change-password" element={<ChangePassword/>} />
+        <Route path="*" element={<UserErrorPage />} />
+
       </Route>
     </Routes>
   );

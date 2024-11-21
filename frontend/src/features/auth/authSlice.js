@@ -38,6 +38,7 @@ export const loginUser = createAsyncThunk(
     }
   }
 );
+
 export const GoogleAuth = createAsyncThunk(
   "auth/GoogleAuth",
   async (userData, { rejectWithValue }) => {

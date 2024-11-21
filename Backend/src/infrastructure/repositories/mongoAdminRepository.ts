@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // import { ICategory, PaginatedCategories } from "../../domain/entities/types/categoryType";
-import  { Types } from "mongoose";
+import { Types } from "mongoose";
 import {
   ICategory,
-  PaginatedCategories,
 } from "../../domain/entities/types/categoryType";
 import { IServiceResponse } from "../../domain/entities/types/serviceType";
 import { IUser, PaginatedUsers } from "../../domain/entities/types/userType";
@@ -116,19 +115,12 @@ export const deleteDepartment = async (id: string) => {
 };
 
 export const getPaginatedCategories = async (
-  page: number,
-  limit: number
-): Promise<PaginatedCategories> => {
+) => {
   try {
     const categories = await Category.find()
-      .skip((page - 1) * limit)
-      .limit(limit)
       .populate("department")
       .lean()
       .exec();
-
-    const totalCategories = await Category.countDocuments();
-    const totalPages = Math.ceil(totalCategories / limit);
 
     // Map over categories to explicitly cast _id to string
     const mappedCategories: ICategory[] = categories.map((category) => ({
@@ -138,10 +130,9 @@ export const getPaginatedCategories = async (
 
     return {
       categories: mappedCategories,
-      totalPages,
     };
   } catch (error) {
-    console.error("Error fetching paginated categories:", error); // Log the error
+    console.error("Error fetching paginated categories:", error);
     throw new Error("Error fetching paginated categories");
   }
 };
@@ -277,24 +268,12 @@ export const updateService = async (
   }
 };
 
-// Get paginated services and populate category names
-// Manually fetching category names based on category IDs
-export const getPaginatedServicesWithCategoryDetails = async (
-  page: number,
-  limit: number
-) => {
+export const getAllServicesWithCategoryDetails = async () => {
   try {
-    // Fetch services without population
-    const services = await Service.find()
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean()
-      .exec();
+    // Fetch all services
+    const services = await Service.find().lean();
 
-    const totalServices = await Service.countDocuments();
-    const totalPages = Math.ceil(totalServices / limit);
-
-    // For each service, fetch category name and id using category ID
+    // Fetch category details for each service
     const servicesWithCategoryDetails = await Promise.all(
       services.map(async (service) => {
         const category = await Category.findById(service.category, "_id name")
@@ -312,16 +291,16 @@ export const getPaginatedServicesWithCategoryDetails = async (
         };
       })
     );
+
     return {
       services: servicesWithCategoryDetails,
-      totalPages,
-      currentPage: page,
     };
   } catch (error) {
-    console.error("Error fetching paginated services:", error);
-    throw new Error("Error fetching paginated services");
+    console.error("Error fetching all services:", error);
+    throw new Error("Error fetching all services");
   }
 };
+
 export const toggleServiceByID = async (id: string) => {
   try {
     const service = await Service.findById(id);
@@ -460,7 +439,7 @@ export const getReportsFromDb = async () => {
       .populate({
         path: "bookingId",
         populate: { path: "user_id", select: "name" },
-      });
+      }).sort({ uploadedAt: -1 });
     return reportList;
   } catch (error) {
     console.error("Error fetching reports from database:", error);
@@ -523,12 +502,12 @@ export const publishReportInDb = async (reportId: string): Promise<any> => {
   }
 };
 
-export const successMessagetoUser= async(chatId:string,content:string)=>{
-  console.log(chatId,content,'yesssssssss');
-  
+export const successMessagetoUser = async (chatId: string, content: string) => {
+  console.log(chatId, content, 'yesssssssss');
+
   return await Message.create({
     chat: chatId,
-    sender: '66ee588d1e1448fbea1f40bb', 
+    sender: '66ee588d1e1448fbea1f40bb',
     senderModel: "Admin",
     content,
     createdAt: new Date(),

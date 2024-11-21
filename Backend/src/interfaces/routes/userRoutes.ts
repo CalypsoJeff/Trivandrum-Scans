@@ -33,5 +33,7 @@ userRouter.get('/booking/user/:id', protectUser, userController.getBookingDetail
 userRouter.post('/cart/clear', protectUser, userController.clearCart);
 userRouter.post('/booking/cancel/:id',protectUser,userController.cancelBooking)
 userRouter.get('/reports/:id',protectUser,userController.reportList)
+userRouter.get('/allbookings',userController.getAllBookings)
+userRouter.put('/change-password',userController.changePassword)
 
 export default userRouter;

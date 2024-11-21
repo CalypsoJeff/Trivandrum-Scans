@@ -19,35 +19,42 @@ const UserOtp = () => {
     const { email } = location.state || {};
 
     if (!email) {
-      return <div>Error: Email not provided</div>;
+      toast.error("Email not provided. Please try again.");
+      return;
     }
 
     try {
       const response = await otpVerification(otp, email);
+      const message = response?.data?.message || "Verification successful!";
       navigate("/home");
-      toast.success(response.data.message, {
+      toast.success(message, {
         style: {
-          backgroundColor: "#4CAF50", // Green for success
+          backgroundColor: "#4CAF50",
           color: "#fff",
         },
       });
     } catch (error) {
       console.error("Error response:", error);
-      if (error.response && error.response.data) {
-        toast.error("Invalid OTP, please try again.");
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
       } else {
-        toast.error(error.message);
+        toast.error("An unexpected error occurred. Please try again.");
       }
     }
   };
 
   const handleResend = async () => {
     const { email } = location.state || {};
+    if (!email) {
+      toast.error("Email not provided. Please try again.");
+      return;
+    }
+
     try {
       await resendOtp(email);
       toast.success("OTP resent successfully", {
         style: {
-          backgroundColor: "#4CAF50", // Green for success
+          backgroundColor: "#4CAF50",
           color: "#fff",
         },
       });

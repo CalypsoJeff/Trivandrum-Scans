@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../../components/AdminComponents/Sidebar";
-import axiosInstance from "../../services/axiosInstance";
 import SearchSortFilter from "../../components/AdminComponents/SearchSortFilter";
 import { fetchBookings } from "../../services/adminService";
 

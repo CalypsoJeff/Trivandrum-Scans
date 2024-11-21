@@ -1,25 +1,32 @@
 /* eslint-disable react/prop-types */
 import React from "react";
+import { AiOutlineCloseCircle } from "react-icons/ai";
 
-const Modal = ({ message, onClose }) => {
-  return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="absolute inset-0 bg-black opacity-100"></div>
-      <div className="absolute inset-0 bg-[url('https://marrymetampabay.com/wp-content/uploads/2018/02/18-8.jpg')] bg-cover opacity-50"></div>
-      <div className="relative bg-white p-6 rounded-lg shadow-lg text-center z-10">
-        <h2 className="text-lg font-semibold mb-4">Notification</h2>
-        <p className="mb-4">{message}</p>
-        <div className="flex justify-center">
-          <button
-            onClick={onClose}
-            className="bg-[#a39f74] hover:bg-[#9b976f] text-white font-bold py-2 px-4 rounded"
-          >
-            OK
-          </button>
-        </div>
+const Modal = ({ message, onClose }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+    <div className="bg-white rounded-lg p-6 shadow-lg max-w-sm w-full">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold text-gray-700">Notice</h2>
+        <button
+          onClick={onClose} // Close the modal
+          className="text-gray-500 hover:text-gray-800 focus:outline-none"
+        >
+          <AiOutlineCloseCircle size={24} />
+        </button>
+      </div>
+      <div className="text-gray-600 text-sm">
+        <p>{message}</p>
+      </div>
+      <div className="mt-6 text-center">
+        <button
+          onClick={onClose} // Close the modal
+          className="px-6 py-2 text-sm font-semibold text-white bg-red-500 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
+        >
+          OK
+        </button>
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 export default Modal;

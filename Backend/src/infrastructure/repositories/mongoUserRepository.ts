@@ -17,6 +17,13 @@ interface Service {
   personIds: string[];
 }
 
+export const getStatus = async (id: string) => {
+  const user = await Users.findOne({ _id: id })
+  console.log(user)
+  return user
+}
+
+
 export const checkExistingUser = async (email: string, name: string) => {
   const existingUser = await Users.findOne({
     $and: [{ email: email }, { name: name }],
@@ -404,7 +411,7 @@ export const saveBooking = async ({
   booking_time_slot,
 }: {
   stripe_session_id: string;
-  paymentIntentId?:string,
+  paymentIntentId?: string,
   user_id: string;
   booking_date: Date;
   services: {
@@ -534,7 +541,7 @@ export const reportListInDb = async (bookingId: string): Promise<any[]> => {
 
     // Query reports for specific bookingId and published status
     const reports = await reportModel.find({
-      bookingId: objectId, 
+      bookingId: objectId,
       published: true,
     });
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
 import jwt from 'jsonwebtoken';
 import userInteractor from "../../domain/useCases/auth/userInteractor";
@@ -8,21 +9,46 @@ import { IServiceUpdate } from "../../domain/entities/types/serviceType";
 import BookingModel from "../../infrastructure/database/dbModel/bookingModel";
 import { generateToken } from "../../domain/helper/jwtHelper";
 import { getUserbyEMail } from "../../infrastructure/repositories/mongoUserRepository";
+import { Service } from "../../infrastructure/database/dbModel/serviceModel";
+import mongoose from "mongoose";
+import { Encrypt } from "../../domain/helper/hashPassword";
 const stripe = new Stripe(process.env.STRIPE_KEY as string, {});
+interface IService {
+  serviceId: mongoose.Types.ObjectId;
+  personIds: string[];
+  price: number;
+}
+
 
 export default {
+  // getStatus: async (req: Request, res: Response) => {
+  //   try {
+  //     if (req.user && req.user.user) {
+  //       console.log(req.user, req.user.user, "15151555");
+
+  //       res
+  //         .status(200)
+  //         .json({ message: "User is authenticated", user: req.user });
+  //     } else {
+  //       res.status(401).json({ message: "User is not authenticated" });
+  //     }
+  //   } catch (error) {
+  //     console.error("Unexpected error in resendOTP:", error);
+  //     res.status(500).json({ error: "Failed to get user status" });
+  //   }
+  // },
   getStatus: async (req: Request, res: Response) => {
+
     try {
-      if (req.user && req.user.user) {
-        res
-          .status(200)
-          .json({ message: "User is authenticated", user: req.user });
-      } else {
-        res.status(401).json({ message: "User is not authenticated" });
-      }
-    } catch (error) {
-      console.error("Unexpected error in resendOTP:", error);
-      res.status(500).json({ error: "Failed to get user status" });
+      const id = req.query.id as string
+      const response = await userInteractor.getStatus(id);
+      console.log(response, 'vvvvv');
+
+      res.status(200).json({ response })
+    } catch (error: any) {
+
+      console.log(error);
+      res.status(500).json(error)
     }
   },
 
@@ -104,18 +130,31 @@ export default {
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error("Error in userLogin:", error.message);
-        if (error.message === "User is not verified") {
-          res.status(403).json({ message: "User is not verified" });
-        } else {
-          res
-            .status(500)
-            .json({ message: error.message || "Internal Server Error" });
+
+        // Handle specific error messages
+        if (error.message === "Account is Blocked") {
+          return res.status(403).json({ message: "Account is Blocked" });
         }
+        if (error.message === "Invalid password") {
+          return res.status(401).json({ message: "Invalid password" });
+        }
+        if (error.message === "User not found") {
+          return res.status(404).json({ message: "User not found" });
+        }
+        if (error.message === "User is not verified") {
+          return res.status(403).json({ message: "User is not verified" });
+        }
+
+        // Fallback for any unexpected error messages
+        return res
+          .status(500)
+          .json({ message: error.message || "Internal Server Error" });
       } else {
         console.error("Unexpected error in userLogin:", error);
-        res.status(500).json({ message: "An unexpected error occurred" });
+        return res.status(500).json({ message: "An unexpected error occurred" });
       }
     }
+
   },
 
   googleAuth: async (req: Request, res: Response) => {
@@ -313,6 +352,21 @@ export default {
         appointmentTimeSlot,
         totalAmount,
       } = req.body;
+      // Validate against existing bookings
+      const conflictingBooking = await BookingModel.findOne({
+        booking_date: appointmentDate,
+        booking_time_slot: appointmentTimeSlot,
+        "services.service_id": { $in: services.map((service: IService) => service.serviceId) },
+        "services.persons": { $in: services.flatMap((service: IService) => service.personIds) },
+      });
+      console.log(conflictingBooking, '124');
+
+
+      if (conflictingBooking) {
+        return res.status(400).json({
+          error: "One or more services are already booked for this time slot on this day.",
+        });
+      }
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: [
@@ -539,8 +593,61 @@ export default {
       console.error("Error in reportList controller:", error);
       res.status(500).json({ message: "Failed to fetch report list" });
     }
-  }
+  },
+  getAllBookings: async (req: Request, res: Response) => {
+    try {
+      const bookings = await BookingModel.find()
+        .populate({
+          path: "services.service_id",
+          select: "name price",
+        })
+        .populate({
+          path: "services.persons",
+          select: "name age gender",
+        });
 
+      res.status(200).json(bookings);
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  },
+
+
+  getAllServices: async (req: Request, res: Response) => {
+    try {
+      const services = await Service.find({ isAvailable: true });
+      res.status(200).json(services)
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  },
+  changePassword: async (req: Request, res: Response) => {
+    const { currentPassword, newPassword, userId } = req.body
+    try {
+      const user = await Users.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      if (!user.password) {
+        return res.status(400).json({ message: 'User password not set' });
+      }
+      const isMatch = await Encrypt.comparePassword(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+      const hashedPassword = await Encrypt.cryptPassword(newPassword);
+      user.password = hashedPassword;
+      await user.save();
+
+      res.status(200).json({ message: 'Password updated successfully' });
+    } catch (error) {
+      console.error('Error changing password:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  },
 
 
 };

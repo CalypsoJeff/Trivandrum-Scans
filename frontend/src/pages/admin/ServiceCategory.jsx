@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
+import { FaEdit, FaPlus } from "react-icons/fa";
 import Sidebar from "../../components/AdminComponents/Sidebar";
 import Modal from "react-modal";
 import { Formik, Form, Field, ErrorMessage } from "formik";
@@ -27,13 +27,23 @@ const CategorySchema = Yup.object().shape({
 function ServiceCategories() {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
   const dispatch = useDispatch();
 
   // Fetching categories from Redux store
   const categories = useSelector((state) => state.admin.categories);
-  console.log(categories,"categoriessssssssssssss");
-
+  console.log(categories,);
+  
   const status = useSelector((state) => state.admin.status);
+
+  // Pagination Logic
+  const totalPages = Math.ceil(categories.length / itemsPerPage);
+  const paginatedCategories = categories.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const openModal = (category = null) => {
     setEditingCategory(category);
@@ -59,6 +69,12 @@ function ServiceCategories() {
     resetForm();
   };
 
+  const handlePageChange = (page) => {
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
   return (
     <div className="flex bg-gray-100 min-h-screen">
       <Sidebar />
@@ -78,44 +94,70 @@ function ServiceCategories() {
             <p className="text-xl text-gray-600">Loading categories...</p>
           </div>
         ) : Array.isArray(categories) && categories.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {categories.map((category) => (
-              <div key={category.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  onError={(e) => (e.target.src = "https://via.placeholder.com/150")} // Fallback image on error
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-4">
-                  <h2 className="text-lg font-semibold text-gray-800">
-                    {category.name}
-                  </h2>
-                  <div className="mt-4 flex justify-between items-center">
-                    <Link
-                      to={`/admin/category_services/${category.id}`}
-                      className="text-blue-500 hover:underline"
-                    >
-                      View Services
-                    </Link>
-                    <div className="flex space-x-3">
+          <div>
+            {/* Grid of Categories */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {paginatedCategories.map((category) => (
+                <div key={category.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    onError={(e) => (e.target.src = "https://via.placeholder.com/150")} // Fallback image on error
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="p-4">
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      {category.name}
+                    </h2>
+                    <div className="mt-4 flex justify-between items-center">
+                      <Link
+                        to={`/admin/category_services/${category.id}`}
+                        className="text-blue-500 hover:underline"
+                      >
+                        View Services
+                      </Link>
                       <button
                         onClick={() => openModal(category)}
                         className="text-blue-500 hover:text-blue-700"
                       >
                         <FaEdit /> Edit
                       </button>
-                      <button
-                        onClick={() => handleDeleteCategory(category.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <FaTrash /> Delete
-                      </button>
                     </div>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-6 space-x-2">
+                <button
+                  className={`px-4 py-2 rounded ${
+                    currentPage === 1
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-blue-500 text-white hover:bg-blue-600"
+                  }`}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </button>
+                <span className="px-4 py-2 bg-gray-200 rounded">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  className={`px-4 py-2 rounded ${
+                    currentPage === totalPages
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-blue-500 text-white hover:bg-blue-600"
+                  }`}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </button>
               </div>
-            ))}
+            )}
           </div>
         ) : (
           <p className="text-center text-gray-600">No categories available</p>
@@ -248,46 +290,3 @@ function ServiceCategories() {
 }
 
 export default ServiceCategories;
-
-// import React, { useEffect, useState } from "react";
-// import axiosInstance from "../../services/axiosInstance";
-
-// function ServiceCategory() {
-//   const [category, setCategory] = useState([]);
-//   const [status, setStatus] = useState("idle");
-//   const [error, setError] = useState(null);
-//   const [searchTerm, setSearchTerm] = useState("");
-//   const [statusFilter, setStatusFilter] = useState("");
-//   const [blockedStatus, setBlockedStatus] = useState({});
-//   const [currentPage, setCurrentPage] = useState(1);
-//   const [totalPages, setTotalPages] = useState(1);
-
-//   const fetchCategory = async (page = 1, limit = 10) => {
-//     setStatus("loading");
-//     try {
-//       const response = await axiosInstance.get(
-//         `/categoryList?page=${page}&limit=${limit}`
-//       );
-//       console.log(response);
-
-//       setCategory(response.data.category);
-//       setTotalPages(response.data.totalPages);
-//       setStatus("succeeded");
-//     } catch (err) {
-//       console.error("Failed to fetch category:", err);
-//       setError(err.message);
-//       setStatus("failed");
-//     }
-//   };
-//   useEffect(() => {
-//     fetchCategory(currentPage);
-//   }, [currentPage]);
-
-//   return (
-//     <div>
-//       <h1>Hey welcome</h1>
-//     </div>
-//   );
-// }
-
-// export default ServiceCategory;

@@ -24,7 +24,9 @@ const AdminLogin = () => {
       .then((response) => {
         console.log(response, "response/");
         if (response.meta.requestStatus === "fulfilled") {
-          toast.success("Admin login success");
+          toast.success("Admin login success",{
+            style: { backgroundColor: "#4CAF50", color: "#fff" },
+          });
           navigate("/admin/dashboard");
         } else {
           toast.error("Login failed");

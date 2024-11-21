@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import Header from "../../components/UserComponents/Header";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import axiosInstanceUser from "../../services/axiosInstanceUser";
 import { useSelector, useDispatch } from "react-redux";
 import { selectUser } from "../../features/auth/authSlice";
 import { addToCart } from "../../features/cart/cartSlice";
@@ -16,7 +15,7 @@ function Services() {
   const [categories, setCategories] = useState([]); // New state for categories
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [limit] = useState(10);
+  const [limit] = useState(8);
   const user = useSelector(selectUser);
   const userId = user?.id;
   const dispatch = useDispatch();

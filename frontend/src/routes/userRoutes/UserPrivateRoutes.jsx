@@ -1,10 +1,26 @@
-import React, { useEffect, useState } from "react"; // Add React import here
+// import React from "react";
+// import { Navigate, Outlet } from "react-router";
+// import Cookies from "js-cookie";
+
+// const UserPrivateRoutes = () => {
+//   const token = Cookies.get("token");
+
+//   if (!token) {
+//     return <Navigate to="/login" />;
+//   }
+
+//   return <Outlet />;
+// };
+
+// export default UserPrivateRoutes;
+
+import React, { useEffect, useState } from "react"; 
 import { Navigate, Outlet, useNavigate } from "react-router";
 import Cookies from "js-cookie";
 import axiosInstanceUser from "../../services/axiosInstanceUser";
 import { selectUser, clearUser } from "../../features/auth/authSlice";
 import { useDispatch, useSelector } from "react-redux";
-import Modal from "../../components/UserComponents/Modal"; // Ensure Modal component is correctly imported
+import Modal from "../../components/UserComponents/Modal";
 
 const UserPrivateRoutes = () => {
   const navigate = useNavigate();
@@ -20,8 +36,10 @@ const UserPrivateRoutes = () => {
       return;
     }
     try {
-      const res = await axiosInstanceUser.get(`/getStatus?id=${user.id}`);
-      if (res.data.response && res.data.response.is_blocked) {
+      const response = await axiosInstanceUser.get(`/getStatus?id=${user.id}`);
+      if (response.data.response && response.data.response.is_blocked) {
+        console.log(response.data.response || response.data.response.is_blocked,'11111111111111111111111');
+        
         setIsBlocked(true);
       }
     } catch (error) {
@@ -37,9 +55,9 @@ const UserPrivateRoutes = () => {
 
   const handleModalClose = () => {
     dispatch(clearUser());
+    Cookies.remove("token");
     navigate("/login");
   };
-
   if (!token) {
     return <Navigate to="/login" />;
   }

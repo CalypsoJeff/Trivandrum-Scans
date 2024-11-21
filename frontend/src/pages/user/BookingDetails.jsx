@@ -38,6 +38,8 @@ function BookingDetails() {
           !anyServiceCompleted && timeDifference > 24 * 60 * 60 * 1000
         );
 
+        console.log(bookingData, "4848484848");
+
         setBooking(bookingData);
         setLoading(false);
       } catch (err) {
@@ -118,7 +120,7 @@ function BookingDetails() {
                   <strong>Time Slot:</strong> {booking.booking_time_slot}
                 </p>
                 <p className="text-gray-600">
-                  <strong>Status:</strong>
+                  <strong>Status:</strong>{" "}
                   <span
                     className={`font-medium ${
                       booking.status === "confirmed"
@@ -133,6 +135,58 @@ function BookingDetails() {
                   <strong>Total Amount:</strong> ₹{booking.total_amount}
                 </p>
               </div>
+            </div>
+
+            {/* Booked Services Section */}
+            <div className="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
+              <h2 className="text-2xl font-semibold text-gray-700 mb-6 text-center border-b pb-4">
+                Booked Services
+              </h2>
+              {booking.services.length > 0 ? (
+                <div className="flex flex-col space-y-4">
+                  {booking.services.map((service, index) => (
+                    <div
+                      key={index}
+                      className="bg-white p-4 rounded-lg shadow-md border border-gray-200"
+                    >
+                      <p className="text-gray-600">
+                        <strong>Service:</strong> {service.service_id.name}
+                      </p>
+                      <p className="text-gray-600">
+                        <strong>Price:</strong> ₹{service.service_id.price}
+                      </p>
+                      <p className="text-gray-600">
+                        <strong>Completed:</strong>{" "}
+                        <span
+                          className={`font-medium ${
+                            service.completed
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {service.completed ? "Yes" : "No"}
+                        </span>
+                      </p>
+                      {service.persons?.length > 0 && (
+                        <div className="mt-2">
+                          <h3 className="text-gray-700 font-medium">
+                            Persons:
+                          </h3>
+                          <ul className="list-disc list-inside text-gray-600">
+                            {service.persons.map((person, i) => (
+                              <li key={i}>
+                                {person.name} ({person.age} years old)
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center">No services booked.</p>
+              )}
             </div>
 
             <div className="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
@@ -173,7 +227,6 @@ function BookingDetails() {
               )}
             </div>
 
-            {/* Cancel button only appears if `canCancel` is true */}
             {canCancel && booking.status === "confirmed" && (
               <div className="flex justify-end">
                 <button

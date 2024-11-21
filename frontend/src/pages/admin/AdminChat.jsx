@@ -1,53 +1,75 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { useSocket } from "../../services/socketProvider";
 import { selectAdmin } from "../../features/admin/adminslice";
-import io from "socket.io-client";
 import Sidebar from "../../components/AdminComponents/Sidebar";
 import { fetchChatMessages } from "../../services/adminService";
-
-// Initialize socket connection
-const socket = io("http://localhost:5000", { autoConnect: false });
 
 export default function AdminChat() {
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState("");
+  const [typing, setTyping] = useState(false);
+  const [online, setOnline] = useState(false); // Online status state
+  const [, setAdminOnline] = useState(false); // Track admin online status
   const location = useLocation();
   const { chatId } = useParams();
   const admin = useSelector(selectAdmin);
   const adminId = admin?._id;
-  const userName = location.state?.userName; // Get userName from location state
 
-  // Reference to the end of the messages container
+  const { socket } = useSocket();
   const messagesEndRef = useRef(null);
+  const { userId, userName } = location.state;
 
+  // Fetch chat messages when chatId is available
   useEffect(() => {
     if (chatId) {
       fetchMessages(chatId);
       socket.connect();
-      socket.emit("joinChat", chatId);
+      socket.emit("join_room", chatId);
+      socket.emit("get_online_status", { userId, adminId });
 
+      // Unified handler for online status updates
+      socket.on("online_status_update", (data) => {
+        if (data.userId === userId) setOnline(data.status === "online");
+        if (data.adminId === adminId) setAdminOnline(data.status === "online");
+      });
+
+      // Handle receiving new messages from server
       socket.on("receiveMessage", (newMessage) => {
         if (newMessage.chat === chatId) {
           setMessages((prevMessages) => [...prevMessages, newMessage]);
         }
       });
 
+      // Handle typing indicator
+      socket.on("typing", (data) => {
+        if (data.roomId === chatId) {
+          setTyping(true);
+          setTimeout(() => setTyping(false), 2000); // Reset typing after 2 seconds
+        }
+      });
+
+      // Cleanup on component unmount
       return () => {
+        console.log("AdminChat component is unmounting.");
+        socket.emit("leave_room", chatId);
         socket.off("receiveMessage");
-        socket.emit("leaveChat", chatId);
-        socket.disconnect();
+        socket.off("typing");
+        socket.off("online_status_update");
+        socket.emit("custom_disconnect", adminId);
       };
     }
-  }, [chatId]);
+  }, [socket, userId, chatId, adminId]);
 
-  // Scroll to the bottom of messages whenever they change
+  // Scroll to the bottom of messages on new message
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
+  // Fetch initial messages from the server
   const fetchMessages = async (selectedChatId) => {
     try {
       const messages = await fetchChatMessages(selectedChatId);
@@ -58,19 +80,57 @@ export default function AdminChat() {
   };
 
   const sendMessage = () => {
-    if (messageInput.trim() && chatId) {
+    if (messageInput.trim() && socket) {
+      if (!socket.connected) {
+        console.error("Socket is disconnected. Message not sent.");
+        return;
+      }
+
       const messageData = {
         chatId,
         sender: adminId,
         senderModel: "Admin",
-        content: messageInput,
+        content: messageInput.trim(),
         createdAt: new Date().toISOString(),
       };
 
-      socket.emit("sendMessage", messageData);
-      setMessageInput("");
+      setMessageInput(""); // Clear input immediately after sending
+
+      // Emit the message to the server
+      socket.emit("sendMessage", messageData, (ack) => {
+        if (ack?.success) {
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            { ...messageData, timestamp: new Date() },
+          ]);
+        } else {
+          console.error("Message not acknowledged by server");
+          setMessageInput(messageData.content); // Optionally restore the message if sending failed
+        }
+      });
     }
   };
+
+  useEffect(() => {
+    if (socket && adminId) {
+      socket.emit("admin_connected", adminId); // Notify the server of the admin's presence
+
+      return () => {
+        socket.emit("custom_disconnect", adminId); // Custom event to avoid conflict with reserved `disconnect`
+      };
+    }
+  }, [socket, adminId]);
+
+  // Handle typing event
+  useEffect(() => {
+    if (socket && chatId && messageInput) {
+      const typingTimeout = setTimeout(() => {
+        socket.emit("typing", { roomId: chatId, userId: adminId });
+      }, 500);
+
+      return () => clearTimeout(typingTimeout);
+    }
+  }, [messageInput, socket, chatId, adminId]);
 
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
@@ -93,19 +153,19 @@ export default function AdminChat() {
 
   return (
     <div className="flex min-h-screen bg-gray-100 overflow-hidden">
-      {/* Sidebar fixed in place */}
       <div className="fixed left-0 top-0 h-screen w-64 bg-white shadow-lg z-10">
         <Sidebar />
       </div>
 
-      {/* Main Chat Area */}
       <div className="flex-1 ml-64 p-6">
         <div className="bg-white rounded-lg shadow-lg flex flex-col h-[calc(100vh-48px)]">
           <h2 className="text-xl font-semibold text-center py-4 border-b">
-            Chat with {userName || "User"}
+            Chat with {userName}{" "}
+            <span className="ml-2 text-sm font-normal text-gray-500">
+              {online ? "Online" : "Offline"}
+            </span>
           </h2>
 
-          {/* Chat Messages */}
           <div
             className="flex-1 overflow-y-auto p-4 space-y-4"
             style={{ maxHeight: "70vh" }}
@@ -118,7 +178,6 @@ export default function AdminChat() {
 
               return (
                 <React.Fragment key={msg._id || index}>
-                  {/* Date Separator */}
                   {showDateSeparator && (
                     <div className="flex items-center my-4">
                       <div className="flex-grow border-t border-gray-300"></div>
@@ -129,7 +188,6 @@ export default function AdminChat() {
                     </div>
                   )}
 
-                  {/* Message */}
                   <div
                     className={`flex ${
                       msg.senderModel === "User" ? "" : "flex-row-reverse"
@@ -145,7 +203,7 @@ export default function AdminChat() {
                       className="rounded-full w-10 h-10"
                     />
                     <div
-                      className={`max-w-xs p-3 rounded-lg shadow-md ${
+                      className={`max-w-xs p-3 rounded-lg shadow-md break-words ${
                         msg.senderModel === "User"
                           ? "bg-gray-200"
                           : "bg-blue-500 text-white"
@@ -153,7 +211,7 @@ export default function AdminChat() {
                     >
                       <div className="flex justify-between items-center">
                         <p className="text-sm font-semibold">
-                          {msg.senderModel === "User" ? userName || "User" : "Admin"}
+                          {msg.senderModel === "User" ? userName : "Admin"}
                         </p>
                         <p
                           className={`text-xs ml-2 ${
@@ -171,22 +229,26 @@ export default function AdminChat() {
                 </React.Fragment>
               );
             })}
-            {/* Reference div to scroll to */}
             <div ref={messagesEndRef} />
           </div>
 
+          {typing && (
+            <p className="text-sm text-gray-500 px-4 py-2">User is typing...</p>
+          )}
+
           {/* Message Input */}
-          <div className="p-4 border-t">
+          <div className="p-4 border-t flex items-center space-x-3">
             <textarea
               placeholder="Type your message..."
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
-              className="w-full p-3 rounded-lg border border-gray-300 focus:ring focus:ring-blue-200 resize-none"
-              rows={3}
+              className="flex-1 p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring focus:ring-blue-200 resize-none"
+              style={{ maxHeight: "120px" }}
+              rows={2}
             />
             <button
               onClick={sendMessage}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg mt-2 hover:bg-blue-600 transition-colors w-full"
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
             >
               Send
             </button>

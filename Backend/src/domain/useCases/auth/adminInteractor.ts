@@ -5,11 +5,11 @@ import {
   deleteCategoryFromDB,
   findAdmin,
   getAllDepartments,
+  getAllServicesWithCategoryDetails,
   getAllUsers,
   getBookingsFromDb,
   getCompletedBookings,
   getPaginatedCategories,
-  getPaginatedServicesWithCategoryDetails,
   getPaginatedUsers,
   getReportsFromDb,
   publishReportInDb,
@@ -31,7 +31,6 @@ import // ICategory,
   "../../entities/types/categoryType";
 import {
   ICategory,
-  PaginatedCategories,
 } from "../../entities/types/categoryType";
 import { IDepartment } from "../../entities/types/departmentType";
 import {
@@ -101,12 +100,11 @@ export default {
     }
   },
   getCategories: async (
-    page: number,
-    limit: number
-  ): Promise<PaginatedCategories> => {
+
+  ) => {
     try {
       // Call the function to fetch paginated categories
-      const categories = await getPaginatedCategories(page, limit);
+      const categories = await getPaginatedCategories();
       return categories;
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -329,11 +327,9 @@ export default {
     }
   },
 
-  getServiceList: async (page: number, limit: number) => {
+  getServiceList: async () => {
     try {
-      const services = await getPaginatedServicesWithCategoryDetails(
-        page,
-        limit
+      const services = await getAllServicesWithCategoryDetails(
       ); // Update to use the new function
       return services;
     } catch (error) {
@@ -444,13 +440,13 @@ export default {
   publishReport: async (reportId: string) => {
     return await publishReportInDb(reportId);
   },
-  successMessage:async(chatId:string,content:string)=>{
-     // Save the message in the database
-     const newMessage = await successMessagetoUser(chatId, content);
+  successMessage: async (chatId: string, content: string) => {
+    // Save the message in the database
+    const newMessage = await successMessagetoUser(chatId, content);
 
-     // Emit the message to the specified chat room via Socket.IO
-     io.to(chatId).emit("receiveMessage", newMessage);
- 
-     return newMessage;
+    // Emit the message to the specified chat room via Socket.IO
+    io.to(chatId).emit("receiveMessage", newMessage);
+
+    return newMessage;
   }
 };

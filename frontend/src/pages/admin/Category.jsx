@@ -9,9 +9,8 @@ import {
   addCategory,
   deleteCategory,
   editCategory,
-} from "../../features/admin/adminslice"; // Import actions
-import axiosInstance from "../../services/axiosInstance"; // Import axios for fetching departments
-import { toast, Toaster } from "sonner"; // Import Sonner for toasts
+} from "../../features/admin/adminslice";
+import { toast, Toaster } from "sonner";
 import { fetchCategories, fetchDepartments } from "../../services/adminService";
 
 // Set the modal's root element
@@ -30,6 +29,8 @@ function Category() {
   const [selectedCategory, setSelectedCategory] = useState(null); // State for currently selected category
   const [departments, setDepartments] = useState([]); // State to store departments
   const [categories, setCategories] = useState([]); // State to store categories
+  const [currentPage, setCurrentPage] = useState(1); // Current page for pagination
+  const itemsPerPage = 6; // Items per page for pagination
   const dispatch = useDispatch();
 
   // Modal open/close functions
@@ -113,10 +114,23 @@ function Category() {
       await dispatch(deleteCategory(selectedCategory._id)).unwrap();
       toast.success("Category deleted successfully");
       closeDeleteModal();
-      loadCategories(); // Refresh categories
+      loadCategories(); 
     } catch (error) {
       console.error("Error deleting category:", error);
       toast.error("Failed to delete category");
+    }
+  };
+
+  // Pagination logic
+  const totalPages = Math.ceil(categories.length / itemsPerPage);
+  const paginatedCategories = categories.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page) => {
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
     }
   };
 
@@ -142,10 +156,10 @@ function Category() {
         <div className="bg-white shadow-md rounded-lg p-6">
           <h2 className="text-2xl font-semibold mb-4">Category List</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categories.length === 0 ? (
+            {paginatedCategories.length === 0 ? (
               <p className="text-gray-500">No categories available.</p>
             ) : (
-              categories.map((category) => (
+              paginatedCategories.map((category) => (
                 <div
                   key={category._id}
                   className="border p-4 rounded-lg shadow-sm hover:shadow-md"
@@ -174,22 +188,136 @@ function Category() {
               ))
             )}
           </div>
-        </div>
 
-        {/* Modal for Adding a Category */}
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-6 space-x-2">
+              <button
+                className={`px-4 py-2 rounded ${
+                  currentPage === 1
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-blue-500 text-white hover:bg-blue-600"
+                }`}
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+              <span className="px-4 py-2 bg-gray-200 rounded">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                className={`px-4 py-2 rounded ${
+                  currentPage === totalPages
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-blue-500 text-white hover:bg-blue-600"
+                }`}
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Modals for Adding, Editing, and Deleting */}
+      <Modal
+        isOpen={modalIsOpen}
+        onRequestClose={closeModal}
+        contentLabel="Add Category"
+        className="fixed inset-0 flex items-center justify-center"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-50"
+      >
+        <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
+          <h2 className="text-xl font-bold mb-4">Add New Category</h2>
+          <Formik
+            initialValues={{ name: "", department: "" }}
+            validationSchema={CategorySchema}
+            onSubmit={handleSubmit}
+          >
+            {({ isSubmitting }) => (
+              <Form>
+                <div className="mb-4">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Category Name
+                  </label>
+                  <Field
+                    type="text"
+                    name="name"
+                    className="border p-2 w-full rounded focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter category name"
+                  />
+                  <ErrorMessage
+                    name="name"
+                    component="div"
+                    className="text-red-500 text-sm"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Department
+                  </label>
+                  <Field
+                    as="select"
+                    name="department"
+                    className="border p-2 w-full rounded focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="" label="Select department" />
+                    {departments.map((dept) => (
+                      <option key={dept._id} value={dept._id}>
+                        {dept.name}
+                      </option>
+                    ))}
+                  </Field>
+                  <ErrorMessage
+                    name="department"
+                    component="div"
+                    className="text-red-500 text-sm"
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg mr-2 transition-all duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Adding..." : "Add Category"}
+                  </button>
+                </div>
+              </Form>
+            )}
+          </Formik>
+        </div>
+      </Modal>
+
+      {selectedCategory && (
         <Modal
-          isOpen={modalIsOpen}
-          onRequestClose={closeModal}
-          contentLabel="Add Category"
+          isOpen={editModalIsOpen}
+          onRequestClose={closeEditModal}
+          contentLabel="Edit Category"
           className="fixed inset-0 flex items-center justify-center"
           overlayClassName="fixed inset-0 bg-black bg-opacity-50"
         >
           <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
-            <h2 className="text-xl font-bold mb-4">Add New Category</h2>
+            <h2 className="text-xl font-bold mb-4">Edit Category</h2>
             <Formik
-              initialValues={{ name: "", department: "" }}
+              initialValues={{
+                name: selectedCategory.name,
+                department: selectedCategory.department._id,
+              }}
               validationSchema={CategorySchema}
-              onSubmit={handleSubmit}
+              onSubmit={handleEditSubmit}
             >
               {({ isSubmitting }) => (
                 <Form>
@@ -236,7 +364,7 @@ function Category() {
                   <div className="flex justify-end">
                     <button
                       type="button"
-                      onClick={closeModal}
+                      onClick={closeEditModal}
                       className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg mr-2 transition-all duration-200"
                     >
                       Cancel
@@ -246,7 +374,7 @@ function Category() {
                       className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
                       disabled={isSubmitting}
                     >
-                      {isSubmitting ? "Adding..." : "Add Category"}
+                      {isSubmitting ? "Saving..." : "Save Changes"}
                     </button>
                   </div>
                 </Form>
@@ -254,125 +382,41 @@ function Category() {
             </Formik>
           </div>
         </Modal>
+      )}
 
-        {/* Modal for Editing a Category */}
-        {selectedCategory && (
-          <Modal
-            isOpen={editModalIsOpen}
-            onRequestClose={closeEditModal}
-            contentLabel="Edit Category"
-            className="fixed inset-0 flex items-center justify-center"
-            overlayClassName="fixed inset-0 bg-black bg-opacity-50"
-          >
-            <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
-              <h2 className="text-xl font-bold mb-4">Edit Category</h2>
-              <Formik
-                initialValues={{
-                  name: selectedCategory.name,
-                  department: selectedCategory.department._id,
-                }}
-                validationSchema={CategorySchema}
-                onSubmit={handleEditSubmit}
-              >
-                {({ isSubmitting }) => (
-                  <Form>
-                    <div className="mb-4">
-                      <label className="block mb-2 text-sm font-medium text-gray-700">
-                        Category Name
-                      </label>
-                      <Field
-                        type="text"
-                        name="name"
-                        className="border p-2 w-full rounded focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter category name"
-                      />
-                      <ErrorMessage
-                        name="name"
-                        component="div"
-                        className="text-red-500 text-sm"
-                      />
-                    </div>
+      <Modal
+        isOpen={deleteModalIsOpen}
+        onRequestClose={closeDeleteModal}
+        contentLabel="Delete Category Confirmation"
+        className="fixed inset-0 flex items-center justify-center"
+        overlayClassName="fixed inset-0 bg-black bg-opacity-50"
+      >
+        <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
+          <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
+          <p>
+            Are you sure you want to delete the category &quot;
+            {selectedCategory?.name}&quot;?
+          </p>
 
-                    <div className="mb-4">
-                      <label className="block mb-2 text-sm font-medium text-gray-700">
-                        Department
-                      </label>
-                      <Field
-                        as="select"
-                        name="department"
-                        className="border p-2 w-full rounded focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="" label="Select department" />
-                        {departments.map((dept) => (
-                          <option key={dept._id} value={dept._id}>
-                            {dept.name}
-                          </option>
-                        ))}
-                      </Field>
-                      <ErrorMessage
-                        name="department"
-                        component="div"
-                        className="text-red-500 text-sm"
-                      />
-                    </div>
-
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        onClick={closeEditModal}
-                        className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg mr-2 transition-all duration-200"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? "Saving..." : "Save Changes"}
-                      </button>
-                    </div>
-                  </Form>
-                )}
-              </Formik>
-            </div>
-          </Modal>
-        )}
-
-        {/* Modal for Confirming Deletion */}
-        <Modal
-          isOpen={deleteModalIsOpen}
-          onRequestClose={closeDeleteModal}
-          contentLabel="Delete Category Confirmation"
-          className="fixed inset-0 flex items-center justify-center"
-          overlayClassName="fixed inset-0 bg-black bg-opacity-50"
-        >
-          <div className="bg-white p-6 rounded-lg w-96 shadow-lg">
-            <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
-            <p>
-              Are you sure you want to delete the category &quot;
-              {selectedCategory?.name}&quot;?
-            </p>
-
-            <div className="flex justify-end mt-6">
-              <button
-                type="button"
-                onClick={closeDeleteModal}
-                className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg mr-2 transition-all duration-200"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
-              >
-                Confirm
-              </button>
-            </div>
+          <div className="flex justify-end mt-6">
+            <button
+              type="button"
+              onClick={closeDeleteModal}
+              className="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg mr-2 transition-all duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
+            >
+              Confirm
+            </button>
           </div>
-        </Modal>
-      </div>
+        </div>
+      </Modal>
+
       <Toaster />
     </div>
   );

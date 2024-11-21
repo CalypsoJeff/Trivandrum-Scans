@@ -59,7 +59,7 @@ function ProfileSidebar() {
               className="flex items-center p-4 hover:bg-gray-200 transition"
             >
               <FaBook className="mr-3 text-[#a39f74]" />
-              <span className="text-gray-800">Booking Details</span>
+              <span className="text-gray-800">Bookings</span>
             </Link>
           </li>
           <li>

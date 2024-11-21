@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import Header from "../../components/UserComponents/Header";
@@ -9,6 +10,7 @@ import {
   createBookingSession,
   fetchLatestCart,
 } from "../../services/userService";
+import { toast } from "sonner";
 
 const stripePromise = loadStripe(
   "pk_test_51Q9p4J02sEEeH3srV1uPSqW1QISpZpbEFDQNV8cGWHBGtONEe0IpxG7EiOZrledVR7xzNnKXhLeRObuRH2ZsnYWh00oHBEyis6"
@@ -31,6 +33,40 @@ const CheckoutPage = () => {
     "5:00 PM - 6:00 PM",
   ];
 
+  // Check if a time slot is disabled
+  const isTimeSlotDisabled = (slot) => {
+    if (!selectedDate) return false; // If no date is selected, all slots are enabled
+
+    const [startTime, endTime] = slot.split(" - ").map((time) => {
+      const [hours, minutes] = time.match(/\d+/g).map(Number);
+      const isPM = time.includes("PM");
+      return new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate(),
+        isPM && hours !== 12 ? hours + 12 : hours, // Convert PM to 24-hour format
+        minutes
+      );
+    });
+
+    const now = new Date();
+
+    // If the selected date is today, compare the time slot's end time with the current time
+    return now.toDateString() === selectedDate.toDateString() && now > endTime;
+  };
+
+  // Handle date change
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+    setSelectedTimeSlot(""); // Reset time slot selection when date changes
+  };
+
+  // Handle time slot selection
+  const handleTimeSlotChange = (e) => {
+    setSelectedTimeSlot(e.target.value);
+  };
+
+  // Load cart data
   const loadCartData = async (userId) => {
     try {
       const { cart, patients } = await fetchLatestCart(userId);
@@ -40,19 +76,20 @@ const CheckoutPage = () => {
       console.error("Failed to load cart data", error);
     }
   };
-  // Handle date selection for appointment
-  const handleDateChange = (date) => {
-    setSelectedDate(date); // Set selected appointment date
-  };
-
-  // Handle time slot selection
-  const handleTimeSlotChange = (e) => {
-    setSelectedTimeSlot(e.target.value); // Set selected time slot
-  };
 
   // Handle proceeding to payment via Stripe
   const handleProceedToPayment = async () => {
-    // Calculate totalAmount
+    if (!selectedDate) {
+      toast.error("Please select a date for your appointment.");
+      return;
+    }
+
+    if (!selectedTimeSlot) {
+      toast.error("Please select a time slot for your appointment.");
+      return;
+    }
+
+    // Calculate total amount
     const totalAmount = cart.services.reduce((total, service) => {
       const numberOfPersons = service.personIds.length;
       return total + service.serviceId.price * numberOfPersons;
@@ -66,8 +103,8 @@ const CheckoutPage = () => {
         personIds: service.personIds,
       })),
       appointmentDate: selectedDate,
-      appointmentTimeSlot: selectedTimeSlot, // Include the selected time slot
-      totalAmount, // Now this is defined
+      appointmentTimeSlot: selectedTimeSlot,
+      totalAmount,
     };
 
     try {
@@ -77,16 +114,21 @@ const CheckoutPage = () => {
       if (stripe) {
         await stripe.redirectToCheckout({ sessionId });
       } else {
-        console.error("Stripe.js failed to load.");
+        toast.error("Stripe.js failed to load.");
       }
     } catch (error) {
+      if (error.response?.status === 400) {
+        toast.error(error.response.data.error || "Booking conflict detected.");
+      } else {
+        toast.error("Error creating booking. Please try again.");
+      }
       console.error("Error creating booking and Stripe session:", error);
     }
   };
 
   useEffect(() => {
     if (user && user.id) {
-      loadCartData(user.id); // Fetch cart data
+      loadCartData(user.id);
     }
   }, [user]);
 
@@ -94,7 +136,7 @@ const CheckoutPage = () => {
     return <div>Loading checkout details...</div>;
   }
 
-  // Helper function to get patient details by ID or fallback to user
+  // Get patient details by ID or fallback to user
   const getPersonDetails = (personId) => {
     const patient = patients.find((patient) => patient._id === personId);
     if (patient) {
@@ -115,19 +157,6 @@ const CheckoutPage = () => {
     <div className="bg-gray-50 min-h-screen">
       <Header />
       <div className="max-w-7xl mx-auto p-6">
-        {/* Step tracker */}
-        <div className="flex justify-center mb-8">
-          <div className="flex items-center space-x-4">
-            <div className="w-8 h-8 bg-teal-500 text-white rounded-full flex items-center justify-center">
-              2
-            </div>
-            <div className="w-16 h-[2px] bg-gray-300"></div>
-            <div className="w-8 h-8 bg-gray-300 text-gray-400 rounded-full flex items-center justify-center">
-              3
-            </div>
-          </div>
-        </div>
-
         {/* Booking Details */}
         <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-700 mb-4">
@@ -142,26 +171,22 @@ const CheckoutPage = () => {
                 {service.serviceId.name}
               </h3>
               <ul className="list-disc list-inside">
-                {service.personIds.length > 0 ? (
-                  service.personIds.map((person) => {
-                    const personDetails = getPersonDetails(person._id);
-                    return (
-                      <li key={person._id}>
-                        {personDetails
-                          ? `${personDetails.name} (${personDetails.relation})`
-                          : "Unknown Person"}
-                      </li>
-                    );
-                  })
-                ) : (
-                  <li>No person assigned</li>
-                )}
+                {service.personIds.map((person) => {
+                  const personDetails = getPersonDetails(person._id);
+                  return (
+                    <li key={person._id}>
+                      {personDetails
+                        ? `${personDetails.name} (${personDetails.relation})`
+                        : "Unknown Person"}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
         </div>
 
-        {/* Date Picker for Appointment */}
+        {/* Date Picker */}
         <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-700 mb-4">
             Select Appointment Date
@@ -172,11 +197,11 @@ const CheckoutPage = () => {
             dateFormat="yyyy-MM-dd"
             className="p-2 border rounded-lg"
             placeholderText="Select a date"
-            minDate={new Date()} // Disable past dates
+            minDate={new Date()}
           />
         </div>
 
-        {/* Time Slot Selection - Show only if a date is selected */}
+        {/* Time Slot Selection */}
         {selectedDate && (
           <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
             <h2 className="text-xl font-semibold text-gray-700 mb-4">
@@ -189,8 +214,12 @@ const CheckoutPage = () => {
             >
               <option value="">Select a time slot</option>
               {timeSlots.map((slot, index) => (
-                <option key={index} value={slot}>
-                  {slot}
+                <option
+                  key={index}
+                  value={slot}
+                  disabled={isTimeSlotDisabled(slot)}
+                >
+                  {slot} {isTimeSlotDisabled(slot) ? "(Unavailable)" : ""}
                 </option>
               ))}
             </select>
@@ -224,7 +253,6 @@ const CheckoutPage = () => {
             </div>
           ))}
 
-          {/* Payment Total */}
           <div className="flex justify-between items-center mt-4 border-t pt-4">
             <h3 className="text-lg font-semibold text-gray-700">
               Total Amount:
@@ -239,12 +267,10 @@ const CheckoutPage = () => {
             </p>
           </div>
 
-          {/* Proceed to Payment Button */}
           <div className="flex justify-end mt-6">
             <button
               className="bg-red-500 hover:bg-red-600 text-white py-2 px-6 rounded-lg font-semibold shadow"
               onClick={handleProceedToPayment}
-              disabled={!selectedDate || !selectedTimeSlot} // Disable button if date or time slot is not selected
             >
               Proceed to Payment
             </button>

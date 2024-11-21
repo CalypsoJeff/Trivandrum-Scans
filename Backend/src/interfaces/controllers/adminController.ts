@@ -44,10 +44,8 @@ export default {
   },
   getCategories: async (req: Request, res: Response): Promise<void> => {
     try {
-      const { page = 1, limit = 10 } = req.query;
+      
       const categories = await adminInteractor.getCategories(
-        Number(page),
-        Number(limit)
       );
       res.status(200).json(categories);
     } catch (error: unknown) {
@@ -351,10 +349,8 @@ export default {
 
   getServices: async (req: Request, res: Response) => {
     try {
-      const { page = 1, limit = 10 } = req.query;
+      
       const serviceList = await adminInteractor.getServiceList(
-        Number(page),
-        Number(limit)
       );
 
       res.status(200).json(serviceList);
@@ -383,7 +379,6 @@ export default {
         page,
         limit
       );
-
       res.status(200).json({
         bookings,
         totalPages: Math.ceil(totalBookings / limit), // Correctly calculate total pages
@@ -417,7 +412,6 @@ export default {
 
       const activeChats = await ChatModel.find({
         users: adminId,
-        is_accepted: 'accepted'
       })
         .populate('users', 'name')   // Populate to get names of users in the chat
         .populate('latestMessage');   // Populate latest message details
@@ -434,8 +428,6 @@ export default {
   // Fetch messages in a specific chat for an admin
   getMessages: async (req: Request, res: Response) => {
     const { chatId } = req.params;
-    console.log(chatId, 'chatId for messages');
-
     try {
       const messages = await Message.find({ chat: chatId })
         .populate('sender', 'name')
@@ -447,26 +439,6 @@ export default {
       res.status(500).json({ message: 'Server error' });
     }
   },
-  sendMessage: async (req: Request, res: Response) => {
-    try {
-      const { chatId } = req.params;
-      const { content } = req.body;
-      const adminId = '66ee588d1e1448fbea1f40bb';
-
-      const message = await Message.create({
-        chat: chatId,
-        sender: adminId,
-        senderModel: "Admin",
-        content,
-      });
-
-      res.status(200).json({ message });
-    } catch (error) {
-      console.error("Error sending message:", error);
-      res.status(500).json({ message: "Server error during message sending" });
-    }
-  },
-
   getChats: async (req: Request, res: Response) => {
     try {
       const chats = await ChatModel.find({})
@@ -591,18 +563,15 @@ export default {
     }
   },
   successMessage: async (req: Request, res: Response) => {
-    console.log("reached heree");
-    
-    const { chatId } = req.params;  // Get chat ID from route parameters
-    const { content } = req.body;    // Get message content from the request body
-
+    const { chatId } = req.params;  
+    const { content } = req.body;    
     try {
       // Call the interactor to send the success message
       const newMessage = await adminInteractor.successMessage(chatId, content);
       res.status(200).json({ message: "Message sent successfully", newMessage });
     } catch (error) {
       console.error("Error sending success message:", error);
-      res.status(500).json({ message: "Failed to send message"});
+      res.status(500).json({ message: "Failed to send message" });
     }
   },
 }

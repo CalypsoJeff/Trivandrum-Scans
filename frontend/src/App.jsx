@@ -17,6 +17,7 @@ function App() {
             padding: "16px", // Custom padding
             fontSize: "16px", // Increase text size
           },
+          duration:2000,
         }}
       />
 

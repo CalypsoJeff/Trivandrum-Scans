@@ -1,20 +1,20 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 const chatSlice = createSlice({
-  name: 'chat',
+  name: "chat",
   initialState: {
-    unreadCount: 0, 
+      messages: [], // Add a status field for each message
   },
   reducers: {
-    updateUnreadCount: (state, action) => {
-        state.unreadCount = action.payload.unreadCount;
+      updateMessageStatus: (state, action) => {
+          const { messageId, status } = action.payload;
+          const message = state.messages.find((msg) => msg._id === messageId);
+          if (message) {
+              message.status = status;
+          }
       },
-      
-    resetUnreadCount: (state) => {
-      state.unreadCount = 0;
-    },
   },
 });
 
-export const { updateUnreadCount, resetUnreadCount } = chatSlice.actions;
+export const { updateMessageStatus } = chatSlice.actions;
 export default chatSlice.reducer;

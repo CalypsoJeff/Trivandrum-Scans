@@ -24,6 +24,13 @@ function ReportList() {
   const [selectedBooking, setSelectedBooking] = useState("");
   const [, setSelectedUserName] = useState("");
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+
   // Function to reset modal state
   const resetModalState = () => {
     setShowModal(false);
@@ -60,8 +67,10 @@ function ReportList() {
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
     setUploadedFiles(files);
+
     if (!isEdit) {
       let bookingFound = false;
+
       files.forEach((file) => {
         const fileName = file.name;
         const bookingIdMatch = fileName.match(/(\w{24})(?=\.\w+$)/);
@@ -132,21 +141,59 @@ function ReportList() {
     }
   };
 
+  // Search Logic
+  const filteredReports = reports.filter((report) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      report._id.toLowerCase().includes(searchLower) ||
+      report.bookingId._id.toLowerCase().includes(searchLower) ||
+      (report.bookingId.user_id?.name || "")
+        .toLowerCase()
+        .includes(searchLower) ||
+      new Date(report.uploadedAt)
+        .toLocaleDateString()
+        .toLowerCase()
+        .includes(searchLower)
+    );
+  });
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredReports.length / itemsPerPage);
+  const paginatedReports = filteredReports.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page) => {
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
   return (
     <div className="flex">
       <Sidebar />
 
       <div className="flex-grow p-6">
         <h1 className="text-3xl font-semibold mb-6">Reports</h1>
-        <button
-          onClick={() => {
-            setIsEdit(false);
-            setShowModal(true);
-          }}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg mb-4 flex items-center gap-2"
-        >
-          <FaCloudUploadAlt /> Add Report
-        </button>
+        <div className="flex justify-between items-center mb-4">
+          <button
+            onClick={() => {
+              setIsEdit(false);
+              setShowModal(true);
+            }}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+          >
+            <FaCloudUploadAlt /> Add Report
+          </button>
+          <input
+            type="text"
+            placeholder="Search by user name, report ID, booking ID, or date"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="p-2 border rounded-lg w-1/3"
+          />
+        </div>
 
         {/* Modal for Upload */}
         <Modal
@@ -201,14 +248,14 @@ function ReportList() {
         </Modal>
 
         {/* Report List Display */}
-        <div className="flex flex-col space-y-4 mt-8">
-          {reports.length > 0 ? (
-            reports.map((report) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          {paginatedReports.length > 0 ? (
+            paginatedReports.map((report) => (
               <div
                 key={report._id}
-                className="bg-white p-6 rounded-lg shadow-lg flex items-center justify-between"
+                className="bg-white p-6 rounded-lg shadow-lg flex flex-col justify-between"
               >
-                <div className="flex-grow">
+                <div>
                   <p className="text-gray-700">
                     <strong>Report ID:</strong> {report._id}
                   </p>
@@ -223,39 +270,75 @@ function ReportList() {
                     <strong>Uploaded On:</strong>{" "}
                     {new Date(report.uploadedAt).toLocaleDateString()}
                   </p>
-                  <div className="flex space-x-2 overflow-x-auto mt-2">
+                  <div className="flex flex-col mt-4 space-y-2">
+                    <strong className="text-gray-800">Files:</strong>
                     {report.reports.map((file, index) => (
                       <a
                         key={index}
                         href={file.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline whitespace-nowrap"
+                        className="text-blue-600 hover:underline"
                       >
                         {file.filename}
                       </a>
                     ))}
                   </div>
                 </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleEditClick(report)}
-                    className="bg-blue-500 text-white rounded-lg px-4 py-2 flex items-center gap-2"
-                  >
-                    <FaEdit /> Edit
-                  </button>
-                  <button
-                    onClick={() => handlePublishClick(report._id)}
-                    className="bg-green-500 text-white rounded-lg px-4 py-2 flex items-center gap-2"
-                  >
-                    <FaCloudUploadAlt /> Publish
-                  </button>
+                <div className="flex justify-end space-x-2 mt-4">
+                  {!report.published && (
+                    <>
+                      <button
+                        onClick={() => handleEditClick(report)}
+                        className="bg-blue-500 text-white rounded-lg px-4 py-2 flex items-center gap-2"
+                      >
+                        <FaEdit /> Edit
+                      </button>
+                      <button
+                        onClick={() => handlePublishClick(report._id)}
+                        className="bg-green-500 text-white rounded-lg px-4 py-2 flex items-center gap-2"
+                      >
+                        <FaCloudUploadAlt /> Publish
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))
           ) : (
-            <p className="text-center text-gray-500">No reports found.</p>
+            <p className="text-center text-gray-500 col-span-2">
+              No reports found.
+            </p>
           )}
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex justify-center items-center space-x-4 mt-6">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`px-4 py-2 rounded-lg ${
+              currentPage === 1
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            }`}
+          >
+            Previous
+          </button>
+          <span className="text-gray-700">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`px-4 py-2 rounded-lg ${
+              currentPage === totalPages
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            }`}
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>

@@ -1,13 +1,12 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IChatModel extends Document {
-    _id: mongoose.Types.ObjectId; // Required _id property
+    _id: mongoose.Types.ObjectId;
     users: mongoose.Types.ObjectId[]; // Array containing User and Admin IDs
     latestMessage: mongoose.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
     is_blocked: boolean;
-    is_accepted: 'pending' | 'accepted' | 'rejected';
     unreadCount: Map<string, number>;
 }
 

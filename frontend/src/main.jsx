@@ -7,8 +7,8 @@ import "./index.css";
 import { store, persistor } from "./app/store.js";
 import { PersistGate } from "redux-persist/integration/react";
 import Modal from "react-modal";
+import SocketProvider from "./services/socketProvider.jsx";
 Modal.setAppElement("#root");
-import  SocketProvider  from "./services/socketProvider";
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Provider store={store}>

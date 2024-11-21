@@ -23,7 +23,6 @@ const Login = () => {
     }
   }, [user, navigate]);
 
-  // Handle form login submit
   const handleSubmit = async (values, { setSubmitting }) => {
     setLoading(true);
     try {
@@ -32,9 +31,23 @@ const Login = () => {
         style: { backgroundColor: "#4CAF50", color: "#fff" },
       });
       navigate("/home");
-      // eslint-disable-next-line no-unused-vars
     } catch (error) {
-      toast.error("Login failed. Please check your credentials.");
+      // Check the specific error message from the backend
+      const errorMessage =
+        error?.message || "Login failed. Please check your credentials.";
+
+      if (errorMessage === "Account is Blocked") {
+        toast.error("Your account is blocked. Please contact support.");
+      } else if (errorMessage === "Invalid password") {
+        toast.error("Invalid password. Please try again.");
+      } else if (errorMessage === "User not found") {
+        toast.error("No user found with this email.");
+      } else if (errorMessage === "User is not verified") {
+        toast.error("Your account is not verified. Please check your email.");
+      } else {
+        // Generic error fallback
+        toast.error(errorMessage);
+      }
     } finally {
       setSubmitting(false);
       setLoading(false);

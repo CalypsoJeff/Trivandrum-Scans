@@ -5,6 +5,7 @@ import { log } from "console";
 
 declare module "express-serve-static-core" {
   interface Request {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     user?: any;
   }
 }
@@ -45,7 +46,7 @@ export const protectUser = async (
 
       if (user.is_blocked) {
         log("User is blocked");
-        res.status(401).json({ message: "User is blocked" });
+        res.status(403).json({ message: "User is blocked" });
         return;
       }
 

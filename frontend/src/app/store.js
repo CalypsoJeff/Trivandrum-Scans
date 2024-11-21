@@ -6,7 +6,7 @@ import authReducer from "../features/auth/authSlice";
 import adminReducer from "../features/admin/adminslice";
 import cartReducer from "../features/cart/cartSlice";
 import bookingReducer from "../features/booking/bookingSlice";
-
+import chatReducer from "../features/chat/chatSlice";
 const authPersistConfig = {
   key: "auth",
   storage,
@@ -24,6 +24,10 @@ const bookingPersistConfig = {
   key: "booking",
   storage,
 };
+const chatPersistConfig = {
+  key: "chat",
+  storage,
+};
 
 const persistedAuthReducer = persistReducer(authPersistConfig, authReducer);
 const persistedAdminReducer = persistReducer(adminPersistConfig, adminReducer);
@@ -32,12 +36,14 @@ const persistedBookingReducer = persistReducer(
   bookingPersistConfig,
   bookingReducer
 );
+const persistedChatReducer = persistReducer(chatPersistConfig, chatReducer);
 
 const rootReducer = combineReducers({
   auth: persistedAuthReducer,
   admin: persistedAdminReducer,
   cart: persistedCartReducer,
   booking: persistedBookingReducer,
+  chat: persistedChatReducer,
 });
 const store = configureStore({
   reducer: rootReducer,

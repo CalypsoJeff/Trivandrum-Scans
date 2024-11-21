@@ -2,11 +2,10 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/AdminComponents/Sidebar";
 import Modal from "react-modal";
-import axiosInstance from "../../services/axiosInstance";
 import { toast } from "sonner";
 import { useDispatch } from "react-redux";
 import Cropper from "cropperjs";
-import "cropperjs/dist/cropper.min.css"; // Include the cropper.css
+import "cropperjs/dist/cropper.min.css";
 import { addService, updateService } from "../../features/admin/adminslice";
 import SearchSortFilter from "../../components/AdminComponents/SearchSortFilter";
 import {
@@ -21,7 +20,7 @@ function Service() {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [services, setServices] = useState([]);
-  const [filteredServices, setFilteredServices] = useState([]); // For filtered data
+  const [filteredServices, setFilteredServices] = useState([]);
   const [serviceData, setServiceData] = useState({
     name: "",
     price: "",
@@ -36,6 +35,10 @@ function Service() {
   const [imageFile, setImageFile] = useState(null);
   const dispatch = useDispatch();
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const servicesPerPage = 7;
+
   const loadCategories = async () => {
     try {
       const data = await fetchCategories();
@@ -47,17 +50,32 @@ function Service() {
 
   const loadServices = async () => {
     try {
-      const services = await fetchServices(1, 10); // Pass any desired page and limit
+      const services = await fetchServices();
       setServices(services);
       setFilteredServices(services);
     } catch (error) {
       toast.error("Error fetching services");
     }
   };
+
   useEffect(() => {
     loadCategories();
     loadServices();
   }, []);
+
+  // Pagination Logic
+  const indexOfLastService = currentPage * servicesPerPage;
+  const indexOfFirstService = indexOfLastService - servicesPerPage;
+  const currentServices = filteredServices.slice(
+    indexOfFirstService,
+    indexOfLastService
+  );
+
+  const totalPages = Math.ceil(filteredServices.length / servicesPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   // Search, Sort, and Filter Handlers
   const handleSearch = (searchText) => {
@@ -67,6 +85,7 @@ function Service() {
         service.category?.name.toLowerCase().includes(searchText.toLowerCase())
     );
     setFilteredServices(filtered);
+    setCurrentPage(1); // Reset to first page
   };
 
   const handleSort = (sortValue) => {
@@ -81,6 +100,7 @@ function Service() {
       );
     }
     setFilteredServices(sortedServices);
+    setCurrentPage(1); // Reset to first page
   };
 
   const handleFilter = (filterValue) => {
@@ -88,6 +108,7 @@ function Service() {
       filterValue ? service.category?._id === filterValue : true
     );
     setFilteredServices(filtered);
+    setCurrentPage(1); // Reset to first page
   };
 
   const openModal = () => {
@@ -215,12 +236,6 @@ function Service() {
           <h1 className="text-3xl font-bold text-gray-800 mb-4">
             Service List
           </h1>
-          <p className="text-gray-600 mb-6">
-            Below is a list of services available. You can add new services or
-            manage existing ones.
-          </p>
-
-          {/* Integrate SearchSortFilter Component */}
           <SearchSortFilter
             onSearch={handleSearch}
             onSort={handleSort}
@@ -236,7 +251,6 @@ function Service() {
             ]}
           />
 
-          {/* Add Service Button */}
           <div className="flex justify-end mb-4">
             <button
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow"
@@ -246,7 +260,6 @@ function Service() {
             </button>
           </div>
 
-          {/* Service Table */}
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white table-auto">
               <thead className="bg-gray-200 text-gray-700">
@@ -258,55 +271,56 @@ function Service() {
                 </tr>
               </thead>
               <tbody className="text-gray-600">
-                {filteredServices.length > 0 ? (
-                  filteredServices.map((service) => (
-                    <tr
-                      key={service._id}
-                      className="border-b hover:bg-gray-100"
-                    >
-                      <td className="py-3 px-6 text-left">{service.name}</td>
-                      <td className="py-3 px-6 text-left">
-                        {service.category
-                          ? `${service.category.name} (ID: ${service.category._id})`
-                          : "Category not available"}
-                      </td>
-                      <td className="py-3 px-6 text-center">
-                        Rs {service.price}
-                      </td>
-                      <td className="py-3 px-6 text-center">
-                        <button
-                          onClick={() => openEditModal(service)}
-                          className="text-blue-500 hover:underline mr-2"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() =>
-                            toggleListing(service._id, service.isAvailable)
-                          }
-                          className="text-yellow-500 hover:underline"
-                        >
-                          {service.isAvailable ? "Unlist" : "List"}
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="py-3 px-6 text-center text-gray-500"
-                    >
-                      No services available
+                {currentServices.map((service) => (
+                  <tr key={service._id} className="border-b hover:bg-gray-100">
+                    <td className="py-3 px-6 text-left">{service.name}</td>
+                    <td className="py-3 px-6 text-left">
+                      {service.category
+                        ? `${service.category.name}`
+                        : "Category not available"}
+                    </td>
+                    <td className="py-3 px-6 text-center">
+                      Rs {service.price}
+                    </td>
+                    <td className="py-3 px-6 text-center">
+                      <button
+                        onClick={() => openEditModal(service)}
+                        className="text-blue-500 hover:underline mr-2"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() =>
+                          toggleListing(service._id, service.isAvailable)
+                        }
+                        className="text-yellow-500 hover:underline"
+                      >
+                        {service.isAvailable ? "Unlist" : "List"}
+                      </button>
                     </td>
                   </tr>
-                )}
+                ))}
               </tbody>
             </table>
           </div>
+
+          <div className="flex justify-center mt-6 space-x-2">
+            {Array.from({ length: totalPages }, (_, index) => (
+              <button
+                key={index}
+                onClick={() => handlePageChange(index + 1)}
+                className={`px-4 py-2 rounded ${
+                  currentPage === index + 1
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-300 text-gray-700"
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Modal for Adding/Editing a Service */}
         <Modal
           isOpen={modalIsOpen}
           onRequestClose={closeModal}
@@ -320,7 +334,6 @@ function Service() {
             </h2>
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-2 gap-4">
-                {/* Service Name */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700">
                     Service Name
@@ -335,7 +348,6 @@ function Service() {
                   />
                 </div>
 
-                {/* Price */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700">
                     Price
@@ -350,7 +362,6 @@ function Service() {
                   />
                 </div>
 
-                {/* Category */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700">
                     Category
@@ -373,7 +384,6 @@ function Service() {
                   </select>
                 </div>
 
-                {/* Expected Result Duration */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700">
                     Expected Result Duration
@@ -388,7 +398,6 @@ function Service() {
                   />
                 </div>
 
-                {/* Pre-test Preparations */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700">
                     Pre-test Preparations (Optional)
@@ -401,7 +410,6 @@ function Service() {
                   ></textarea>
                 </div>
 
-                {/* Description */}
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700">
                     Description (Optional)
@@ -414,7 +422,6 @@ function Service() {
                   ></textarea>
                 </div>
 
-                {/* Image Uploader */}
                 <div className="mb-4 col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Upload Service Image
@@ -430,7 +437,6 @@ function Service() {
                   </p>
                 </div>
 
-                {/* Image Preview */}
                 <div className="mb-4 col-span-2 grid grid-cols-2 gap-4">
                   <div className="border border-gray-300 rounded-lg bg-gray-100 h-64 flex items-center justify-center">
                     <img
@@ -448,7 +454,6 @@ function Service() {
                   </div>
                 </div>
 
-                {/* Crop Actions */}
                 <div className="col-span-2 flex justify-end space-x-4">
                   <button
                     type="button"
@@ -471,7 +476,6 @@ function Service() {
                 </div>
               </div>
 
-              {/* Submit & Cancel Buttons */}
               <div className="flex justify-end mt-4">
                 <button
                   type="button"

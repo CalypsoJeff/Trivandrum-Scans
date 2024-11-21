@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   addPatientInDb,
   addToCartInDb,
@@ -12,6 +13,7 @@ import {
   getFamilyDataInDb,
   getPaginatedServices,
   getService,
+  getStatus,
   getStoredOTP,
   getUserbyEMail,
   getUserByResetToken,
@@ -158,6 +160,16 @@ export default {
     };
     return { token, user, refreshToken };
   },
+
+  getStatus: async (id: string) => {
+    try {
+        return await getStatus(id)
+
+    } catch (error: any) {
+        console.error(error.message)
+        throw error
+    }
+},
 
   googleUser: async (userData: IUser) => {
     try {

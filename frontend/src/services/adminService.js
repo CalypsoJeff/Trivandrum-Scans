@@ -5,8 +5,6 @@ export const fetchChatMessages = async (chatId) => {
     const { data } = await axiosInstance.get(
       `/messages/chat/${chatId}/messages`
     );
-    console.log(data,'mmmmmmmmmm');
-    
     return data.messages;
   } catch (error) {
     console.error("Error fetching messages:", error);
@@ -97,10 +95,10 @@ export const fetchDepartments = async (page = 1, limit = 10) => {
 };
 
 // Fetch all categories
-export const fetchCategories = async (page = 1, limit = 10) => {
+export const fetchCategories = async () => {
   try {
     const response = await axiosInstance.get(
-      `/categoryList?page=${page}&limit=${limit}`
+      `/categoryList`
     );
     return response.data.categories;
   } catch (error) {
@@ -155,10 +153,10 @@ export const publishReport = async (reportId) => {
   return response.data;
 };
 
-export const fetchServices = async (page = 1, limit = 10) => {
+export const fetchServices = async () => {
   try {
     const response = await axiosInstance.get(
-      `/serviceList?page=${page}&limit=${limit}`
+      `/serviceList`
     );
     const { services } = response.data;
     return Array.isArray(services) ? services : [];

@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import Switch from "react-switch";
 import Modal from "react-modal";
@@ -25,6 +26,7 @@ const modalStyles = {
 
 function UserList() {
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,39 +34,71 @@ function UserList() {
   const [blockedStatus, setBlockedStatus] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10); // Rows per page
   const [confirmModalIsOpen, setConfirmModalIsOpen] = useState(false);
   const [userToToggle, setUserToToggle] = useState(null);
 
-  const loadUsers = async (page) => {
-    setStatus("loading");
-    try {
-      const { users, totalPages } = await fetchUsers(page, 10);
-      setUsers(users);
-      setTotalPages(totalPages);
-      setStatus("succeeded");
-    } catch (err) {
-      setError(err.message);
-      setStatus("failed");
-    }
+  // Load users and initialize blocked status
+  useEffect(() => {
+    const initializeBlockedStatus = (users) => {
+      const statusMap = {};
+      users.forEach((user) => {
+        statusMap[user._id] = user.is_blocked;
+      });
+      setBlockedStatus(statusMap);
+    };
+
+    const loadData = async () => {
+      setStatus("loading");
+      try {
+        const { users, totalPages } = await fetchUsers(currentPage, rowsPerPage);
+        setUsers(users);
+        setFilteredUsers(users); // Initialize filtered users
+        setTotalPages(totalPages);
+        initializeBlockedStatus(users);
+        setStatus("succeeded");
+      } catch (err) {
+        setError(err.message);
+        setStatus("failed");
+      }
+    };
+
+    loadData();
+  }, [currentPage, rowsPerPage]);
+
+  // Filter users by search term and status
+  useEffect(() => {
+    const filterData = () => {
+      let updatedUsers = [...users];
+
+      if (searchTerm) {
+        updatedUsers = updatedUsers.filter((user) =>
+          user.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      if (statusFilter) {
+        const isBlockedFilter = statusFilter === "Blocked";
+        updatedUsers = updatedUsers.filter(
+          (user) => user.is_blocked === isBlockedFilter
+        );
+      }
+
+      setFilteredUsers(updatedUsers);
+    };
+
+    filterData();
+  }, [searchTerm, statusFilter, users]);
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
   };
 
-  useEffect(() => {
-    loadUsers(currentPage);
-  }, [currentPage]);
-
-  useEffect(() => {
-    const initialBlockedStatus = {};
-    if (Array.isArray(users)) {
-      users.forEach((user) => {
-        initialBlockedStatus[user._id] = user.is_blocked;
-      });
-    }
-    setBlockedStatus(initialBlockedStatus);
-  }, [users]);
-
-  const handleSearchChange = (e) => setSearchTerm(e.target.value);
-
-  const handleStatusFilterChange = (e) => setStatusFilter(e.target.value);
+  const handleStatusFilterChange = (e) => {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1);
+  };
 
   const openConfirmModal = (user) => {
     setUserToToggle(user);
@@ -78,9 +112,9 @@ function UserList() {
 
   const confirmToggleBlockedStatus = async () => {
     if (userToToggle) {
-      const isBlocked = !blockedStatus[userToToggle._id];
+      const isBlocked = !blockedStatus[userToToggle._id]; // Toggle the current status
       try {
-        await toggleUserBlockStatus(userToToggle._id, isBlocked);
+        await toggleUserBlockStatus(userToToggle._id, isBlocked); // Call the API
         setBlockedStatus((prev) => ({
           ...prev,
           [userToToggle._id]: isBlocked,
@@ -101,44 +135,28 @@ function UserList() {
     if (newPage > 0 && newPage <= totalPages) setCurrentPage(newPage);
   };
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch = user.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "" || user.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex min-h-screen bg-gray-100">
       <Sidebar />
 
-      <div className="flex-1 p-6 bg-gray-50">
-        {/* Search and Filter Bar */}
-        <div className="flex items-center justify-between mb-6 space-x-4">
-          <div className="flex items-center bg-gray-200 rounded-lg shadow-sm w-full">
+      <div className="flex-1 flex flex-col p-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
+          <p className="text-gray-600 mt-1">
+            Manage and monitor your platform users.
+          </p>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="relative w-full max-w-md">
             <input
               type="text"
-              placeholder="Search users"
-              className="px-4 py-2 w-full border-none focus:outline-none bg-transparent rounded-l-lg"
+              placeholder="Search users by name"
               value={searchTerm}
               onChange={handleSearchChange}
+              className="w-full px-4 py-2 bg-white border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <button className="px-4 py-2 bg-gray-200 border-l border-gray-300">
-              <svg
-                className="w-5 h-5 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-4.35-4.35M9 14a5 5 0 1 1 10 0 5 5 0 0 1-10 0zm0 0v1a1 1 0 0 0 1 1h3m-4-6h4"
-                />
-              </svg>
-            </button>
           </div>
           <select
             className="px-4 py-2 bg-gray-200 rounded-lg shadow-sm"
@@ -147,102 +165,85 @@ function UserList() {
           >
             <option value="">Status</option>
             <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
+            <option value="Blocked">Blocked</option>
           </select>
         </div>
 
-        {/* Table */}
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <table className="min-w-full leading-normal">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+        {/* Rows Per Page Selector */}
+        <div className="mb-4">
+          <label className="text-gray-700 font-semibold mr-2">
+            Rows per page:
+          </label>
+          <select
+            className="px-4 py-2 border rounded-lg shadow-sm"
+            value={rowsPerPage}
+            onChange={(e) => setRowsPerPage(Number(e.target.value))}
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={15}>15</option>
+          </select>
+        </div>
+
+        {/* User Table */}
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden flex-1">
+          <table className="min-w-full">
+            <thead className="bg-blue-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Name
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-5 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white">
               {status === "loading" ? (
                 <tr>
-                  <td colSpan="4" className="text-center p-5">
-                    Loading...
-                  </td>
-                </tr>
-              ) : status === "failed" ? (
-                <tr>
-                  <td colSpan="4" className="text-center p-5 text-red-500">
-                    {error}
-                    <button
-                      onClick={() => fetchUsers(currentPage)}
-                      className="ml-4 text-blue-500 underline"
-                    >
-                      Retry
-                    </button>
+                  <td colSpan="4" className="text-center px-6 py-4">
+                    Loading users...
                   </td>
                 </tr>
               ) : filteredUsers.length > 0 ? (
-                filteredUsers.map((user) => {
-                  const isBlocked = blockedStatus[user._id];
-                  return (
-                    <tr
-                      key={user._id}
-                      className="bg-white hover:bg-gray-50 transition-colors duration-150"
-                    >
-                      <td className="px-5 py-5 border-b border-gray-200 text-sm">
-                        <p className="text-gray-900 whitespace-no-wrap">
-                          {user.name}
-                        </p>
-                      </td>
-                      <td className="px-5 py-5 border-b border-gray-200 text-sm">
-                        <p className="text-gray-900 whitespace-no-wrap">
-                          {user.email}
-                        </p>
-                      </td>
-                      <td className="px-5 py-5 border-b border-gray-200 text-sm">
-                        <span
-                          className={`relative inline-block px-3 py-1 font-semibold leading-tight ${
-                            isBlocked ? "text-red-600" : "text-green-600"
-                          }`}
-                        >
-                          <span
-                            aria-hidden
-                            className={`absolute inset-0 opacity-50 rounded-full ${
-                              isBlocked ? "bg-red-200" : "bg-green-200"
-                            }`}
-                          ></span>
-                          <span className="relative">
-                            {isBlocked ? "Blocked" : "Active"}
-                          </span>
-                        </span>
-                      </td>
-                      <td className="px-5 py-5 border-b border-gray-200 text-sm">
-                        <Switch
-                          onChange={() => openConfirmModal(user)}
-                          checked={blockedStatus[user._id] ?? false} // Default to false if undefined
-                          onColor="#EF4444"
-                          offColor="#A39F74"
-                          uncheckedIcon={false}
-                          checkedIcon={false}
-                          height={20}
-                          width={40}
-                          borderRadius={10}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })
+                filteredUsers.map((user) => (
+                  <tr key={user._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">{user.name}</td>
+                    <td className="px-6 py-4">{user.email}</td>
+                    <td className="px-6 py-4 text-center">
+                      <span
+                        className={`px-2 py-1 text-sm rounded-lg ${
+                          blockedStatus[user._id]
+                            ? "bg-red-100 text-red-600"
+                            : "bg-green-100 text-green-600"
+                        }`}
+                      >
+                        {blockedStatus[user._id] ? "Blocked" : "Active"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <Switch
+                        onChange={() => openConfirmModal(user)}
+                        checked={blockedStatus[user._id] ?? false}
+                        onColor="#EF4444"
+                        offColor="#A3A3A3"
+                        uncheckedIcon={false}
+                        checkedIcon={false}
+                        height={20}
+                        width={40}
+                      />
+                    </td>
+                  </tr>
+                ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="text-center p-5">
+                  <td colSpan="4" className="text-center px-6 py-4">
                     No users found.
                   </td>
                 </tr>
@@ -252,9 +253,9 @@ function UserList() {
         </div>
 
         {/* Pagination */}
-        <div className="flex justify-center mt-4 space-x-2">
+        <div className="flex justify-center mt-6 space-x-2">
           <button
-            className={`px-4 py-2 rounded ${
+            className={`px-4 py-2 rounded-lg ${
               currentPage === 1
                 ? "bg-gray-300 cursor-not-allowed"
                 : "bg-blue-500 text-white hover:bg-blue-600"
@@ -265,7 +266,7 @@ function UserList() {
             Previous
           </button>
           <button
-            className={`px-4 py-2 rounded ${
+            className={`px-4 py-2 rounded-lg ${
               currentPage === totalPages
                 ? "bg-gray-300 cursor-not-allowed"
                 : "bg-blue-500 text-white hover:bg-blue-600"
@@ -281,27 +282,29 @@ function UserList() {
         <Modal
           isOpen={confirmModalIsOpen}
           onRequestClose={closeConfirmModal}
-          contentLabel="Confirmation Modal"
+          contentLabel="Confirm Action"
           style={modalStyles}
-          ariaHideApp={false}
         >
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">
             Confirm Action
           </h2>
-          <p className="mb-6 text-gray-700">
+          <p className="text-gray-700 mb-6">
             Are you sure you want to{" "}
-            {blockedStatus[userToToggle?._id] ? "unblock" : "block"} this user?
+            <span className="font-bold">
+              {blockedStatus[userToToggle?._id] ? "unblock" : "block"}
+            </span>{" "}
+            this user?
           </p>
           <div className="flex justify-end space-x-4">
             <button
               onClick={closeConfirmModal}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+              className="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400"
             >
               Cancel
             </button>
             <button
               onClick={confirmToggleBlockedStatus}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"
             >
               Confirm
             </button>
