@@ -111,6 +111,8 @@
 // export default Dashboard;
 
 import React, { useEffect, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUser } from "@fortawesome/free-solid-svg-icons";
 import {
   FaUsers,
   FaBuilding,
@@ -167,8 +169,10 @@ const AdminDashboard = () => {
       >
         <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
       </div>
-      <div className="flex-1 flex flex-col overflow-hidden ml-64"
-        style={{ marginLeft: "16rem" }}>
+      <div
+        className="flex-1 flex flex-col overflow-hidden ml-64"
+        style={{ marginLeft: "16rem" }}
+      >
         <header className="bg-white shadow-md z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
@@ -211,11 +215,13 @@ const AdminDashboard = () => {
                 </button>
                 <div className="ml-4 relative">
                   <button className="flex items-center focus:outline-none">
-                    <img
-                      className="h-8 w-8 rounded-full"
-                      src="/placeholder-avatar.jpg"
-                      alt="User avatar"
-                    />
+                    <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                      {/* Font Awesome User Icon */}
+                      <FontAwesomeIcon
+                        icon={faUser}
+                        className="text-gray-700 h-5 w-5"
+                      />
+                    </div>
                     <span className="ml-2 text-gray-700">Admin</span>
                   </button>
                 </div>
