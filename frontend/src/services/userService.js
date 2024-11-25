@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
-import axiosInstanceUser from "./axiosInstanceUser";
-import axiosInstance from "./axiosInstance";
+import axiosInstanceUser from "../api/middlewares/axiosInstanceUser";
 import { toast } from "sonner";
 import axios from "axios";
+import axiosInstanceAdmin from "../api/middlewares/axiosInstanceAdmin";
 
 // Clear user's cart in backend after booking confirmation
 export const clearCartInBackend = async (userId) => {
@@ -21,7 +21,7 @@ export const initiateChatWithAdmin = async (userId, service, date) => {
     const { data } = await axiosInstanceUser.post(`/messages/chat/start`, {
       userId,
     });
-    await axiosInstance.post(`/chat/${data.chatId}/send`, {
+    await axiosInstanceAdmin.post(`/chat/${data.chatId}/send`, {
       content: `Your booking for ${service} on ${date} has been confirmed. Thank you!`,
     });
     return data;

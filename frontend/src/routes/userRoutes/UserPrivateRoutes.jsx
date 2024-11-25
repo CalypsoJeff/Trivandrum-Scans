@@ -1,23 +1,7 @@
-// import React from "react";
-// import { Navigate, Outlet } from "react-router";
-// import Cookies from "js-cookie";
-
-// const UserPrivateRoutes = () => {
-//   const token = Cookies.get("token");
-
-//   if (!token) {
-//     return <Navigate to="/login" />;
-//   }
-
-//   return <Outlet />;
-// };
-
-// export default UserPrivateRoutes;
-
 import React, { useEffect, useState } from "react"; 
 import { Navigate, Outlet, useNavigate } from "react-router";
 import Cookies from "js-cookie";
-import axiosInstanceUser from "../../services/axiosInstanceUser";
+import axiosInstanceUser from "../../api/middlewares/axiosInstanceUser";
 import { selectUser, clearUser } from "../../features/auth/authSlice";
 import { useDispatch, useSelector } from "react-redux";
 import Modal from "../../components/UserComponents/Modal";

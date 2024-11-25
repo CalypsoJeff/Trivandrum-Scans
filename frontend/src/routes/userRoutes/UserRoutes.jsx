@@ -7,9 +7,9 @@ import Home from "../../pages/user/Home";
 import LandingPage from "../../pages/user/LandingPage";
 import ForgetPassword from "../../pages/user/ForgetPassword";
 import ResetPassword from "../../pages/user/ResetPassword";
-import UserPrivateRoutes from "./UserPrivateRoutes"; // Protected routes handler
+import UserPrivateRoutes from "./UserPrivateRoutes"; 
 import { useDispatch } from "react-redux";
-import { setupInterceptors } from "../../services/axiosInstanceUser";
+import { setupInterceptors } from "../../api/middlewares/axiosInstanceUser";
 import { logoutUser } from "../../features/auth/authSlice";
 import { toast } from "sonner";
 import Services from "../../pages/user/Services";

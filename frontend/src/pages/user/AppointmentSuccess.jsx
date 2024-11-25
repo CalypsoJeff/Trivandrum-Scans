@@ -115,8 +115,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FaCheckCircle } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
-import axiosInstanceUser from "../../services/axiosInstanceUser";
-import axiosInstance from "../../services/axiosInstance";
+import axiosInstanceUser from "../../api/middlewares/axiosInstanceUser";
+import axiosInstanceAdmin from "../../api/middlewares/axiosInstanceAdmin";
 
 function AppointmentSuccess() {
   const navigate = useNavigate();
@@ -158,7 +158,7 @@ function AppointmentSuccess() {
       const { data } = await axiosInstanceUser.post(`/chat/start`, { userId });
       console.log("Chat initiated:", data);
 
-      await axiosInstance.post(`/chat/${data.chatId}/send`, {
+      await axiosInstanceAdmin.post(`/chat/${data.chatId}/send`, {
         content: `Your booking for ${service} on ${date} has been confirmed. Thank you!`,
       });
       console.log("Initial confirmation message sent to user.");

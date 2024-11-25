@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axiosInstanceUser from "../../services/axiosInstanceUser";
+import axiosInstanceUser from "../../api/middlewares/axiosInstanceUser";
 
 export const addToCart = createAsyncThunk(
   "cart/addToCart",

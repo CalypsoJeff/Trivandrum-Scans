@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
-import axiosInstanceUser from "../../services/axiosInstanceUser";
+import axiosInstanceUser from "../../api/middlewares/axiosInstanceUser";
 
 const TimeSlotHeatmap = () => {
   const [chartOptions, setChartOptions] = useState(null);

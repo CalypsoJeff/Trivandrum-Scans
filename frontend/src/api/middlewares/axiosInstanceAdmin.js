@@ -1,7 +1,14 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-const axiosInstance = axios.create({
+// const axiosInstanceAdmin = axios.create({
+//   baseURL: import.meta.env.REACT_APP_API_BASE_URL + "/api/admin",
+//   headers: {
+//     "Content-Type": "application/json",
+//   },
+//   withCredentials: true,
+// });
+const axiosInstanceAdmin = axios.create({
   baseURL: "http://localhost:5000/api/admin",
   headers: {
     "Content-Type": "application/json",
@@ -9,7 +16,7 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-axiosInstance.interceptors.request.use(
+axiosInstanceAdmin.interceptors.request.use(
   (config) => {
     const token = Cookies.get("admintoken");
     if (token) {
@@ -22,7 +29,7 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-axiosInstance.interceptors.response.use(
+axiosInstanceAdmin.interceptors.response.use(
   (response) => {
     return response;
   },
@@ -34,4 +41,4 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-export default axiosInstance;
+export default axiosInstanceAdmin;

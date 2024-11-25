@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axiosInstanceUser from "../../services/axiosInstanceUser";
+import axiosInstanceUser from "../../api/middlewares/axiosInstanceUser";
 import ProfileSidebar from "../../components/UserComponents/ProfileSidebar";
 import { toast } from "sonner";
 import {

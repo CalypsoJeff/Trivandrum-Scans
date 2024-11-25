@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
 import axios from "axios";
 import adminService from "./adminService";
-import axiosInstance from "../../services/axiosInstance";
+import axiosInstanceAdmin from "../../api/middlewares/axiosInstanceAdmin";
 
 export const loginAdmin = createAsyncThunk(
   "admin/loginAdmin",
@@ -11,8 +11,6 @@ export const loginAdmin = createAsyncThunk(
       const response = await adminService.adminLogin(adminData);
       Cookies.set("admintoken", response.response.token);
       Cookies.set("adminRefreshtoken", response.response.refreshToken);
-      console.log(response,'billlllllll');
-      
       return response;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -47,11 +45,10 @@ export const addDepartment = createAsyncThunk(
   "admin/addDepartment",
   async (departmentData, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(
+      const response = await axiosInstanceAdmin.post(
         "/add-Department",
         departmentData
       );
-      console.log(response.data);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -63,7 +60,7 @@ export const editDepartment = createAsyncThunk(
   async (departmentData, { rejectWithValue }) => {
     const { id, ...dataaaas } = departmentData;
     try {
-      const response = await axiosInstance.put(
+      const response = await axiosInstanceAdmin.put(
         `/edit-department/${id}`,
         dataaaas
       );
@@ -77,8 +74,9 @@ export const deleteDepartment = createAsyncThunk(
   "admin/deleteDepartment",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.delete(`/delete-department/${id}`);
-      // return response.data;
+      const response = await axiosInstanceAdmin.delete(
+        `/delete-department/${id}`
+      );
       return { id, ...response.data };
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -90,9 +88,10 @@ export const addCategory = createAsyncThunk(
   "admin/addCategory",
   async (categoryData, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/add-category", categoryData);
-      console.log(response.data, "gayathriiiiiiiiiiiiiiiiii");
-
+      const response = await axiosInstanceAdmin.post(
+        "/add-category",
+        categoryData
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -104,7 +103,10 @@ export const editCategory = createAsyncThunk(
   async (categoryData, { rejectWithValue }) => {
     try {
       const { id, ...data } = categoryData;
-      const response = await axiosInstance.put(`/edit-category/${id}`, data);
+      const response = await axiosInstanceAdmin.put(
+        `/edit-category/${id}`,
+        data
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -115,7 +117,9 @@ export const deleteCategory = createAsyncThunk(
   "admin/deleteCategory",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.delete(`/delete-category/${id}`);
+      const response = await axiosInstanceAdmin.delete(
+        `/delete-category/${id}`
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -160,8 +164,8 @@ const adminSlice = createSlice({
     admin: null,
     status: "idle",
     error: null,
-    categories: [], 
-    categoriesStatus: "idle", 
+    categories: [],
+    categoriesStatus: "idle",
     categoriesError: null,
     departments: [],
     departmentsStatus: "idle",
@@ -176,7 +180,7 @@ const adminSlice = createSlice({
     },
     setChatRequestCount(state, action) {
       state.chatRequestCount = action.payload;
-    }, 
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -187,8 +191,7 @@ const adminSlice = createSlice({
       .addCase(loginAdmin.fulfilled, (state, action) => {
         state.loading = false;
         state.admin = action.payload.response.admin;
-        console.log(action.payload.response.admin,'nokiyaeeeeeeeeeeee');
-        
+        console.log(action.payload.response.admin, "nokiyaeeeeeeeeeeee");
       })
       .addCase(loginAdmin.rejected, (state, action) => {
         state.loading = false;
@@ -271,7 +274,7 @@ const adminSlice = createSlice({
       });
   },
 });
-export const { logoutAdmin,setChatRequestCount } = adminSlice.actions;
+export const { logoutAdmin, setChatRequestCount } = adminSlice.actions;
 export const selectAdmin = (state) => state.admin.admin;
 
 export default adminSlice.reducer;

@@ -3,7 +3,7 @@ import axios from "axios";
 import authService from "./authService";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
-import axiosInstanceUser from "../../services/axiosInstanceUser";
+import axiosInstanceUser from "../../api/middlewares/axiosInstanceUser";
 const API_URL = "http://localhost:5000/api/users";
 
 export const signupUser = createAsyncThunk(

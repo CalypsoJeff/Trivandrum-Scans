@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
-import axiosInstance from "../../services/axiosInstance";
 import Sidebar from "../../components/AdminComponents/Sidebar";
 import {
   fetchBookingDetail,

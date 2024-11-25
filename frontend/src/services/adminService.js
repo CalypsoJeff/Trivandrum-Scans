@@ -1,8 +1,8 @@
-import axiosInstance from "./axiosInstance";
+import axiosInstanceAdmin from "../api/middlewares/axiosInstanceAdmin";
 
 export const fetchChatMessages = async (chatId) => {
   try {
-    const { data } = await axiosInstance.get(
+    const { data } = await axiosInstanceAdmin.get(
       `/messages/chat/${chatId}/messages`
     );
     return data.messages;
@@ -14,7 +14,7 @@ export const fetchChatMessages = async (chatId) => {
 
 export const fetchUserCount = async () => {
   try {
-    const { data } = await axiosInstance.get("/count");
+    const { data } = await axiosInstanceAdmin.get("/count");
     return data;
   } catch (error) {
     console.error("Error fetching user count:", error);
@@ -24,7 +24,7 @@ export const fetchUserCount = async () => {
 
 export const fetchDepartmentCount = async () => {
   try {
-    const { data } = await axiosInstance.get("/count-departments");
+    const { data } = await axiosInstanceAdmin.get("/count-departments");
     return data;
   } catch (error) {
     console.error("Error fetching department count:", error);
@@ -34,7 +34,7 @@ export const fetchDepartmentCount = async () => {
 
 export const fetchCategoryCount = async () => {
   try {
-    const { data } = await axiosInstance.get("/count-categories");
+    const { data } = await axiosInstanceAdmin.get("/count-categories");
     return data;
   } catch (error) {
     console.error("Error fetching category count:", error);
@@ -45,7 +45,7 @@ export const fetchCategoryCount = async () => {
 // Fetch booking details
 export const fetchBookingDetail = async (bookingId) => {
   try {
-    const response = await axiosInstance.get(`/bookings/${bookingId}`);
+    const response = await axiosInstanceAdmin.get(`/bookings/${bookingId}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching booking details:", error);
@@ -60,7 +60,7 @@ export const toggleServiceCompletionStatus = async (
   status
 ) => {
   try {
-    await axiosInstance.patch(`/bookings/${bookingId}/service/${serviceId}`, {
+    await axiosInstanceAdmin.patch(`/bookings/${bookingId}/service/${serviceId}`, {
       completed: status,
     });
   } catch (error) {
@@ -71,7 +71,7 @@ export const toggleServiceCompletionStatus = async (
 
 export const fetchBookings = async (page, limit) => {
   try {
-    const response = await axiosInstance.get(
+    const response = await axiosInstanceAdmin.get(
       `/bookings?page=${page}&limit=${limit}`
     );
     return response.data;
@@ -84,7 +84,7 @@ export const fetchBookings = async (page, limit) => {
 // Fetch all departments
 export const fetchDepartments = async (page = 1, limit = 10) => {
   try {
-    const response = await axiosInstance.get(
+    const response = await axiosInstanceAdmin.get(
       `/departmentlist?page=${page}&limit=${limit}`
     );
     return response.data;
@@ -97,9 +97,11 @@ export const fetchDepartments = async (page = 1, limit = 10) => {
 // Fetch all categories
 export const fetchCategories = async () => {
   try {
-    const response = await axiosInstance.get(
+    const response = await axiosInstanceAdmin.get(
       `/categoryList`
     );
+    console.log(response.data.categories,'fffffffffff');
+    
     return response.data.categories;
   } catch (error) {
     console.error("Error fetching categories:", error);
@@ -109,7 +111,7 @@ export const fetchCategories = async () => {
 
 export const fetchChatList = async () => {
   try {
-    const response = await axiosInstance.get("/chatList");
+    const response = await axiosInstanceAdmin.get("/chatList");
     return response.data;
   } catch (error) {
     console.error("Error fetching chat list:", error);
@@ -118,36 +120,36 @@ export const fetchChatList = async () => {
 };
 
 export const fetchDepartment = async () => {
-  const response = await axiosInstance.get("/departmentlist");
+  const response = await axiosInstanceAdmin.get("/departmentlist");
   return response.data;
 };
 
 export const fetchCompletedBookings = async () => {
-  const response = await axiosInstance.get("/service-Completed");
+  const response = await axiosInstanceAdmin.get("/service-Completed");
   return response.data.bookings;
 };
 
 export const fetchReportList = async () => {
-  const response = await axiosInstance.get("/reports");
+  const response = await axiosInstanceAdmin.get("/reports");
   return response.data.reports;
 };
 
 export const uploadReport = async (formData) => {
-  const response = await axiosInstance.post("/reports/upload", formData, {
+  const response = await axiosInstanceAdmin.post("/reports/upload", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data;
 };
 
 export const editReport = async (reportId, formData) => {
-  const response = await axiosInstance.put(`/reports/${reportId}`, formData, {
+  const response = await axiosInstanceAdmin.put(`/reports/${reportId}`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data;
 };
 
 export const publishReport = async (reportId) => {
-  const response = await axiosInstance.patch(`/reports/${reportId}/publish`, {
+  const response = await axiosInstanceAdmin.patch(`/reports/${reportId}/publish`, {
     published: true,
   });
   return response.data;
@@ -155,7 +157,7 @@ export const publishReport = async (reportId) => {
 
 export const fetchServices = async () => {
   try {
-    const response = await axiosInstance.get(
+    const response = await axiosInstanceAdmin.get(
       `/serviceList`
     );
     const { services } = response.data;
@@ -168,7 +170,7 @@ export const fetchServices = async () => {
 
 export const toggleServiceListing = async (id) => {
   try {
-    await axiosInstance.patch(`/service/${id}/toggleListing`);
+    await axiosInstanceAdmin.patch(`/service/${id}/toggleListing`);
     return true; // Indicate success
   } catch (error) {
     console.error("Error toggling listing status:", error);
@@ -178,7 +180,7 @@ export const toggleServiceListing = async (id) => {
 
 export const fetchUsers = async (page = 1, limit = 10) => {
   try {
-    const response = await axiosInstance.get(
+    const response = await axiosInstanceAdmin.get(
       `/userlist?page=${page}&limit=${limit}`
     );
     return {
@@ -193,7 +195,7 @@ export const fetchUsers = async (page = 1, limit = 10) => {
 
 export const toggleUserBlockStatus = async (userId, isBlocked) => {
   try {
-    await axiosInstance.patch(`/blockUser/${userId}`, {
+    await axiosInstanceAdmin.patch(`/blockUser/${userId}`, {
       is_blocked: isBlocked,
     });
   } catch (error) {

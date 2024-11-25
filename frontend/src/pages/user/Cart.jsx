@@ -5,7 +5,7 @@ import { MdEventAvailable } from "react-icons/md";
 import Header from "../../components/UserComponents/Header";
 import { useSelector, useDispatch } from "react-redux";
 import { selectUser } from "../../features/auth/authSlice";
-import axiosInstanceUser from "../../services/axiosInstanceUser";
+import axiosInstanceUser from "../../api/middlewares/axiosInstanceUser";
 import { removeFromCart } from "../../features/cart/cartSlice";
 import { useNavigate } from "react-router-dom";
 

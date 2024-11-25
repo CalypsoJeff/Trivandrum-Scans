@@ -12,6 +12,7 @@ import {
 } from "../../features/admin/adminslice";
 import { toast, Toaster } from "sonner";
 import { fetchCategories, fetchDepartments } from "../../services/adminService";
+// import { getCategories } from "../../api/endpoints/category";
 
 // Set the modal's root element
 Modal.setAppElement("#root");

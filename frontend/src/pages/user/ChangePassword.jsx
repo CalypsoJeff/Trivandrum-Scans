@@ -1,7 +1,7 @@
 import React from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import axiosInstanceUser from "../../services/axiosInstanceUser";
+import axiosInstanceUser from "../../api/middlewares/axiosInstanceUser";
 import { useSelector } from "react-redux";
 import { selectUser } from "../../features/auth/authSlice";
 import Header from "../../components/UserComponents/Header";

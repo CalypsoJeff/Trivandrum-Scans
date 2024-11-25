@@ -1,5 +1,5 @@
 import axios from "axios";
-import axiosInstance from "../../services/axiosInstance";
+import axiosInstanceAdmin from "../../api/middlewares/axiosInstanceAdmin";
 
 const API_URL = "http://localhost:5000/api/admin";
 
@@ -15,7 +15,7 @@ const adminLogin = async (credentials) => {
 
 const addService = async (serviceData) => {
   try {
-    const response = await axiosInstance.post(
+    const response = await axiosInstanceAdmin.post(
       `${API_URL}/add-service`,
       serviceData,
       {
@@ -34,7 +34,7 @@ const addService = async (serviceData) => {
 const updateService = async (serviceData) => {
   try {
     const { id, formData } = serviceData;
-    const response = await axiosInstance.put(
+    const response = await axiosInstanceAdmin.put(
       `${API_URL}/update-service/${id}`,
       formData,
       {
