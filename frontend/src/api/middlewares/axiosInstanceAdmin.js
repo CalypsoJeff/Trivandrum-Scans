@@ -9,7 +9,10 @@ import Cookies from "js-cookie";
 //   withCredentials: true,
 // });
 const axiosInstanceAdmin = axios.create({
-  baseURL: "http://localhost:5000/api/admin",
+  // baseURL: "http://localhost:5000/api/admin",
+  baseURL: "https://trivandrum-scans.onrender.com/api/admin",
+
+  
   headers: {
     "Content-Type": "application/json",
   },

@@ -265,9 +265,6 @@
 //   );
 // }
 
-
-
-
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
@@ -388,7 +385,8 @@ export default function Chat() {
   const getChatId = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:5000${apiBaseUrl}/chat/start/${userId}`
+        // `http://localhost:5000${apiBaseUrl}/chat/start/${userId}`
+        `https://trivandrum-scans.onrender.com/api/users/messages/chat/start/${userId}`
       );
       setChatId(response.data.chat._id);
     } catch (error) {
@@ -399,7 +397,8 @@ export default function Chat() {
   const fetchMessages = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:5000${apiBaseUrl}/chat/${chatId}/messages`
+        // `http://localhost:5000${apiBaseUrl}/chat/${chatId}/messages`
+        `https://trivandrum-scans.onrender.com/api/users/messages/chat/${chatId}/messages`
       );
       setMessages(response.data.messages);
     } catch (error) {
@@ -423,7 +422,7 @@ export default function Chat() {
         console.error("Socket is disconnected. Message not sent.");
         return;
       }
-  
+
       const messageData = {
         _id: new Date().getTime().toString(), // Temporary unique ID
         chatId,
@@ -433,7 +432,7 @@ export default function Chat() {
         createdAt: new Date().toISOString(),
         status: "sent",
       };
-  
+
       // Clear input immediately to enhance user experience
       setMessageInput("");
       socket.emit("sendMessage", messageData, (ack) => {
@@ -450,7 +449,7 @@ export default function Chat() {
       console.error("Message not sent: input is empty or socket disconnected.");
     }
   };
-  
+
   useEffect(() => {
     if (socket && chatId) {
       socket.on("receiveMessage", (newMessage) => {
@@ -460,13 +459,13 @@ export default function Chat() {
         });
         socket.emit("messageRead", { roomId: chatId, userId });
       });
-  
+
       return () => {
         socket.off("receiveMessage");
       };
     }
   }, [socket, chatId, userId]);
-  
+
   function formatTimestamp(timestamp) {
     const date = new Date(timestamp);
     return date.toLocaleTimeString("en-US", {

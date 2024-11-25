@@ -1,8 +1,8 @@
 import axios from "axios";
 import axiosInstanceAdmin from "../../api/middlewares/axiosInstanceAdmin";
 
-const API_URL = "http://localhost:5000/api/admin";
-
+// const API_URL = "http://localhost:5000/api/admin";
+const API_URL = "https://trivandrum-scans.onrender.com/api/admin";
 const adminLogin = async (credentials) => {
   try {
     const response = await axios.post(`${API_URL}/login`, credentials);

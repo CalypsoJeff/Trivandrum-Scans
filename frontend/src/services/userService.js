@@ -122,7 +122,8 @@ export const createBookingSession = async (bookingData) => {
 export const requestPasswordReset = async (email) => {
   try {
     const response = await axios.post(
-      "http://localhost:5000/api/users/forget-password",
+      // "http://localhost:5000/api/users/forget-password",
+      "https://trivandrum-scans.onrender.com/api/users/forget-password",
       { email }
     );
     return response;
@@ -156,7 +157,9 @@ export const addServiceToCart = async (cartData) => {
 
 export const otpVerification = async (otp, email) => {
   const response = await axios.post(
-    "http://localhost:5000/api/users/otp-verification",
+    // "http://localhost:5000/api/users/otp-verification",
+    "https://trivandrum-scans.onrender.com/api/users/otp-verification",
+
     {
       otp,
       email,
@@ -167,7 +170,9 @@ export const otpVerification = async (otp, email) => {
 
 export const resendOtp = async (email) => {
   const response = await axios.post(
-    "http://localhost:5000/api/users/resend-otp",
+    // "http://localhost:5000/api/users/resend-otp",
+    "https://trivandrum-scans.onrender.com/api/users/resend-otp",
+
     { email }
   );
   return response.data;

@@ -12,7 +12,10 @@ import { jwtDecode } from "jwt-decode";
 //   withCredentials: true,
 // });
 
-const baseURL = "http://localhost:5000/api/users";
+// const baseURL = "http://localhost:5000/api/users";
+const baseURL = "https://trivandrum-scans.onrender.com/api/users";
+
+
 const axiosInstanceUser = axios.create({
   baseURL,
   headers: {

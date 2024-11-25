@@ -18,14 +18,18 @@ export const loginAdmin = createAsyncThunk(
   }
 );
 export const fetchUsers = createAsyncThunk("admin/fetchUsers", async () => {
-  const response = await axios.get("http://localhost:5000/api/admin/userlist");
+  const response = await axios.get(
+    // "http://localhost:5000/api/admin/userlist"
+    "https://trivandrum-scans.onrender.com/api/admin/userlist"
+  );
   return response.data;
 });
 export const fetchCategories = createAsyncThunk(
   "admin/fetchCategories",
   async () => {
     const response = await axios.get(
-      "http://localhost:5000/api/admin/categoryList"
+      // "http://localhost:5000/api/admin/categoryList"
+      "https://trivandrum-scans.onrender.com/api/admin/categoryList"
     );
     return response.data;
   }
@@ -35,7 +39,9 @@ export const toggleUserStatus = createAsyncThunk(
   "admin/toggleUserStatus",
   async ({ userId, isBlocked }) => {
     const response = await axios.post(
-      "http://localhost:5000/api/admin/block-user",
+      // "http://localhost:5000/api/admin/block-user",
+      "https://trivandrum-scans.onrender.com/api/admin/block-user",
+
       { userId, is_blocked: isBlocked }
     );
     return response.data;
@@ -191,7 +197,6 @@ const adminSlice = createSlice({
       .addCase(loginAdmin.fulfilled, (state, action) => {
         state.loading = false;
         state.admin = action.payload.response.admin;
-        console.log(action.payload.response.admin, "nokiyaeeeeeeeeeeee");
       })
       .addCase(loginAdmin.rejected, (state, action) => {
         state.loading = false;
