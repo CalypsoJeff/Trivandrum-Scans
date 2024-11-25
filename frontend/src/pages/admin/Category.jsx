@@ -9,7 +9,7 @@ import {
   addCategory,
   deleteCategory,
   editCategory,
-} from "../../features/admin/adminslice";
+} from "../../features/admin/adminSlice";
 import { toast, Toaster } from "sonner";
 import { fetchCategories, fetchDepartments } from "../../services/adminService";
 // import { getCategories } from "../../api/endpoints/category";

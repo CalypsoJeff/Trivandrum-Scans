@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useSocket } from "../../services/socketProvider";
-import { selectAdmin } from "../../features/admin/adminslice";
+import { selectAdmin } from "../../features/admin/adminSlice";
 import Sidebar from "../../components/AdminComponents/Sidebar";
 import { fetchChatMessages } from "../../services/adminService";
 

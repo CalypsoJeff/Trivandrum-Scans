@@ -3,7 +3,7 @@ import { MessageCircle, Search, Mail } from "lucide-react";
 import { fetchChatList, fetchChatMessages } from "../../services/adminService";
 import { useSocket } from "../../services/socketProvider";
 import { useSelector } from "react-redux";
-import { selectAdmin } from "../../features/admin/adminslice";
+import { selectAdmin } from "../../features/admin/adminSlice";
 import Sidebar from "../../components/AdminComponents/Sidebar";
 
 const Chat = () => {

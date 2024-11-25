@@ -7,7 +7,7 @@ import { AiFillDashboard, AiOutlineProfile } from "react-icons/ai";
 import { MdCategory, MdBusiness, MdChat } from "react-icons/md";
 import { BsFillCalendarCheckFill } from "react-icons/bs";
 import Cookies from "js-cookie";
-import { clearAdmin } from "../../features/admin/adminslice";
+import { clearAdmin } from "../../features/admin/adminSlice";
 
 function Sidebar({ isOpen, toggleSidebar }) {
   const navigate = useNavigate();

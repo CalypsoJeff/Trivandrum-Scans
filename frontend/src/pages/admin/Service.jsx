@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useDispatch } from "react-redux";
 import Cropper from "cropperjs";
 import "cropperjs/dist/cropper.min.css";
-import { addService, updateService } from "../../features/admin/adminslice";
+import { addService, updateService } from "../../features/admin/adminSlice";
 import SearchSortFilter from "../../components/AdminComponents/SearchSortFilter";
 import {
   fetchCategories,

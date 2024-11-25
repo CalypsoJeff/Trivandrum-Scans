@@ -8,7 +8,7 @@ import {
   addDepartment,
   deleteDepartment,
   editDepartment,
-} from "../../features/admin/adminslice";
+} from "../../features/admin/adminSlice";
 import { fetchDepartment as fetchDepartmentsService } from "../../services/adminService";
 import { toast, Toaster } from "sonner";
 

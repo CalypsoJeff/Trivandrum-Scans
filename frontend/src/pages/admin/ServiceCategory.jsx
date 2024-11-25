@@ -6,7 +6,7 @@ import Modal from "react-modal";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useDispatch, useSelector } from "react-redux";
-import { addCategory } from "../../features/admin/adminslice";
+import { addCategory } from "../../features/admin/adminSlice";
 
 // Ensure Modal is accessible
 Modal.setAppElement("#root");
