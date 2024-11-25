@@ -3,7 +3,7 @@ import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import { combineReducers } from "redux";
 import authReducer from "../features/auth/authSlice";
-import adminReducer from "../features/admin/adminslice";
+import adminReducer from '../features/admin/adminSlice'
 import cartReducer from "../features/cart/cartSlice";
 import bookingReducer from "../features/booking/bookingSlice";
 import chatReducer from "../features/chat/chatSlice";

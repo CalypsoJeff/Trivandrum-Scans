@@ -274,7 +274,7 @@ const adminSlice = createSlice({
       });
   },
 });
-export const { logoutAdmin, setChatRequestCount } = adminslice.actions;
+export const { logoutAdmin, setChatRequestCount } = adminSlice.actions;
 export const selectAdmin = (state) => state.admin.admin;
 
-export default adminslice.reducer;
+export default adminSlice.reducer;
