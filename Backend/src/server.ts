@@ -22,7 +22,8 @@ export const io = new Server(server, {
         origin: [
             'https://trivandrum-scans-cq38.vercel.app',
             'https://trivandrumscans-ffl74s6pz-jephyjvarghese-gmailcoms-projects.vercel.app',
-            'http://localhost:5173'
+            'http://localhost:5173',
+            'https://trivandrum-scans-punalur.vercel.app/'
         ],
         methods: ['GET', 'POST'],
         credentials: true,
@@ -36,7 +37,10 @@ const corsOptions = {
     // origin: ['http://localhost:5173'],
     origin: ['https://trivandrum-scans-cq38.vercel.app',
         'https://trivandrumscans-ffl74s6pz-jephyjvarghese-gmailcoms-projects.vercel.app',
-        'http://localhost:5173'],
+        'http://localhost:5173',
+        'https://trivandrum-scans-punalur.vercel.app/'
+
+    ],
 
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', "PATCH"],
