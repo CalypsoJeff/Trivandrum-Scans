@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { loginAdmin } from "../../features/admin/adminslice";
+import { loginAdmin } from "../../features/admin/adminSlice";
 import { toast, Toaster } from "sonner";
 import BackgroundImgLogin from "/Images/pexels-tima-miroshnichenko-9574411.jpg";
 
