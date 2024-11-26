@@ -24,7 +24,7 @@ export const io = new Server(server, {
             // 'https://trivandrumscans-ffl74s6pz-jephyjvarghese-gmailcoms-projects.vercel.app',
             // 'http://localhost:5173',
             // 'https://trivandrum-scans-punalur.vercel.app/',
-            'https://trivandrum-scans-zh4r.vercel.app/'
+            'https://trivandrum-scans-zh4r.vercel.app'
 
         ],
         methods: ['GET', 'POST'],
@@ -40,7 +40,7 @@ const corsOptions = {
     origin: [
         // 'https://trivandrum-scans-cq38.vercel.app',
         // 'http://localhost:5173',
-        'https://trivandrum-scans-zh4r.vercel.app/'
+        'https://trivandrum-scans-zh4r.vercel.app'
 
     ],
 
