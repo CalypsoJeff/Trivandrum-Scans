@@ -20,10 +20,10 @@ const server = http.createServer(app);
 export const io = new Server(server, {
     cors: {
         origin: [
-            'https://trivandrum-scans-cq38.vercel.app',
-            'https://trivandrumscans-ffl74s6pz-jephyjvarghese-gmailcoms-projects.vercel.app',
-            'http://localhost:5173',
-            'https://trivandrum-scans-punalur.vercel.app/',
+            // 'https://trivandrum-scans-cq38.vercel.app',
+            // 'https://trivandrumscans-ffl74s6pz-jephyjvarghese-gmailcoms-projects.vercel.app',
+            // 'http://localhost:5173',
+            // 'https://trivandrum-scans-punalur.vercel.app/',
             'https://trivandrum-scans-zh4r.vercel.app/'
 
         ],
@@ -37,9 +37,9 @@ handleSocketEvents(io);
 const PORT = process.env.PORT || 5000;
 const corsOptions = {
     // origin: ['http://localhost:5173'],
-    origin: ['https://trivandrum-scans-cq38.vercel.app',
-        'https://trivandrumscans-ffl74s6pz-jephyjvarghese-gmailcoms-projects.vercel.app',
-        'http://localhost:5173',
+    origin: [
+        // 'https://trivandrum-scans-cq38.vercel.app',
+        // 'http://localhost:5173',
         'https://trivandrum-scans-zh4r.vercel.app/'
 
     ],
@@ -48,6 +48,7 @@ const corsOptions = {
     methods: ['GET', 'POST', 'PUT', 'DELETE', "PATCH"],
     allowedHeaders: ['Content-Type', 'Authorization'],
 };
+
 app.options('*', cors(corsOptions));
 
 app.use(cors(corsOptions));
