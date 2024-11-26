@@ -109,12 +109,7 @@ function Home() {
         />
       )}
       <Header />
-      <div
-        className="image-carousel"
-        style={{ position: "relative", zIndex: 1 }}
-      >
-        <ImageCarousel userName={user.name || user.user.name} />
-      </div>
+      <ImageCarousel userName={user.name || user.user.name} />
       <Features data={featuresData} />
       <div className="max-w-7xl mx-auto p-6">
         <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">
