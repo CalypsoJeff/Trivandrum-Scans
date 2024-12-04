@@ -20,7 +20,7 @@ userRouter.post("/checkAuth", protectUser, userController.checkAuth);
 userRouter.put("/updateuser/:userId", protectUser, userController.updateUser);
 userRouter.get("/serviceList", userController.getServices);
 userRouter.get("/service/:id", userController.getServiceDetail);
-userRouter.get('/categoryList',protectUser,userController.getCategory)
+userRouter.get('/categoryList',userController.getCategory)
 userRouter.post("/cart/add", protectUser, userController.addToCart);
 userRouter.post("/cart/update/:id", protectUser, userController.updateCart);
 userRouter.get("/cart/:id", protectUser, userController.fetchCart);
