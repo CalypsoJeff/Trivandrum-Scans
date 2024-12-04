@@ -23,19 +23,24 @@ const app = (0, express_1.default)();
 const server = http_1.default.createServer(app);
 exports.io = new socket_io_1.Server(server, {
     cors: {
-        origin: "http://localhost:5173",
-        methods: ["GET", "POST"],
+        origin: [
+            'https://trivandrum-scans.vercel.app'
+        ],
+        methods: ['GET', 'POST'],
         credentials: true,
     },
 });
 (0, socketHandler_1.default)(exports.io);
 const PORT = process.env.PORT || 5000;
 const corsOptions = {
-    origin: ['http://localhost:5173'],
+    origin: [
+        'https://trivandrum-scans.vercel.app'
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', "PATCH"],
     allowedHeaders: ['Content-Type', 'Authorization'],
 };
+app.options('*', (0, cors_1.default)(corsOptions));
 app.use((0, cors_1.default)(corsOptions));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
@@ -44,7 +49,7 @@ app.use((0, express_session_1.default)({
     secret: "MY_SECRET",
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }
+    cookie: { secure: true }
 }));
 // Routes
 app.use('/api/users', userRoutes_1.default);

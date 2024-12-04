@@ -31,9 +31,7 @@ handleSocketEvents(io);
 
 const PORT = process.env.PORT || 5000;
 const corsOptions = {
-    // origin: ['http://localhost:5173'],
     origin: [
-        // 'https://trivandrum-scans-cq38.vercel.app',
         'https://trivandrum-scans.vercel.app'
 
     ],
@@ -53,7 +51,7 @@ app.use(session({
     secret: "MY_SECRET",
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }
+    cookie: { secure: true }
 }));
 
 // Routes
