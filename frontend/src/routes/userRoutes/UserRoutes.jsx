@@ -7,7 +7,7 @@ import Home from "../../pages/user/Home";
 import LandingPage from "../../pages/user/LandingPage";
 import ForgetPassword from "../../pages/user/ForgetPassword";
 import ResetPassword from "../../pages/user/ResetPassword";
-import UserPrivateRoutes from "./UserPrivateRoutes"; 
+import UserPrivateRoutes from "./UserPrivateRoutes";
 import { useDispatch } from "react-redux";
 import { setupInterceptors } from "../../api/middlewares/axiosInstanceUser";
 import { logoutUser } from "../../features/auth/authSlice";
@@ -43,12 +43,12 @@ const UserRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/forget-password" element={<ForgetPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/service" element={<Services />} />
+      <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
       {/* Private (Protected) Routes */}
       <Route element={<UserPrivateRoutes />}>
         <Route path="/home" element={<Home />} />
         <Route path="/profile" element={<ProfileView />} />
-        <Route path="/service" element={<Services />} />
-        <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/appointment-success" element={<AppointmentSuccess />} />
@@ -57,9 +57,8 @@ const UserRoutes = () => {
         <Route path="/booking" element={<BookingList />} />
         <Route path="/booking/:id" element={<BookingDetails />} />
         <Route path="/chat" element={<Chat />} />
-        <Route path="/change-password" element={<ChangePassword/>} />
+        <Route path="/change-password" element={<ChangePassword />} />
         <Route path="*" element={<UserErrorPage />} />
-
       </Route>
     </Routes>
   );
