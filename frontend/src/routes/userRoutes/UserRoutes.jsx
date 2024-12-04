@@ -44,11 +44,11 @@ const UserRoutes = () => {
       <Route path="/forget-password" element={<ForgetPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/service" element={<Services />} />
-      <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
       {/* Private (Protected) Routes */}
       <Route element={<UserPrivateRoutes />}>
         <Route path="/home" element={<Home />} />
         <Route path="/profile" element={<ProfileView />} />
+        <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/appointment-success" element={<AppointmentSuccess />} />
