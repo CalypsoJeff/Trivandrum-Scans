@@ -25,7 +25,7 @@ userRouter.post("/checkAuth", userAuthMiddleware_1.protectUser, userController_1
 userRouter.put("/updateuser/:userId", userAuthMiddleware_1.protectUser, userController_1.default.updateUser);
 userRouter.get("/serviceList", userController_1.default.getServices);
 userRouter.get("/service/:id", userController_1.default.getServiceDetail);
-userRouter.get('/categoryList', userAuthMiddleware_1.protectUser, userController_1.default.getCategory);
+userRouter.get('/categoryList', userController_1.default.getCategory);
 userRouter.post("/cart/add", userAuthMiddleware_1.protectUser, userController_1.default.addToCart);
 userRouter.post("/cart/update/:id", userAuthMiddleware_1.protectUser, userController_1.default.updateCart);
 userRouter.get("/cart/:id", userAuthMiddleware_1.protectUser, userController_1.default.fetchCart);
