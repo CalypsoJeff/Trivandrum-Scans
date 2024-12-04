@@ -15,28 +15,27 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.protectUser = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const userModel_1 = require("../../../../infrastructure/database/dbModel/userModel");
-const console_1 = require("console");
 const protectUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     let token = req.header("Authorization");
-    (0, console_1.log)(token, "token123");
+    console.log(token, "token123");
     if (token && token.startsWith("Bearer ")) {
         token = token.split(" ")[1];
-        (0, console_1.log)(token, "tokenWithoutBearer");
+        console.log(token, "tokenWithoutBearer");
         try {
             const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
-            (0, console_1.log)(decoded, "decoded");
+            console.log(decoded, "decoded");
             req.user = decoded;
             const userId = req.user.user;
-            (0, console_1.log)(userId, "userId");
+            console.log(userId, "userId");
             const user = yield userModel_1.Users.findById(userId);
-            (0, console_1.log)("User found:", user);
+            console.log("User found:", user);
             if (!user) {
-                (0, console_1.log)("User not found");
+                console.log("User not found");
                 res.status(401).json({ message: "User not found" });
                 return;
             }
             if (user.is_blocked) {
-                (0, console_1.log)("User is blocked");
+                console.log("User is blocked");
                 res.status(403).json({ message: "User is blocked" });
                 return;
             }
@@ -45,7 +44,7 @@ const protectUser = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
             }
         }
         catch (error) {
-            (0, console_1.log)(error, "JWT verification error");
+            console.log(error, "JWT verification error");
             if (error instanceof jsonwebtoken_1.default.TokenExpiredError) {
                 res.status(401).json({ message: "Token expired" });
             }
@@ -55,7 +54,7 @@ const protectUser = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         }
     }
     else {
-        (0, console_1.log)("No token provided");
+        console.log("No token provided");
         res.status(401).json({ message: "Not authorized, no token" });
     }
 });
