@@ -5,7 +5,7 @@ import Cookies from "js-cookie";
 import { toast } from "sonner";
 import axiosInstanceUser from "../../api/middlewares/axiosInstanceUser";
 // const API_URL = "http://localhost:5000/api/users";
-const API_URL = "https://trivandrum-scans.onrender.com/api/users";
+const API_URL = "https://trivandrumscans.online/api/users";
 
 export const signupUser = createAsyncThunk(
   "auth/signupUser",

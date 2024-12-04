@@ -55,7 +55,7 @@ function SocketProvider({ children }) {
   useEffect(() => {
     if (!socket) {
       // const newSocket = io("http://localhost:5000");
-      const newSocket = io("https://trivandrum-scans.onrender.com");
+      const newSocket = io("https://trivandrumscans.online");
 
       newSocket.on("connect", () => {
         console.log("Socket connected:", newSocket.id);

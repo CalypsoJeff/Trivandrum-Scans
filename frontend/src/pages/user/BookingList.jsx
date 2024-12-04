@@ -56,7 +56,7 @@ function BookingList() {
       );
     }
     setFilteredBookings(sortedBookings);
-    setCurrentPage(1); // Reset to the first page after sorting
+    setCurrentPage(1);
   };
 
   const handleFilter = (filterValue) => {
@@ -126,7 +126,8 @@ function BookingList() {
                       {booking.services[0]?.service_id?.name[0] || "S"}
                     </div>
                     <h3 className="ml-4 text-2xl font-semibold text-gray-800">
-                      {booking.services[0]?.service_id?.name || "Unknown Service"}
+                      {booking.services[0]?.service_id?.name ||
+                        "Unknown Service"}
                     </h3>
                   </div>
                   <div className="text-gray-700 space-y-2">
