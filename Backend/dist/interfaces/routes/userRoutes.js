@@ -23,8 +23,8 @@ userRouter.put("/UserData/edit/:id", userAuthMiddleware_1.protectUser, userContr
 userRouter.post("/patients/add", userAuthMiddleware_1.protectUser, userController_1.default.addPatient);
 userRouter.post("/checkAuth", userAuthMiddleware_1.protectUser, userController_1.default.checkAuth);
 userRouter.put("/updateuser/:userId", userAuthMiddleware_1.protectUser, userController_1.default.updateUser);
-userRouter.get("/serviceList", userAuthMiddleware_1.protectUser, userController_1.default.getServices);
-userRouter.get("/service/:id", userAuthMiddleware_1.protectUser, userController_1.default.getServiceDetail);
+userRouter.get("/serviceList", userController_1.default.getServices);
+userRouter.get("/service/:id", userController_1.default.getServiceDetail);
 userRouter.get('/categoryList', userAuthMiddleware_1.protectUser, userController_1.default.getCategory);
 userRouter.post("/cart/add", userAuthMiddleware_1.protectUser, userController_1.default.addToCart);
 userRouter.post("/cart/update/:id", userAuthMiddleware_1.protectUser, userController_1.default.updateCart);

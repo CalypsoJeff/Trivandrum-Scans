@@ -18,8 +18,8 @@ userRouter.put("/UserData/edit/:id", protectUser, userController.editUser);
 userRouter.post("/patients/add", protectUser, userController.addPatient);
 userRouter.post("/checkAuth", protectUser, userController.checkAuth);
 userRouter.put("/updateuser/:userId", protectUser, userController.updateUser);
-userRouter.get("/serviceList", protectUser, userController.getServices);
-userRouter.get("/service/:id", protectUser, userController.getServiceDetail);
+userRouter.get("/serviceList", userController.getServices);
+userRouter.get("/service/:id", userController.getServiceDetail);
 userRouter.get('/categoryList',protectUser,userController.getCategory)
 userRouter.post("/cart/add", protectUser, userController.addToCart);
 userRouter.post("/cart/update/:id", protectUser, userController.updateCart);
