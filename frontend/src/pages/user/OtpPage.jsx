@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import BackgroundImgLogin from "/Images/pexels-tima-miroshnichenko-9574411.jpg";
 import logo from "/Images/Logo.png";
 import { otpVerification, resendOtp } from "../../services/userService";
+import Cookies from "js-cookie";
 
 const UserOtp = () => {
   const inputRefs = useRef([]);
