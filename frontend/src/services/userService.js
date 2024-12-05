@@ -165,6 +165,8 @@ export const otpVerification = async (otp, email) => {
       email,
     }
   );
+  console.log(response.data,'service resp0onse');
+  
   return response.data;
 };
 
