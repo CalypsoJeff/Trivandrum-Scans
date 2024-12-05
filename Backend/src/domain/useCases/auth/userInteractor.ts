@@ -109,12 +109,14 @@ export default {
     }
 
     // Generate tokens for the verified user
-    const role = "user"; 
+    const role = "user";
     const { token, refreshToken } = await generateToken(
       verifiedUser.id,
       data.email,
       role
     );
+    console.log(token, refreshToken, 'yesss');
+
 
     // Return verified user details and tokens
     const user = {

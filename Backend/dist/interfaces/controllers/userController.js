@@ -24,21 +24,6 @@ const serviceModel_1 = require("../../infrastructure/database/dbModel/serviceMod
 const hashPassword_1 = require("../../domain/helper/hashPassword");
 const stripe = new stripe_1.default(process.env.STRIPE_KEY, {});
 exports.default = {
-    // getStatus: async (req: Request, res: Response) => {
-    //   try {
-    //     if (req.user && req.user.user) {
-    //       console.log(req.user, req.user.user, "15151555");
-    //       res
-    //         .status(200)
-    //         .json({ message: "User is authenticated", user: req.user });
-    //     } else {
-    //       res.status(401).json({ message: "User is not authenticated" });
-    //     }
-    //   } catch (error) {
-    //     console.error("Unexpected error in resendOTP:", error);
-    //     res.status(500).json({ error: "Failed to get user status" });
-    //   }
-    // },
     getStatus: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const id = req.query.id;

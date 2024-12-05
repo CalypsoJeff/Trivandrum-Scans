@@ -74,7 +74,24 @@ exports.default = {
         if (otpAge > expireOTP) {
             throw new Error("OTP Expired");
         }
-        return yield (0, mongoUserRepository_1.verifyUserDb)(data.email);
+        // Verify the user in the database
+        const verifiedUser = yield (0, mongoUserRepository_1.verifyUserDb)(data.email);
+        if (!verifiedUser) {
+            throw new Error("User verification failed");
+        }
+        // Generate tokens for the verified user
+        const role = "user";
+        const { token, refreshToken } = yield (0, jwtHelper_1.generateToken)(verifiedUser.id, data.email, role);
+        console.log(token, refreshToken, 'yesss');
+        // Return verified user details and tokens
+        const user = {
+            id: verifiedUser.id,
+            name: verifiedUser.name,
+            email: verifiedUser.email,
+            isBlocked: verifiedUser.is_blocked,
+            isVerified: verifiedUser.is_verified,
+        };
+        return { token, refreshToken, user };
     }),
     otpResend: (email) => __awaiter(void 0, void 0, void 0, function* () {
         try {
