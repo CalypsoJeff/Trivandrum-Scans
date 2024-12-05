@@ -31,6 +31,8 @@ const UserOtp = () => {
 
       // Correctly extract tokens and user details from the response
       const { token, refreshToken, user } = apiResponse?.userdata || {};
+      console.log(token ,'and',refreshToken,'uuu');
+      
 
       if (token && refreshToken) {
         // Set tokens in cookies
@@ -40,7 +42,7 @@ const UserOtp = () => {
         throw new Error("Token generation failed after verification.");
       }
 
-      const message = response?.message || "Verification successful!";
+      const message = apiResponse?.message || "Verification successful!";
       navigate("/home");
       toast.success(message, {
         style: {
