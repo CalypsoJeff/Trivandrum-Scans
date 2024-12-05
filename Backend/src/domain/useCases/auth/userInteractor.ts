@@ -102,8 +102,32 @@ export default {
     if (otpAge > expireOTP) {
       throw new Error("OTP Expired");
     }
-    return await verifyUserDb(data.email);
+    // Verify the user in the database
+    const verifiedUser = await verifyUserDb(data.email);
+    if (!verifiedUser) {
+      throw new Error("User verification failed");
+    }
+
+    // Generate tokens for the verified user
+    const role = "user"; 
+    const { token, refreshToken } = await generateToken(
+      verifiedUser.id,
+      data.email,
+      role
+    );
+
+    // Return verified user details and tokens
+    const user = {
+      id: verifiedUser.id,
+      name: verifiedUser.name,
+      email: verifiedUser.email,
+      isBlocked: verifiedUser.is_blocked,
+      isVerified: verifiedUser.is_verified,
+    };
+
+    return { token, refreshToken, user };
   },
+
   otpResend: async (email: string) => {
     try {
       const newotp = await generateOTP();
@@ -163,13 +187,13 @@ export default {
 
   getStatus: async (id: string) => {
     try {
-        return await getStatus(id)
+      return await getStatus(id)
 
     } catch (error: any) {
-        console.error(error.message)
-        throw error
+      console.error(error.message)
+      throw error
     }
-},
+  },
 
   googleUser: async (userData: IUser) => {
     try {
@@ -424,23 +448,23 @@ export default {
     try {
       // Verify the Stripe payment session
       const session = await stripe.checkout.sessions.retrieve(stripe_session_id);
-  
+
       // Ensure the session exists and the payment is successful
       if (!session || session.payment_status !== "paid") {
         throw new Error("Payment not completed or unsuccessful.");
       }
-  
+
       // Extract the payment intent ID, ensuring it's not null
-      const paymentIntentId = session.payment_intent 
-        ? (typeof session.payment_intent === 'string' 
-          ? session.payment_intent 
-          : session.payment_intent.id) 
+      const paymentIntentId = session.payment_intent
+        ? (typeof session.payment_intent === 'string'
+          ? session.payment_intent
+          : session.payment_intent.id)
         : null;
-  
+
       if (!paymentIntentId) {
         throw new Error("Payment Intent ID is missing.");
       }
-  
+
       // Convert service and person IDs to ObjectId for MongoDB
       const servicesWithObjectIds = services.map((service) => ({
         service_id: new mongoose.Types.ObjectId(service.serviceId),
@@ -448,7 +472,7 @@ export default {
           (person) => new mongoose.Types.ObjectId(person._id)
         ),
       }));
-  
+
       // Save the booking with paymentIntentId
       const savedBooking = await saveBooking({
         stripe_session_id,
@@ -459,7 +483,7 @@ export default {
         total_amount,
         booking_time_slot,
       });
-  
+
       return { success: true, booking: savedBooking };
     } catch (error) {
       if (error instanceof Error) {
@@ -468,7 +492,7 @@ export default {
       throw error;
     }
   },
-  
+
   getBookingList: async (id: string) => {
     try {
       // Call the database query function to get bookings
@@ -503,20 +527,20 @@ export default {
       if (!cancelledBooking) {
         throw new Error("Booking not found or already cancelled");
       }
-      if(cancelledBooking.paymentIntentId){
+      if (cancelledBooking.paymentIntentId) {
         try {
-          const refund =  await stripe.refunds.create({
+          const refund = await stripe.refunds.create({
             payment_intent: cancelledBooking.paymentIntentId,
           });
-          console.log(refund.id,'refund successfull ');
-          
+          console.log(refund.id, 'refund successfull ');
+
         } catch (error) {
           console.error("Error in refund:", error);
         }
-       
-      }else{
+
+      } else {
         console.log('no payment intent id found ');
-        
+
       }
       return cancelledBooking;
     } catch (error) {
@@ -524,8 +548,8 @@ export default {
       throw error;
     }
   },
- 
-  reportList: async (id:string) => {
+
+  reportList: async (id: string) => {
     try {
       const reportList = await reportListInDb(id);
       return reportList;

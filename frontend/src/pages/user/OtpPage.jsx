@@ -25,6 +25,18 @@ const UserOtp = () => {
 
     try {
       const response = await otpVerification(otp, email);
+      console.log(response);
+      // Extract tokens from the response
+      const { token, refreshToken } = response?.data?.response || {};
+
+      if (token && refreshToken) {
+        // Set tokens in cookies
+        Cookies.set("token", token);
+        Cookies.set("refreshToken", refreshToken);
+      } else {
+        throw new Error("Token generation failed after verification.");
+      }
+
       const message = response?.data?.message || "Verification successful!";
       navigate("/home");
       toast.success(message, {
