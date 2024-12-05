@@ -188,6 +188,10 @@ export const fetchUserData = async (userId) => {
 
 // Fetch family members of the user
 export const fetchFamilyData = async (userId) => {
+  if(!userId){
+    console.log('no user id');
+    
+  }
   const response = await axiosInstanceUser.get(`/familyData/${userId}`);
   return response.data;
 };
