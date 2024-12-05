@@ -27,7 +27,9 @@ const UserOtp = () => {
       const response = await otpVerification(otp, email);
       console.log(response);
       // Extract tokens from the response
-      const { token, refreshToken } = response?.data?.response || {};
+      const { token, refreshToken } = response?.data?.response ;
+      console.log(token,'we',refreshToken,'nooo');
+      
 
       if (token && refreshToken) {
         // Set tokens in cookies
