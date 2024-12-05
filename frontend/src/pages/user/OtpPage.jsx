@@ -52,8 +52,8 @@ const UserOtp = () => {
       });
     } catch (error) {
       console.error("Error response:", error);
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.message);
+      if (error.apiResponse?.data?.message) {
+        toast.error(error.apiResponse.data.message);
       } else {
         toast.error("An unexpected error occurred. Please try again.");
       }
