@@ -61,8 +61,8 @@ exports.default = {
     }),
     verifyOTP: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const response = yield userInteractor_1.default.verifyUser(req.body);
-            res.status(200).json({ message: "Verify Success", response });
+            const userdata = yield userInteractor_1.default.verifyUser(req.body);
+            res.status(200).json({ message: "Verify Success", userdata });
         }
         catch (error) {
             if (error instanceof Error) {

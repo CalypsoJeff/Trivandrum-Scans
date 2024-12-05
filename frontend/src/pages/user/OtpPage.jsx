@@ -27,10 +27,10 @@ const UserOtp = () => {
     try {
       // Call otpVerification to verify OTP
       const apiResponse = await otpVerification(otp, email); // This returns response.data
-      console.log("API Response:", apiResponse);
+      console.log("API Response in userData:", apiResponse.userdata);
 
       // Correctly extract tokens and user details from the response
-      const { token, refreshToken, user } = apiResponse?.response || {};
+      const { token, refreshToken, user } = apiResponse?.userdata || {};
 
       if (token && refreshToken) {
         // Set tokens in cookies

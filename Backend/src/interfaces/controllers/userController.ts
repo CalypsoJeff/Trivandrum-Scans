@@ -59,8 +59,8 @@ export default {
 
   verifyOTP: async (req: Request, res: Response) => {
     try {
-      const response = await userInteractor.verifyUser(req.body);
-      res.status(200).json({ message: "Verify Success", response });
+      const userdata = await userInteractor.verifyUser(req.body);
+      res.status(200).json({ message: "Verify Success", userdata });
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error("Error in verifyOTP:", error.message);
