@@ -94,22 +94,22 @@ export const checkAuth = createAsyncThunk(
   }
 );
 
-export const updateUser = createAsyncThunk(
-  "auth/updateUser",
-  async ({ userId, name, address, mobile, age }, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstanceUser.put(`/updateuser/${userId}`, {
-        name,
-        address,
-        mobile,
-        age,
-      });
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response.data);
-    }
-  }
-);
+// export const updateUser = createAsyncThunk(
+//   "auth/updateUser",
+//   async ({ userId, name, address, mobile, age }, { rejectWithValue }) => {
+//     try {
+//       const response = await axiosInstanceUser.put(`/updateuser/${userId}`, {
+//         name,
+//         address,
+//         mobile,
+//         age,
+//       });
+//       return response.data;
+//     } catch (error) {
+//       return rejectWithValue(error.response.data);
+//     }
+//   }
+// );
 
 const authSlice = createSlice({
   name: "auth",
@@ -178,18 +178,18 @@ const authSlice = createSlice({
           ? action.payload.message
           : "Password Reset failed";
       })
-      .addCase(updateUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(updateUser.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload;
-      })
-      .addCase(updateUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      });
+      // .addCase(updateUser.pending, (state) => {
+      //   state.loading = true;
+      //   state.error = null;
+      // })
+      // .addCase(updateUser.fulfilled, (state, action) => {
+      //   state.loading = false;
+      //   state.user = action.payload;
+      // })
+      // .addCase(updateUser.rejected, (state, action) => {
+      //   state.loading = false;
+      //   state.error = action.payload;
+      // });
   },
 });
 
