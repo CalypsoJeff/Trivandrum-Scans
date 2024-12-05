@@ -26,8 +26,6 @@ export default {
     try {
       const id = req.query.id as string
       const response = await userInteractor.getStatus(id);
-      console.log(response, 'vvvvv');
-
       res.status(200).json({ response })
     } catch (error: any) {
 
@@ -144,8 +142,6 @@ export default {
   googleAuth: async (req: Request, res: Response) => {
     try {
       const response = await userInteractor.googleUser(req.body);
-      console.log(response);
-
       res.status(200).json({ message: "Google Auth Success", response });
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -208,14 +204,11 @@ export default {
   refreshToken: async (req: Request, res: Response) => {
     try {
       const refreshToken = req.cookies.refreshToken;
-      console.log(refreshToken, 'refreshToken in request');
       if (!refreshToken) {
         return res.status(401).json({ message: "Refresh token not provided" });
       }
       try {
         const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET_KEY!) as { user: string, email: string, role: string };
-        console.log(decoded, 'decoded refresh token data');
-
         const user = await getUserbyEMail(decoded.email);
         if (!user) {
           return res.status(404).json({ message: "User not found" });
@@ -343,9 +336,6 @@ export default {
         "services.service_id": { $in: services.map((service: IService) => service.serviceId) },
         "services.persons": { $in: services.flatMap((service: IService) => service.personIds) },
       });
-      console.log(conflictingBooking, '124');
-
-
       if (conflictingBooking) {
         return res.status(400).json({
           error: "One or more services are already booked for this time slot on this day.",

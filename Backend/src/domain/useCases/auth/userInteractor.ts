@@ -115,9 +115,6 @@ export default {
       data.email,
       role
     );
-    console.log(token, refreshToken, 'yesss');
-
-
     // Return verified user details and tokens
     const user = {
       id: verifiedUser.id,
@@ -200,14 +197,12 @@ export default {
   googleUser: async (userData: IUser) => {
     try {
       const savedUser = await googleUser(userData);
-      console.log("Saved User:", savedUser);
       if (savedUser) {
         const user = {
           id: savedUser._id,
           name: savedUser.name,
           email: savedUser.email,
         };
-        console.log("User Object:", user);
         if (!savedUser._id || !savedUser.email) {
           throw new Error("User not found");
         }
@@ -220,7 +215,6 @@ export default {
           savedUser.email,
           role
         );
-        console.log(token, refreshToken, "refresh");
         return { user, token, refreshToken };
       }
     } catch (error: unknown) {
@@ -240,7 +234,6 @@ export default {
       throw new Error("User not found");
     }
     const resetToken = generateResetToken(email);
-    console.log(resetToken, "this is reset token");
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = new Date(Date.now() + 3600000);
     await user.save();
