@@ -21,22 +21,6 @@ interface IService {
 
 
 export default {
-  // getStatus: async (req: Request, res: Response) => {
-  //   try {
-  //     if (req.user && req.user.user) {
-  //       console.log(req.user, req.user.user, "15151555");
-
-  //       res
-  //         .status(200)
-  //         .json({ message: "User is authenticated", user: req.user });
-  //     } else {
-  //       res.status(401).json({ message: "User is not authenticated" });
-  //     }
-  //   } catch (error) {
-  //     console.error("Unexpected error in resendOTP:", error);
-  //     res.status(500).json({ error: "Failed to get user status" });
-  //   }
-  // },
   getStatus: async (req: Request, res: Response) => {
 
     try {

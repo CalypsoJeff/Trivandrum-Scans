@@ -1,20 +1,7 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
-
-// const baseURL = import.meta.env.REACT_APP_API_BASE_URL + "/api/users";
-
-// const axiosInstanceUser = axios.create({
-//   baseURL,
-//   headers: {
-//     "Content-Type": "application/json",
-//   },
-//   withCredentials: true,
-// });
-
-// const baseURL = "http://localhost:5000/api/users";
 const baseURL = "https://trivandrumscans.online/api/users";
-
 
 const axiosInstanceUser = axios.create({
   baseURL,

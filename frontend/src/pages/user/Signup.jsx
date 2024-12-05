@@ -16,11 +16,11 @@ const Signup = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
 
-  useEffect(() => {
-    if (user) {
-      navigate("/otp-verification");
-    }
-  }, [user, navigate]);
+  // useEffect(() => {
+  //   if (user) {
+  //     navigate("/otp-verification");
+  //   }
+  // }, [user, navigate]);
 
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
