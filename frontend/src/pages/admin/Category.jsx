@@ -109,6 +109,8 @@ function Category() {
   const handleSubmit = async (values, { resetForm }) => {
     try {
       const newCategory = await dispatch(addCategory(values)).unwrap();
+      console.log(newCategory,'response from server');
+      
       // If the department details are not included in the response, populate them manually
       const populatedCategory = {
         ...newCategory,
@@ -159,12 +161,14 @@ function Category() {
   //   }
   // };
 
-  
+
   const handleEditSubmit = async (values) => {
     try {
       const updatedCategory = await dispatch(
         editCategory({ id: selectedCategory._id, ...values })
       ).unwrap();
+      console.log(updatedCategory,'edited response from server');
+
       // Ensure the department is populated correctly
       const populatedCategory = {
         ...updatedCategory,
