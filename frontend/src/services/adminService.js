@@ -100,8 +100,6 @@ export const fetchCategories = async () => {
     const response = await axiosInstanceAdmin.get(
       `/categoryList`
     );
-    console.log(response.data.categories,'fffffffffff');
-    
     return response.data.categories;
   } catch (error) {
     console.error("Error fetching categories:", error);

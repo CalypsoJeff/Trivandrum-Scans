@@ -98,6 +98,7 @@ export const addCategory = createAsyncThunk(
         "/add-category",
         categoryData
       );
+      console.log(response.data,'in add slice response');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -113,12 +114,15 @@ export const editCategory = createAsyncThunk(
         `/edit-category/${id}`,
         data
       );
+      console.log(response.data,'in edit slice response');
+      
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
   }
 );
+
 export const deleteCategory = createAsyncThunk(
   "admin/deleteCategory",
   async (id, { rejectWithValue }) => {
