@@ -94,10 +94,27 @@ function Category() {
   //   }
   // };
 
+  // const handleSubmit = async (values, { resetForm }) => {
+  //   try {
+  //     const newCategory = await dispatch(addCategory(values)).unwrap();
+  //     setCategories((prevCategories) => [...prevCategories, newCategory]);
+  //     toast.success("Category added successfully");
+  //     closeModal();
+  //     resetForm();
+  //   } catch (error) {
+  //     console.error("Error adding category:", error);
+  //     toast.error("Failed to add category");
+  //   }
+  // };
   const handleSubmit = async (values, { resetForm }) => {
     try {
       const newCategory = await dispatch(addCategory(values)).unwrap();
-      setCategories((prevCategories) => [...prevCategories, newCategory]);
+      // If the department details are not included in the response, populate them manually
+      const populatedCategory = {
+        ...newCategory,
+        department: departments.find((dept) => dept._id === values.department),
+      };
+      setCategories((prevCategories) => [...prevCategories, populatedCategory]);
       toast.success("Category added successfully");
       closeModal();
       resetForm();
@@ -106,6 +123,7 @@ function Category() {
       toast.error("Failed to add category");
     }
   };
+  
   
 
   // // Handle editing a category
@@ -123,14 +141,38 @@ function Category() {
   //   }
   // };
 
+  // const handleEditSubmit = async (values) => {
+  //   try {
+  //     const updatedCategory = await dispatch(
+  //       editCategory({ id: selectedCategory._id, ...values })
+  //     ).unwrap();
+  //     setCategories((prevCategories) =>
+  //       prevCategories.map((category) =>
+  //         category._id === updatedCategory._id ? updatedCategory : category
+  //       )
+  //     );
+  //     toast.success("Category updated successfully");
+  //     closeEditModal();
+  //   } catch (error) {
+  //     console.error("Error updating category:", error);
+  //     toast.error("Failed to update category");
+  //   }
+  // };
+
+  
   const handleEditSubmit = async (values) => {
     try {
       const updatedCategory = await dispatch(
         editCategory({ id: selectedCategory._id, ...values })
       ).unwrap();
+      // Ensure the department is populated correctly
+      const populatedCategory = {
+        ...updatedCategory,
+        department: departments.find((dept) => dept._id === values.department),
+      };
       setCategories((prevCategories) =>
         prevCategories.map((category) =>
-          category._id === updatedCategory._id ? updatedCategory : category
+          category._id === populatedCategory._id ? populatedCategory : category
         )
       );
       toast.success("Category updated successfully");
