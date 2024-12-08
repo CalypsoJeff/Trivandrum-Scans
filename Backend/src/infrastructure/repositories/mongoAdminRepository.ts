@@ -171,7 +171,7 @@ export const addCategoryToDB = async (categoryData: {
     });
     // Save the new category to the database
     const savedCategory = await newCategory.save();
-    const populatedCategory = await Category.findById(savedCategory._id).populate('department');
+    const populatedCategory = await Category.findById(savedCategory._id).populate("department");
     if (!populatedCategory) {
       throw new Error("Failed to populate the newly created category.");
     }
@@ -202,7 +202,7 @@ export const updateCategoryInDB = async (
         department: updateData.department,
       },
       { new: true }
-    ).populate('department');
+    ).populate("department");
     return updatedCategory ? (updatedCategory.toObject() as ICategory) : null; // Explicitly cast the result to ICategory
   } catch (error: unknown) {
     if (error instanceof Error) {

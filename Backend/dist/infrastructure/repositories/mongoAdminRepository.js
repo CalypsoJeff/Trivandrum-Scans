@@ -153,7 +153,7 @@ const addCategoryToDB = (categoryData) => __awaiter(void 0, void 0, void 0, func
         });
         // Save the new category to the database
         const savedCategory = yield newCategory.save();
-        const populatedCategory = yield categoryModel_1.Category.findById(savedCategory._id).populate('department');
+        const populatedCategory = yield categoryModel_1.Category.findById(savedCategory._id).populate("department");
         if (!populatedCategory) {
             throw new Error("Failed to populate the newly created category.");
         }
@@ -176,7 +176,7 @@ const updateCategoryInDB = (categoryId, updateData) => __awaiter(void 0, void 0,
         const updatedCategory = yield categoryModel_1.Category.findByIdAndUpdate(categoryId, {
             name: updateData.name,
             department: updateData.department,
-        }, { new: true }).populate('department');
+        }, { new: true }).populate("department");
         return updatedCategory ? updatedCategory.toObject() : null; // Explicitly cast the result to ICategory
     }
     catch (error) {
