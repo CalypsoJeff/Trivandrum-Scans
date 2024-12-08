@@ -451,7 +451,7 @@ export default {
           if (cartService.serviceId.toString() === serviceId.toString()) {
             cartService.personIds = personIds.map((personId) => ({
               _id: personId, // Assign the ObjectId
-              model: personId.toString() === id ? "User" : "Patient", // Check if the personId belongs to the User
+              model: personId.toString() === id ? "User" : "Patient",
             }));
           }
         });
@@ -579,7 +579,6 @@ export default {
           path: "services.persons",
           select: "name age gender",
         });
-
       res.status(200).json(bookings);
     } catch (error) {
       console.error("Error fetching bookings:", error);
@@ -604,7 +603,6 @@ export default {
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
-
       if (!user.password) {
         return res.status(400).json({ message: 'User password not set' });
       }

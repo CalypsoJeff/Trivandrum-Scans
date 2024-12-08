@@ -184,6 +184,7 @@ export default {
 
       // Call the interactor layer to handle business logic
       const category = await adminInteractor.addCategory(newCategoryData);
+      console.log(category,'aaaaaaaaa');
 
       // Send success response
       return res
@@ -219,6 +220,8 @@ export default {
         name,
         department,
       });
+      console.log(updatedCategory,'ddddddddddddddddddd');
+      
 
       res
         .status(200)
