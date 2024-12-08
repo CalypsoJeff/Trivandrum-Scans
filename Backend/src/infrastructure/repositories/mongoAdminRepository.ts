@@ -167,14 +167,16 @@ export const addCategoryToDB = async (categoryData: {
     // Create a new Category instance
     const newCategory = new Category({
       name: categoryData.name,
-      department: categoryData.department, // Ensure department is saved in the category
+      department: categoryData.department,
     });
-
     // Save the new category to the database
     const savedCategory = await newCategory.save();
-
+    const populatedCategory = await Category.findById(savedCategory._id).populate('department');
+    if (!populatedCategory) {
+      throw new Error("Failed to populate the newly created category.");
+    }
     // Return the saved category as an object
-    return savedCategory.toObject() as ICategory;
+    return populatedCategory.toObject() as ICategory;
   } catch (error: unknown) {
     if (error instanceof Error) {
       throw new Error(error.message);
@@ -200,7 +202,7 @@ export const updateCategoryInDB = async (
         department: updateData.department,
       },
       { new: true }
-    );
+    ).populate('department');
     return updatedCategory ? (updatedCategory.toObject() as ICategory) : null; // Explicitly cast the result to ICategory
   } catch (error: unknown) {
     if (error instanceof Error) {
