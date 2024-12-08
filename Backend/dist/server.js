@@ -37,7 +37,7 @@ const corsOptions = {
         'https://trivandrum-scans.vercel.app'
     ],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', "PATCH"],
+    methods: ['GET', 'Head', 'POST', 'PUT', 'DELETE', "PATCH"],
     allowedHeaders: ['Content-Type', 'Authorization'],
 };
 app.options('*', (0, cors_1.default)(corsOptions));

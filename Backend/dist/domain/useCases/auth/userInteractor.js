@@ -82,7 +82,6 @@ exports.default = {
         // Generate tokens for the verified user
         const role = "user";
         const { token, refreshToken } = yield (0, jwtHelper_1.generateToken)(verifiedUser.id, data.email, role);
-        console.log(token, refreshToken, 'yesss');
         // Return verified user details and tokens
         const user = {
             id: verifiedUser.id,
@@ -155,14 +154,12 @@ exports.default = {
     googleUser: (userData) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const savedUser = yield (0, mongoUserRepository_1.googleUser)(userData);
-            console.log("Saved User:", savedUser);
             if (savedUser) {
                 const user = {
                     id: savedUser._id,
                     name: savedUser.name,
                     email: savedUser.email,
                 };
-                console.log("User Object:", user);
                 if (!savedUser._id || !savedUser.email) {
                     throw new Error("User not found");
                 }
@@ -171,7 +168,6 @@ exports.default = {
                 }
                 const role = "user";
                 const { token, refreshToken } = (0, jwtHelper_1.generateToken)(savedUser.id, savedUser.email, role);
-                console.log(token, refreshToken, "refresh");
                 return { user, token, refreshToken };
             }
         }
@@ -192,7 +188,6 @@ exports.default = {
             throw new Error("User not found");
         }
         const resetToken = (0, jwtHelper_1.generateResetToken)(email);
-        console.log(resetToken, "this is reset token");
         user.resetPasswordToken = resetToken;
         user.resetPasswordExpires = new Date(Date.now() + 3600000);
         yield user.save();

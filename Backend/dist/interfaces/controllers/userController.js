@@ -28,7 +28,6 @@ exports.default = {
         try {
             const id = req.query.id;
             const response = yield userInteractor_1.default.getStatus(id);
-            console.log(response, 'vvvvv');
             res.status(200).json({ response });
         }
         catch (error) {
@@ -146,7 +145,6 @@ exports.default = {
     googleAuth: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const response = yield userInteractor_1.default.googleUser(req.body);
-            console.log(response);
             res.status(200).json({ message: "Google Auth Success", response });
         }
         catch (error) {
@@ -211,13 +209,11 @@ exports.default = {
     refreshToken: (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const refreshToken = req.cookies.refreshToken;
-            console.log(refreshToken, 'refreshToken in request');
             if (!refreshToken) {
                 return res.status(401).json({ message: "Refresh token not provided" });
             }
             try {
                 const decoded = jsonwebtoken_1.default.verify(refreshToken, process.env.REFRESH_SECRET_KEY);
-                console.log(decoded, 'decoded refresh token data');
                 const user = yield (0, mongoUserRepository_1.getUserbyEMail)(decoded.email);
                 if (!user) {
                     return res.status(404).json({ message: "User not found" });
@@ -339,7 +335,6 @@ exports.default = {
                 "services.service_id": { $in: services.map((service) => service.serviceId) },
                 "services.persons": { $in: services.flatMap((service) => service.personIds) },
             });
-            console.log(conflictingBooking, '124');
             if (conflictingBooking) {
                 return res.status(400).json({
                     error: "One or more services are already booked for this time slot on this day.",
@@ -450,7 +445,7 @@ exports.default = {
                     if (cartService.serviceId.toString() === serviceId.toString()) {
                         cartService.personIds = personIds.map((personId) => ({
                             _id: personId, // Assign the ObjectId
-                            model: personId.toString() === id ? "User" : "Patient", // Check if the personId belongs to the User
+                            model: personId.toString() === id ? "User" : "Patient",
                         }));
                     }
                 });
