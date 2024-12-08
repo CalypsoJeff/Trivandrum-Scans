@@ -256,10 +256,8 @@ export const updateService = async (
     if (!existingService) {
       throw new Error("Service not found");
     }
-
     // Update the service fields
     Object.assign(existingService, completeServiceData);
-
     // Save the updated service
     const updatedService = await existingService.save();
 
