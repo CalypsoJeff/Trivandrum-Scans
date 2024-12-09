@@ -190,7 +190,6 @@ exports.default = {
             const newCategoryData = { name, department };
             // Call the interactor layer to handle business logic
             const category = yield adminInteractor_1.default.addCategory(newCategoryData);
-            console.log(category, 'aaaaaaaaa');
             // Send success response
             return res
                 .status(201)
@@ -224,7 +223,6 @@ exports.default = {
                 name,
                 department,
             });
-            console.log(updatedCategory, 'ddddddddddddddddddd');
             res
                 .status(200)
                 .json({ message: "Category updated successfully", updatedCategory });

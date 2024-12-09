@@ -81,142 +81,46 @@ function Category() {
   }, []);
 
   // Handle adding a new category
-  // const handleSubmit = async (values, { resetForm }) => {
-  //   try {
-  //     await dispatch(addCategory(values)).unwrap();
-  //     toast.success("Category added successfully");
-  //     closeModal();
-  //     resetForm();
-  //     loadCategories(); // Refresh categories
-  //   } catch (error) {
-  //     console.error("Error adding category:", error);
-  //     toast.error("Failed to add category");
-  //   }
-  // };
-
-  // const handleSubmit = async (values, { resetForm }) => {
-  //   try {
-  //     const newCategory = await dispatch(addCategory(values)).unwrap();
-  //     setCategories((prevCategories) => [...prevCategories, newCategory]);
-  //     toast.success("Category added successfully");
-  //     closeModal();
-  //     resetForm();
-  //   } catch (error) {
-  //     console.error("Error adding category:", error);
-  //     toast.error("Failed to add category");
-  //   }
-  // };
   const handleSubmit = async (values, { resetForm }) => {
     try {
-      const newCategory = await dispatch(addCategory(values)).unwrap();
-      console.log(newCategory,'response from server');
-      
-      // If the department details are not included in the response, populate them manually
-      const populatedCategory = {
-        ...newCategory,
-        department: departments.find((dept) => dept._id === values.department),
-      };
-      setCategories((prevCategories) => [...prevCategories, populatedCategory]);
+      await dispatch(addCategory(values)).unwrap();
       toast.success("Category added successfully");
       closeModal();
       resetForm();
+      loadCategories(); // Refresh categories
     } catch (error) {
       console.error("Error adding category:", error);
       toast.error("Failed to add category");
     }
   };
-  
-  
 
-  // // Handle editing a category
-  // const handleEditSubmit = async (values) => {
-  //   try {
-  //     await dispatch(
-  //       editCategory({ id: selectedCategory._id, ...values })
-  //     ).unwrap();
-  //     toast.success("Category updated successfully");
-  //     closeEditModal();
-  //     loadCategories(); // Refresh categories
-  //   } catch (error) {
-  //     console.error("Error updating category:", error);
-  //     toast.error("Failed to update category");
-  //   }
-  // };
-
-  // const handleEditSubmit = async (values) => {
-  //   try {
-  //     const updatedCategory = await dispatch(
-  //       editCategory({ id: selectedCategory._id, ...values })
-  //     ).unwrap();
-  //     setCategories((prevCategories) =>
-  //       prevCategories.map((category) =>
-  //         category._id === updatedCategory._id ? updatedCategory : category
-  //       )
-  //     );
-  //     toast.success("Category updated successfully");
-  //     closeEditModal();
-  //   } catch (error) {
-  //     console.error("Error updating category:", error);
-  //     toast.error("Failed to update category");
-  //   }
-  // };
-
-
+  // Handle editing a category
   const handleEditSubmit = async (values) => {
     try {
-      const updatedCategory = await dispatch(
+      await dispatch(
         editCategory({ id: selectedCategory._id, ...values })
       ).unwrap();
-      console.log(updatedCategory,'edited response from server');
-
-      // Ensure the department is populated correctly
-      const populatedCategory = {
-        ...updatedCategory,
-        department: departments.find((dept) => dept._id === values.department),
-      };
-      setCategories((prevCategories) =>
-        prevCategories.map((category) =>
-          category._id === populatedCategory._id ? populatedCategory : category
-        )
-      );
       toast.success("Category updated successfully");
       closeEditModal();
+      loadCategories(); // Refresh categories
     } catch (error) {
       console.error("Error updating category:", error);
       toast.error("Failed to update category");
     }
   };
-  
 
-  // // Handle deleting a category
-  // const handleDelete = async () => {
-  //   try {
-  //     await dispatch(deleteCategory(selectedCategory._id)).unwrap();
-  //     toast.success("Category deleted successfully");
-  //     closeDeleteModal();
-  //     loadCategories(); 
-  //   } catch (error) {
-  //     console.error("Error deleting category:", error);
-  //     toast.error("Failed to delete category");
-  //   }
-  // };
-
+  // Handle deleting a category
   const handleDelete = async () => {
     try {
       await dispatch(deleteCategory(selectedCategory._id)).unwrap();
-      setCategories((prevCategories) =>
-        prevCategories.filter((category) => category._id !== selectedCategory._id)
-      );
       toast.success("Category deleted successfully");
       closeDeleteModal();
+      loadCategories();
     } catch (error) {
       console.error("Error deleting category:", error);
       toast.error("Failed to delete category");
     }
   };
-  
-
-
 
   // Pagination logic
   const totalPages = Math.ceil(categories.length / itemsPerPage);

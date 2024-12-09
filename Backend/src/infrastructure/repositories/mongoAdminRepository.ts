@@ -167,16 +167,13 @@ export const addCategoryToDB = async (categoryData: {
     // Create a new Category instance
     const newCategory = new Category({
       name: categoryData.name,
-      department: categoryData.department,
+      department: categoryData.department, // Ensure department is saved in the category
     });
+
     // Save the new category to the database
     const savedCategory = await newCategory.save();
-    const populatedCategory = await Category.findById(savedCategory._id).populate("department");
-    if (!populatedCategory) {
-      throw new Error("Failed to populate the newly created category.");
-    }
     // Return the saved category as an object
-    return populatedCategory.toObject() as ICategory;
+    return savedCategory.toObject() as ICategory;
   } catch (error: unknown) {
     if (error instanceof Error) {
       throw new Error(error.message);
@@ -202,7 +199,7 @@ export const updateCategoryInDB = async (
         department: updateData.department,
       },
       { new: true }
-    ).populate("department");
+    );
     return updatedCategory ? (updatedCategory.toObject() as ICategory) : null; // Explicitly cast the result to ICategory
   } catch (error: unknown) {
     if (error instanceof Error) {
@@ -256,8 +253,10 @@ export const updateService = async (
     if (!existingService) {
       throw new Error("Service not found");
     }
+
     // Update the service fields
     Object.assign(existingService, completeServiceData);
+
     // Save the updated service
     const updatedService = await existingService.save();
 
