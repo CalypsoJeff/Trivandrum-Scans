@@ -301,11 +301,33 @@ exports.default = {
             throw error;
         }
     }),
+    // addReportData: async ({ bookingId, reportFiles }: { bookingId: string; reportFiles: Express.Multer.File[] }) => {
+    //   const reports = [];
+    //   // Upload each file to S3 and collect its metadata
+    //   for (const reportFile of reportFiles) {
+    //     const reportData = await uploadToS3(reportFile);
+    //     const reportUrl = reportData.Location;
+    //     reports.push({
+    //       filename: reportFile.originalname,
+    //       mimetype: reportFile.mimetype,
+    //       size: reportFile.size,
+    //       url: reportUrl,
+    //     });
+    //   }
+    //   // Prepare the complete report data for the database
+    //   const completeReportData = {
+    //     bookingId,
+    //     reports,
+    //   };
+    //   // Save report data to the database
+    //   const savedReport = await saveReport(completeReportData);
+    //   return savedReport;
+    // },
     addReportData: (_a) => __awaiter(void 0, [_a], void 0, function* ({ bookingId, reportFiles }) {
         const reports = [];
         // Upload each file to S3 and collect its metadata
         for (const reportFile of reportFiles) {
-            const reportData = yield (0, s3Uploader_1.uploadToS3)(reportFile);
+            const reportData = yield (0, s3Uploader_1.uploadToS3)(reportFile, true); // Generate Signed URL
             const reportUrl = reportData.Location;
             reports.push({
                 filename: reportFile.originalname,
@@ -326,11 +348,33 @@ exports.default = {
     reportList: () => __awaiter(void 0, void 0, void 0, function* () {
         return yield (0, mongoAdminRepository_1.getReportsFromDb)();
     }),
+    // editReportData: async ({ editReportId, bookingId, reportFiles }: { editReportId: string; bookingId: string; reportFiles: Express.Multer.File[] }) => {
+    //   const reports = [];
+    //   // Upload each file and store details in the reports array
+    //   for (const reportFile of reportFiles) {
+    //     const reportData = await uploadToS3(reportFile);
+    //     const reportUrl = reportData.Location;
+    //     reports.push({
+    //       filename: reportFile.originalname,
+    //       mimetype: reportFile.mimetype,
+    //       size: reportFile.size,
+    //       url: reportUrl,
+    //     });
+    //   }
+    //   // Prepare the updated data object
+    //   const updatedReportData = {
+    //     bookingId,
+    //     reports,
+    //   };
+    //   // Update the report in the database
+    //   const updatedReport = await updateReportInDb(editReportId, updatedReportData);
+    //   return updatedReport;
+    // },
     editReportData: (_a) => __awaiter(void 0, [_a], void 0, function* ({ editReportId, bookingId, reportFiles }) {
         const reports = [];
         // Upload each file and store details in the reports array
         for (const reportFile of reportFiles) {
-            const reportData = yield (0, s3Uploader_1.uploadToS3)(reportFile);
+            const reportData = yield (0, s3Uploader_1.uploadToS3)(reportFile, true); // Generate Signed URL
             const reportUrl = reportData.Location;
             reports.push({
                 filename: reportFile.originalname,
