@@ -44,20 +44,17 @@ const stripe = new Stripe(process.env.STRIPE_KEY as string, {});
 interface ErrorWithStatus extends Error {
   status?: number;
 }
-
 function createError(message: string, status: number) {
   const error = new Error(message) as ErrorWithStatus;
   error.status = status;
   return error;
 }
-
 export default {
   registerUser: async (userData: IUser) => {
     try {
       if (!userData.email || !userData.name) {
         throw new Error("Email and name are required");
       }
-
       const existingUser = await checkExistingUser(
         userData.email,
         userData.name
@@ -84,7 +81,6 @@ export default {
       }
     }
   },
-
   verifyUser: async (data: { otp: string; email: string }) => {
     if (!data.otp) {
       throw new Error("no otp");
@@ -102,20 +98,16 @@ export default {
     if (otpAge > expireOTP) {
       throw new Error("OTP Expired");
     }
-    // Verify the user in the database
     const verifiedUser = await verifyUserDb(data.email);
     if (!verifiedUser) {
       throw new Error("User verification failed");
     }
-
-    // Generate tokens for the verified user
     const role = "user";
     const { token, refreshToken } = await generateToken(
       verifiedUser.id,
       data.email,
       role
     );
-    // Return verified user details and tokens
     const user = {
       id: verifiedUser.id,
       name: verifiedUser.name,
@@ -123,10 +115,8 @@ export default {
       isBlocked: verifiedUser.is_blocked,
       isVerified: verifiedUser.is_verified,
     };
-
     return { token, refreshToken, user };
   },
-
   otpResend: async (email: string) => {
     try {
       const newotp = await generateOTP();
@@ -135,7 +125,6 @@ export default {
       if (users && users.name) {
         await sendOTPEmail(email, newotp, users.name);
         console.log("newOtp:", newotp);
-
         await saveOtp(email, newotp, generatedAt);
       } else {
         throw new Error("Please signup again");
@@ -169,7 +158,6 @@ export default {
       throw new Error(`User is not verified.Register!`);
     }
     const role = "user";
-
     const { token, refreshToken } = await generateToken(
       existingUser.id,
       email,
@@ -183,17 +171,14 @@ export default {
     };
     return { token, user, refreshToken };
   },
-
   getStatus: async (id: string) => {
     try {
       return await getStatus(id)
-
     } catch (error: any) {
       console.error(error.message)
       throw error
     }
   },
-
   googleUser: async (userData: IUser) => {
     try {
       const savedUser = await googleUser(userData);
@@ -227,7 +212,6 @@ export default {
       }
     }
   },
-
   forgotPassword: async (email: string) => {
     const user = await getUserbyEMail(email);
     if (!user) {
@@ -237,11 +221,9 @@ export default {
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = new Date(Date.now() + 3600000);
     await user.save();
-
     await sendVerifyMail(user.email || "", resetToken, user.name || "User");
     return { message: "Password reset email sent" };
   },
-
   resetPassword: async (token: string, newPassword: string) => {
     const user = await getUserByResetToken(token);
     if (!user) {
@@ -262,10 +244,8 @@ export default {
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
     await user.save();
-
     return { message: "Password has been reset successfully" };
   },
-
   getServiceData: async (id: string) => {
     const service = await getService(id);
     return service;
@@ -324,7 +304,6 @@ export default {
   },
   addPatient: async (patientData: IPatientInput, userId: string) => {
     try {
-      // Call the repository to add patient to the database
       const addedPatient = await addPatientInDb(patientData, userId);
       return addedPatient; // Return the added patient
     } catch (error) {
@@ -350,78 +329,6 @@ export default {
       throw error; // Re-throw to be handled by the controller
     }
   },
-  // bookAppointment: async (
-  //   user_id: string,
-  //   service_id: [],
-  //   booking_date: Date,
-  //   total_amount: number,
-  //   status: string,
-  //   stripe_session_id: string,
-  //   booking_time_slot: string
-  // ) => {
-  //   return await bookAppointment(
-  //     user_id,
-  //     service_id,
-  //     booking_date,
-  //     total_amount,
-  //     "success",
-  //     stripe_session_id,
-  //     booking_time_slot
-  //   );
-  // },
-  // confirmBooking: async ({
-  //   stripe_session_id,
-  //   user_id,
-  //   booking_date,
-  //   services,
-  //   total_amount,
-  //   booking_time_slot,
-  // }: {
-  //   stripe_session_id: string;
-  //   user_id: string;
-  //   booking_date: Date;
-  //   services: {
-  //     serviceId: string;
-  //     personIds: { _id: string }[];
-  //   }[];
-  //   total_amount: number;
-  //   booking_time_slot: string;
-  // }): Promise<{ success: boolean; booking: unknown }> => {
-  //   try {
-  //     // Verify the Stripe payment session
-  //     const session = await stripe.checkout.sessions.retrieve(
-  //       stripe_session_id
-  //     );
-
-  //     if (!session || session.payment_status !== "paid"&& session.payment_intent) {
-  //       throw new Error("Payment not completed or unsuccessful.");
-  //     }
-  //     const servicesWithObjectIds = services.map((service) => ({
-  //       service_id: new mongoose.Types.ObjectId(service.serviceId), // Convert serviceId to ObjectId
-  //       persons: service.personIds.map(
-  //         (person) => new mongoose.Types.ObjectId(person._id)
-  //       ), // Convert each person._id to ObjectId
-  //     }));
-
-  //     const savedBooking = await saveBooking({
-  //       stripe_session_id,
-  //       paymentIntentId:session.payment_intent.toString(),
-  //       user_id,
-  //       booking_date,
-  //       services: servicesWithObjectIds,
-  //       total_amount,
-  //       booking_time_slot,
-  //     });
-
-  //     return { success: true, booking: savedBooking };
-  //   } catch (error) {
-  //     if (error instanceof Error) {
-  //       throw new Error(`Error confirming booking: ${error.message}`);
-  //     }
-  //     throw error;
-  //   }
-  // },
-
   confirmBooking: async ({
     stripe_session_id,
     user_id,
@@ -441,34 +348,24 @@ export default {
     booking_time_slot: string;
   }): Promise<{ success: boolean; booking: unknown }> => {
     try {
-      // Verify the Stripe payment session
       const session = await stripe.checkout.sessions.retrieve(stripe_session_id);
-
-      // Ensure the session exists and the payment is successful
       if (!session || session.payment_status !== "paid") {
         throw new Error("Payment not completed or unsuccessful.");
       }
-
-      // Extract the payment intent ID, ensuring it's not null
       const paymentIntentId = session.payment_intent
         ? (typeof session.payment_intent === 'string'
           ? session.payment_intent
           : session.payment_intent.id)
         : null;
-
       if (!paymentIntentId) {
         throw new Error("Payment Intent ID is missing.");
       }
-
-      // Convert service and person IDs to ObjectId for MongoDB
       const servicesWithObjectIds = services.map((service) => ({
         service_id: new mongoose.Types.ObjectId(service.serviceId),
         persons: service.personIds.map(
           (person) => new mongoose.Types.ObjectId(person._id)
         ),
       }));
-
-      // Save the booking with paymentIntentId
       const savedBooking = await saveBooking({
         stripe_session_id,
         paymentIntentId,
@@ -478,7 +375,6 @@ export default {
         total_amount,
         booking_time_slot,
       });
-
       return { success: true, booking: savedBooking };
     } catch (error) {
       if (error instanceof Error) {
@@ -487,10 +383,8 @@ export default {
       throw error;
     }
   },
-
   getBookingList: async (id: string) => {
     try {
-      // Call the database query function to get bookings
       return await BookingListInDb(id);
     } catch (error) {
       console.error("Error in getBookingList:", error);
@@ -508,7 +402,6 @@ export default {
   },
   clearCart: async (userId: string) => {
     try {
-      // Clear the cart in the database
       await clearCartInDb(userId);
     } catch (error) {
       console.error("Error in clearing cart from interactor:", error);
@@ -518,7 +411,6 @@ export default {
   cancelBooking: async (id: string) => {
     try {
       const cancelledBooking = await cancelBookingInDb(id);
-
       if (!cancelledBooking) {
         throw new Error("Booking not found or already cancelled");
       }
@@ -528,14 +420,11 @@ export default {
             payment_intent: cancelledBooking.paymentIntentId,
           });
           console.log(refund.id, 'refund successfull ');
-
         } catch (error) {
           console.error("Error in refund:", error);
         }
-
       } else {
         console.log('no payment intent id found ');
-
       }
       return cancelledBooking;
     } catch (error) {
@@ -543,7 +432,6 @@ export default {
       throw error;
     }
   },
-
   reportList: async (id: string) => {
     try {
       const reportList = await reportListInDb(id);
@@ -553,6 +441,4 @@ export default {
       throw new Error("Failed to fetch report list");
     }
   }
-
-
 };

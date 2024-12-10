@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
 import jwt from 'jsonwebtoken';
@@ -18,11 +19,8 @@ interface IService {
   personIds: string[];
   price: number;
 }
-
-
 export default {
   getStatus: async (req: Request, res: Response) => {
-
     try {
       const id = req.query.id as string
       const response = await userInteractor.getStatus(id);
@@ -33,7 +31,6 @@ export default {
       res.status(500).json(error)
     }
   },
-
   userRegistration: async (req: Request, res: Response) => {
     try {
       const user = await userInteractor.registerUser(req.body);
@@ -54,7 +51,6 @@ export default {
       }
     }
   },
-
   verifyOTP: async (req: Request, res: Response) => {
     try {
       const userdata = await userInteractor.verifyUser(req.body);
@@ -71,7 +67,6 @@ export default {
       }
     }
   },
-
   resendOTP: async (req: Request, res: Response) => {
     try {
       const { email } = req.body;
@@ -92,7 +87,6 @@ export default {
       }
     }
   },
-
   userLogin: async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
@@ -112,8 +106,6 @@ export default {
     } catch (error: unknown) {
       if (error instanceof Error) {
         console.error("Error in userLogin:", error.message);
-
-        // Handle specific error messages
         if (error.message === "Account is Blocked") {
           return res.status(403).json({ message: "Account is Blocked" });
         }
@@ -126,8 +118,6 @@ export default {
         if (error.message === "User is not verified") {
           return res.status(403).json({ message: "User is not verified" });
         }
-
-        // Fallback for any unexpected error messages
         return res
           .status(500)
           .json({ message: error.message || "Internal Server Error" });
@@ -136,9 +126,7 @@ export default {
         return res.status(500).json({ message: "An unexpected error occurred" });
       }
     }
-
   },
-
   googleAuth: async (req: Request, res: Response) => {
     try {
       const response = await userInteractor.googleUser(req.body);
@@ -155,7 +143,6 @@ export default {
       }
     }
   },
-
   forgotPassword: async (req: Request, res: Response) => {
     try {
       const response = await userInteractor.forgotPassword(req.body.email);
@@ -172,7 +159,6 @@ export default {
       }
     }
   },
-
   reset_PasswordFn: async (req: Request, res: Response) => {
     try {
       const { token, password } = req.body;
@@ -195,12 +181,9 @@ export default {
       }
     }
   },
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   checkAuth: async (req: Request, res: Response) => {
     console.log("Hellooooo checkauth");
   },
-
   refreshToken: async (req: Request, res: Response) => {
     try {
       const refreshToken = req.cookies.refreshToken;
@@ -213,11 +196,9 @@ export default {
         if (!user) {
           return res.status(404).json({ message: "User not found" });
         }
-
         const { token: newAccessToken, refreshToken: newRefreshToken } = generateToken(user.id, decoded.email, 'user');
         res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: true, sameSite: 'strict' });
         res.json({ accessToken: newAccessToken });
-
       } catch (err) {
         if (err instanceof Error) {
           if (err.name === 'TokenExpiredError') {
@@ -225,20 +206,15 @@ export default {
           }
           return res.status(403).json({ message: "Invalid refresh token" });
         }
-        // Handle non-Error types if necessary
         return res.status(500).json({ message: "An unknown error occurred" });
       }
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
   },
-
-
-
   updateUser: async (req: Request, res: Response) => {
     const { name, address, mobile, age } = req.body; // Destructure all fields from the request body
     const { userId } = req.params;
-
     try {
       const user = await Users.findById(userId);
       if (!user) {
@@ -329,7 +305,6 @@ export default {
         appointmentTimeSlot,
         totalAmount,
       } = req.body;
-      // Validate against existing bookings
       const conflictingBooking = await BookingModel.findOne({
         booking_date: appointmentDate,
         booking_time_slot: appointmentTimeSlot,
@@ -372,7 +347,6 @@ export default {
       res.status(500).json({ error: "Failed to create Stripe session" });
     }
   },
-
   getUserData: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -429,19 +403,16 @@ export default {
       res.status(500).json({ message: "Error fetching family data", error });
     }
   },
-
   updateCart: async (req: Request, res: Response) => {
     const { id } = req.params; // Ensure `id` is being passed correctly (userId)
     const { services }: { services: IServiceUpdate[] } = req.body;
     try {
-      // Fetch the cart by userId
       const cart = await Cart.findOne({ userId: id });
       if (!cart) {
         return res.status(404).json({ message: "Cart not found" });
       }
       services.forEach((serviceUpdate: IServiceUpdate) => {
         const { serviceId, personIds } = serviceUpdate;
-
         if (!personIds || personIds.length === 0) {
           return res
             .status(400)
@@ -463,7 +434,6 @@ export default {
       res.status(500).json({ message: "Error updating cart data", error });
     }
   },
-
   booking: async (req: Request, res: Response) => {
     const {
       sessionId,
@@ -480,7 +450,6 @@ export default {
       if (existingBooking) {
         return res.status(400).json({ error: "Booking already confirmed." });
       }
-      // Call the interactor to handle the booking logic
       const bookingResult = await userInteractor.confirmBooking({
         stripe_session_id: sessionId,
         user_id: userId,
@@ -585,8 +554,6 @@ export default {
       res.status(500).json({ message: "Internal server error" });
     }
   },
-
-
   getAllServices: async (req: Request, res: Response) => {
     try {
       const services = await Service.find({ isAvailable: true });
@@ -620,6 +587,4 @@ export default {
       res.status(500).json({ message: 'Internal server error' });
     }
   },
-
-
 };

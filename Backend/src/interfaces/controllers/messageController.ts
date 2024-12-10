@@ -1,12 +1,10 @@
 import { Request, Response } from "express";
 import ChatModel from "../../infrastructure/database/dbModel/chatModel";
 import Message from "../../infrastructure/database/dbModel/messageModel";
-
 export default {
     startChat: async (req: Request, res: Response) => {
         const { userId } = req.params;
         const adminId = '66ee588d1e1448fbea1f40bb';
-
         try {
             let chat = await ChatModel.findOne({ users: { $all: [userId, adminId] } });
             if (!chat) {

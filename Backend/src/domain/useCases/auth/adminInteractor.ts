@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-catch */
 import { Department } from "../../../infrastructure/database/dbModel/departmentModel";
 import {
   addCategoryToDB,
@@ -26,8 +27,7 @@ import {
 } from "../../../infrastructure/repositories/mongoAdminRepository";
 import { uploadToS3 } from "../../../utils/s3Uploader";
 import { io } from '../../../server';
-import // ICategory,
-  // PaginatedCategories,
+import
   "../../entities/types/categoryType";
 import {
   ICategory,
@@ -72,7 +72,6 @@ export default {
       }
     }
   },
-
   userList: async () => {
     try {
       const users = await getAllUsers();
@@ -85,7 +84,6 @@ export default {
       throw new Error("An unknown error occurred while fetching user list");
     }
   },
-
   getUsers: async (page: number, limit: number): Promise<PaginatedUsers> => {
     try {
       const users = await getPaginatedUsers(page, limit);
@@ -100,25 +98,20 @@ export default {
     }
   },
   getCategories: async (
-
   ) => {
     try {
-      // Call the function to fetch paginated categories
       const categories = await getPaginatedCategories();
       return categories;
     } catch (error: unknown) {
       if (error instanceof Error) {
-        // Log and rethrow the error if known
         console.error(`Error: ${error.message}`);
         throw new Error(error.message);
       }
-      // Handle unexpected errors
       throw new Error(
         "An unknown error occurred while fetching paginated categories"
       );
     }
   },
-
   updatedUserStatus: async (
     userId: string,
     is_blocked: boolean
@@ -136,7 +129,6 @@ export default {
       }
     }
   },
-
   addDepartment: async (departmentData: {
     departmentName: string;
     departmentDescription?: string;
@@ -170,37 +162,27 @@ export default {
     id: string,
     departmentData: { name: string; description?: string }
   ): Promise<IDepartment | null> => {
-    // Call the repository to update the department
     const updatedDepartment = await updateDepartment(id, departmentData);
-
-    // Handle if the department is not found
     if (!updatedDepartment) {
       throw new Error("Department not found or could not be updated");
     }
-
     return updatedDepartment;
   },
-
   deleteDepartment: async (id: string) => {
     try {
       if (!id) {
         throw new Error("Department ID is required");
       }
-
-      // Attempt to delete the department by ID
       const deletedDepartment = await Department.findByIdAndDelete(id);
-
       if (!deletedDepartment) {
         throw new Error("Department not found or could not be deleted");
       }
-
-      return deletedDepartment; // Return the deleted department object
+      return deletedDepartment;
     } catch (error) {
       console.error("Error deleting department:", error);
       throw new Error("Could not delete department");
     }
   },
-  // Interactor Layer for Adding a New Category
   addCategory: async (categoryData: {
     name: string;
     department: string;
@@ -210,8 +192,6 @@ export default {
       if (!categoryData.name || !categoryData.department) {
         throw new Error("Category name and department are required");
       }
-
-      // Call the function that interacts with the database
       const newCategory = await addCategoryToDB(categoryData);
       return newCategory;
     } catch (error: unknown) {
@@ -223,8 +203,6 @@ export default {
       }
     }
   },
-
-  // Update Category
   updateCategory: async (
     categoryId: string,
     updateData: {
@@ -248,8 +226,6 @@ export default {
       }
     }
   },
-
-  // Delete Category
   deleteCategory: async (categoryId: string) => {
     try {
       await deleteCategoryFromDB(categoryId);
@@ -263,7 +239,6 @@ export default {
       }
     }
   },
-
   addServiceData: async (
     serviceData: IServiceRequest
   ): Promise<IServiceResponse> => {
@@ -278,7 +253,6 @@ export default {
     } = serviceData;
     const serviceDataResult = await uploadToS3(serviceImage);
     const serviceImageUrl = serviceDataResult.Location;
-
     const completeServiceData = {
       name,
       price,
@@ -291,22 +265,16 @@ export default {
     const savedService = await saveService(completeServiceData);
     return savedService;
   },
-
-  // In the interactor
   editServiceData: async (
     id: string,
     serviceData: IServiceRequest
   ): Promise<IServiceResponse> => {
     try {
       let serviceImageUrl = null;
-
-      // If a new service image was uploaded, upload it to S3
       if (serviceData.serviceImage) {
         const serviceDataResult = await uploadToS3(serviceData.serviceImage);
         serviceImageUrl = serviceDataResult.Location; // S3 image URL
       }
-
-      // Build complete data to update, including new image URL if applicable
       const completeServiceData = {
         name: serviceData.name,
         price: serviceData.price,
@@ -316,21 +284,16 @@ export default {
         description: serviceData.description,
         ...(serviceImageUrl && { serviceImageUrl }), // Add image URL only if it exists
       };
-
-      // Call repository to update service by ID
       const updatedService = await updateService(id, completeServiceData);
-
       return updatedService;
     } catch (error) {
       console.error("Error in editing service:", error);
       throw new Error("Failed to edit service data");
     }
   },
-
   getServiceList: async () => {
     try {
-      const services = await getAllServicesWithCategoryDetails(
-      ); // Update to use the new function
+      const services = await getAllServicesWithCategoryDetails();
       return services;
     } catch (error) {
       console.error("Error fetching service list:", error);
@@ -347,7 +310,6 @@ export default {
     }
   },
   getBookingList: async (page = 1, limit = 10) => {
-    // eslint-disable-next-line no-useless-catch
     try {
       return await getBookingsFromDb(page, limit);
     } catch (error) {
@@ -383,12 +345,9 @@ export default {
   },
   addReportData: async ({ bookingId, reportFiles }: { bookingId: string; reportFiles: Express.Multer.File[] }) => {
     const reports = [];
-
-    // Upload each file to S3 and collect its metadata
     for (const reportFile of reportFiles) {
       const reportData = await uploadToS3(reportFile);
       const reportUrl = reportData.Location;
-
       reports.push({
         filename: reportFile.originalname,
         mimetype: reportFile.mimetype,
@@ -396,14 +355,10 @@ export default {
         url: reportUrl,
       });
     }
-
-    // Prepare the complete report data for the database
     const completeReportData = {
       bookingId,
       reports,
     };
-
-    // Save report data to the database
     const savedReport = await saveReport(completeReportData);
     return savedReport;
   },
@@ -413,12 +368,9 @@ export default {
   },
   editReportData: async ({ editReportId, bookingId, reportFiles }: { editReportId: string; bookingId: string; reportFiles: Express.Multer.File[] }) => {
     const reports = [];
-
-    // Upload each file and store details in the reports array
     for (const reportFile of reportFiles) {
       const reportData = await uploadToS3(reportFile);
       const reportUrl = reportData.Location;
-
       reports.push({
         filename: reportFile.originalname,
         mimetype: reportFile.mimetype,
@@ -426,14 +378,10 @@ export default {
         url: reportUrl,
       });
     }
-
-    // Prepare the updated data object
     const updatedReportData = {
       bookingId,
       reports,
     };
-
-    // Update the report in the database
     const updatedReport = await updateReportInDb(editReportId, updatedReportData);
     return updatedReport;
   },
@@ -441,10 +389,7 @@ export default {
     return await publishReportInDb(reportId);
   },
   successMessage: async (chatId: string, content: string) => {
-    // Save the message in the database
     const newMessage = await successMessagetoUser(chatId, content);
-
-    // Emit the message to the specified chat room via Socket.IO
     io.to(chatId).emit("receiveMessage", newMessage);
 
     return newMessage;

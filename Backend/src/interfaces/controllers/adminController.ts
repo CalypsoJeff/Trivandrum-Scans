@@ -1,13 +1,8 @@
 import { Request, Response } from "express";
 import adminInteractor from "../../domain/useCases/auth/adminInteractor";
-import {
-  categoryCount,
-  departmentCount,
-  userCount,
-} from "../../infrastructure/repositories/mongoAdminRepository";
+import { categoryCount, departmentCount, userCount } from "../../infrastructure/repositories/mongoAdminRepository";
 import ChatModel from "../../infrastructure/database/dbModel/chatModel";
 import Message from "../../infrastructure/database/dbModel/messageModel";
-
 export default {
   adminLogin: async (req: Request, res: Response) => {
     try {
@@ -27,7 +22,6 @@ export default {
       }
     }
   },
-
   getUsers: async (req: Request, res: Response): Promise<void> => {
     try {
       const { page = 1, limit = 10 } = req.query;
@@ -44,7 +38,6 @@ export default {
   },
   getCategories: async (req: Request, res: Response): Promise<void> => {
     try {
-      
       const categories = await adminInteractor.getCategories(
       );
       res.status(200).json(categories);
@@ -57,7 +50,6 @@ export default {
       }
     }
   },
-
   blockUser: async (req: Request, res: Response): Promise<void> => {
     try {
       const { userId } = req.params;
@@ -68,7 +60,6 @@ export default {
       );
       res.status(200).json(updatedUser);
     } catch (error: unknown) {
-      // Use `unknown` type for error handling
       if (error instanceof Error) {
         console.error(error.message); // Safely access `message` only if it's an instance of `Error`
         res.status(500).json({ error: error.message });
@@ -98,7 +89,6 @@ export default {
       }
     }
   },
-
   departmentList: async (req: Request, res: Response) => {
     try {
       const departments = await adminInteractor.getDepartments();
@@ -112,7 +102,6 @@ export default {
       }
     }
   },
-
   editDepartment: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -147,7 +136,6 @@ export default {
       if (!id) {
         return res.status(400).json({ error: "Department ID is required" });
       }
-      // Call the interactor to handle the business logic and perform the delete
       const deletedDepartment = await adminInteractor.deleteDepartment(
         id as string
       );
@@ -159,8 +147,6 @@ export default {
         .json({ message: "Department deleted successfully", id });
     } catch (error) {
       console.error("Error deleting department:", error);
-
-      // Handle error and send appropriate response
       if (error instanceof Error) {
         res.status(500).json({ error: error.message });
       } else {
@@ -168,31 +154,21 @@ export default {
       }
     }
   },
-
   addCategory: async (req: Request, res: Response) => {
     try {
       const { name, department } = req.body;
-      // Validate the input data
       if (!name || !department) {
         return res
           .status(400)
           .json({ error: "Category name and department are required" });
       }
-
-      // Prepare the category data object
       const newCategoryData = { name, department };
-
-      // Call the interactor layer to handle business logic
       const category = await adminInteractor.addCategory(newCategoryData);
-
-      // Send success response
       return res
         .status(201)
         .json({ message: "Category added successfully", category });
     } catch (error: unknown) {
       console.error("Error adding category:", error);
-
-      // Error handling
       if (error instanceof Error) {
         return res.status(500).json({ error: error.message });
       } else {
@@ -200,8 +176,6 @@ export default {
       }
     }
   },
-
-  // Update Category
   editCategory: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -214,12 +188,10 @@ export default {
           .status(400)
           .json({ error: "Category name and department are required" });
       }
-
       const updatedCategory = await adminInteractor.updateCategory(id, {
         name,
         department,
       });
-
       res
         .status(200)
         .json({ message: "Category updated successfully", updatedCategory });
@@ -232,8 +204,6 @@ export default {
       }
     }
   },
-
-  // Delete Category
   deleteCategory: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -251,7 +221,6 @@ export default {
       }
     }
   },
-
   getUserCount: async (req: Request, res: Response) => {
     try {
       const userCounts = await userCount();
@@ -290,9 +259,7 @@ export default {
         description,
       } = req.body;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-
       const serviceImage = files?.serviceImage?.[0];
-
       if (!serviceImage) {
         console.error("Service Image is missing.");
         return res
@@ -300,13 +267,7 @@ export default {
           .json({ message: "License document is required" });
       }
       const serviceData = {
-        name,
-        price,
-        category,
-        preTestPreparations,
-        expectedResultDuration,
-        description,
-        serviceImage,
+        name, price, category, preTestPreparations, expectedResultDuration, description, serviceImage,
       };
       const result = await adminInteractor.addServiceData(serviceData);
       res.status(200).json({ message: "Service added successfully", result });
@@ -315,21 +276,12 @@ export default {
       res.status(500).json({ message: "Failed to add service" });
     }
   },
-
   editService: async (req: Request, res: Response) => {
     try {
       const { id } = req.params; // Get the service ID from the URL parameters
-      const {
-        name,
-        price,
-        category,
-        preTestPreparations,
-        expectedResultDuration,
-        description,
-      } = req.body;
+      const { name, price, category, preTestPreparations, expectedResultDuration, description, } = req.body;
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       const serviceImage = files?.serviceImage?.[0];
-      // Prepare service data, omit serviceImage if not provided
       const serviceData = {
         name,
         price,
@@ -346,13 +298,10 @@ export default {
       res.status(500).json({ message: "Failed to edit service" });
     }
   },
-
   getServices: async (req: Request, res: Response) => {
     try {
-      
       const serviceList = await adminInteractor.getServiceList(
       );
-
       res.status(200).json(serviceList);
     } catch (error) {
       console.error("Failed to retrieve services", error);
@@ -371,10 +320,8 @@ export default {
   },
   bookingList: async (req: Request, res: Response) => {
     try {
-      // Parse query params for page and limit
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
-
       const { bookings, totalBookings } = await adminInteractor.getBookingList(
         page,
         limit
@@ -397,14 +344,12 @@ export default {
       if (!bookingDetails) {
         return res.status(404).json({ message: "Booking not found" });
       }
-
       res.status(200).json(bookingDetails);
     } catch (error) {
       console.error("Error fetching booking details:", error);
       res.status(500).json({ message: "Failed to fetch details" });
     }
   },
-  // Fetch active chats for an admin
   getActiveChats: async (req: Request, res: Response) => {
     try {
       const { adminId } = req.params;
@@ -415,17 +360,13 @@ export default {
       })
         .populate('users', 'name')   // Populate to get names of users in the chat
         .populate('latestMessage');   // Populate latest message details
-
       console.log(activeChats, 'activeChats for admin');
-
       res.status(200).json(activeChats);
     } catch (error) {
       console.error('Error fetching active chats for admin:', error);
       res.status(500).json({ message: 'Server error' });
     }
   },
-
-  // Fetch messages in a specific chat for an admin
   getMessages: async (req: Request, res: Response) => {
     const { chatId } = req.params;
     try {
@@ -483,7 +424,6 @@ export default {
       res.status(500).json({ message: "Server error updating Bookings" });
     }
   },
-
   serviceCompleted: async (req: Request, res: Response) => {
     try {
       const bookings = await adminInteractor.CompletedBooking();
@@ -493,23 +433,16 @@ export default {
       res.status(500).json({ message: "Failed to fetch completed bookings." });
     }
   },
-
   uploadReport: async (req: Request, res: Response) => {
     try {
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       const { bookingId } = req.body;
-
-      // Validate booking ID
       if (!bookingId) {
         return res.status(400).json({ message: "Booking ID is required" });
       }
-
-      // Validate files
       if (!files || !files.report || files.report.length === 0) {
         return res.status(400).json({ message: "No report files uploaded" });
       }
-
-      // Pass all files to the interactor
       const result = await adminInteractor.addReportData({ bookingId, reportFiles: files.report });
       res.status(200).json({ message: "Report uploaded successfully", result });
     } catch (error) {
@@ -517,7 +450,6 @@ export default {
       res.status(500).json({ message: "Failed to upload report" });
     }
   },
-
   reportList: async (req: Request, res: Response) => {
     try {
       const reports = await adminInteractor.reportList();
@@ -539,8 +471,6 @@ export default {
       if (!files || !files.report || files.report.length === 0) {
         return res.status(400).json({ message: "No report file uploaded" });
       }
-
-      // Send the array of files to the interactor for uploading and saving
       const result = await adminInteractor.editReportData({ editReportId, bookingId, reportFiles: files.report });
       res.status(200).json({ message: "Report updated successfully", result });
     } catch (error) {
@@ -563,10 +493,9 @@ export default {
     }
   },
   successMessage: async (req: Request, res: Response) => {
-    const { chatId } = req.params;  
-    const { content } = req.body;    
+    const { chatId } = req.params;
+    const { content } = req.body;
     try {
-      // Call the interactor to send the success message
       const newMessage = await adminInteractor.successMessage(chatId, content);
       res.status(200).json({ message: "Message sent successfully", newMessage });
     } catch (error) {
