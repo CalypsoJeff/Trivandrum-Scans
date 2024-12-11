@@ -122,8 +122,7 @@ export const createBookingSession = async (bookingData) => {
 export const requestPasswordReset = async (email) => {
   try {
     const response = await axios.post(
-      // "http://localhost:5000/api/users/forget-password",
-      "https://trivandrumscans.online/api/users/forget-password",
+      "http://localhost:5000/api/users/forget-password",
       { email }
     );
     return response;
@@ -157,23 +156,21 @@ export const addServiceToCart = async (cartData) => {
 
 export const otpVerification = async (otp, email) => {
   const response = await axios.post(
-    // "http://localhost:5000/api/users/otp-verification",
-    "https://trivandrumscans.online/api/users/otp-verification",
+    "http://localhost:5000/api/users/otp-verification",
 
     {
       otp,
       email,
     }
   );
-  console.log(response.data,'service resp0onse');
-  
+  console.log(response.data, "service resp0onse");
+
   return response.data;
 };
 
 export const resendOtp = async (email) => {
   const response = await axios.post(
-    // "http://localhost:5000/api/users/resend-otp",
-    "https://trivandrumscans.online/api/users/resend-otp",
+    "http://localhost:5000/api/users/resend-otp",
 
     { email }
   );
@@ -188,9 +185,8 @@ export const fetchUserData = async (userId) => {
 
 // Fetch family members of the user
 export const fetchFamilyData = async (userId) => {
-  if(!userId){
-    console.log('no user id');
-    
+  if (!userId) {
+    console.log("no user id");
   }
   const response = await axiosInstanceUser.get(`/familyData/${userId}`);
   return response.data;
@@ -227,6 +223,8 @@ export const fetchServiceDetail = async (serviceId) => {
 // Fetch list of categories
 export const fetchCategories = async () => {
   const response = await axiosInstanceUser.get("/categoryList");
+  console.log(response.data,'##############');
+  
   return response.data.categories;
 };
 

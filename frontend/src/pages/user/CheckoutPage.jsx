@@ -11,6 +11,7 @@ import {
   fetchLatestCart,
 } from "../../services/userService";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const stripePromise = loadStripe(
   "pk_test_51Q9p4J02sEEeH3srV1uPSqW1QISpZpbEFDQNV8cGWHBGtONEe0IpxG7EiOZrledVR7xzNnKXhLeRObuRH2ZsnYWh00oHBEyis6"
@@ -22,6 +23,7 @@ const CheckoutPage = () => {
   const [selectedDate, setSelectedDate] = useState(null); // Store selected appointment date
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(""); // Store selected time slot
   const user = useSelector(selectUser);
+  const navigate = useNavigate();
 
   // Define available time slots
   const timeSlots = [
@@ -78,6 +80,53 @@ const CheckoutPage = () => {
   };
 
   // Handle proceeding to payment via Stripe
+  // const handleProceedToPayment = async () => {
+  //   if (!selectedDate) {
+  //     toast.error("Please select a date for your appointment.");
+  //     return;
+  //   }
+  //   if (!selectedTimeSlot) {
+  //     toast.error("Please select a time slot for your appointment.");
+  //     return;
+  //   }
+
+  //   // Calculate total amount
+  //   const totalAmount = cart.services.reduce((total, service) => {
+  //     const numberOfPersons = service.personIds.length;
+  //     return total + service.serviceId.price * numberOfPersons;
+  //   }, 0);
+
+  //   // Construct booking data
+  //   const bookingData = {
+  //     userId: user.id,
+  //     services: cart.services.map((service) => ({
+  //       serviceId: service.serviceId._id,
+  //       personIds: service.personIds,
+  //     })),
+  //     appointmentDate: selectedDate,
+  //     appointmentTimeSlot: selectedTimeSlot,
+  //     totalAmount,
+  //   };
+
+  //   try {
+  //     const { sessionId } = await createBookingSession(bookingData);
+
+  //     const stripe = await stripePromise;
+  //     if (stripe) {
+  //       await stripe.redirectToCheckout({ sessionId });
+  //     } else {
+  //       toast.error("Stripe.js failed to load.");
+  //     }
+  //   } catch (error) {
+  //     if (error.response?.status === 400) {
+  //       toast.error(error.response.data.error || "Booking conflict detected.");
+  //     } else {
+  //       toast.error("Error creating booking. Please try again.");
+  //     }
+  //     console.error("Error creating booking and Stripe session:", error);
+  //   }
+  // };
+
   const handleProceedToPayment = async () => {
     if (!selectedDate) {
       toast.error("Please select a date for your appointment.");
@@ -89,25 +138,57 @@ const CheckoutPage = () => {
       return;
     }
 
-    // Calculate total amount
-    const totalAmount = cart.services.reduce((total, service) => {
-      const numberOfPersons = service.personIds.length;
-      return total + service.serviceId.price * numberOfPersons;
-    }, 0);
-
-    // Construct booking data
-    const bookingData = {
-      userId: user.id,
-      services: cart.services.map((service) => ({
-        serviceId: service.serviceId._id,
-        personIds: service.personIds,
-      })),
-      appointmentDate: selectedDate,
-      appointmentTimeSlot: selectedTimeSlot,
-      totalAmount,
-    };
-
     try {
+      // Fetch the latest cart data from the server
+      const latestCart = await fetchLatestCart(user.id);
+
+      if (latestCart.cart.services.length === 0) {
+        toast.error("Your cart is empty. Redirecting to services...");
+        navigate("/service");
+        return;
+      }
+
+      // Check if the current cart matches the latest cart
+      const currentServiceIds = cart.services.map(
+        (service) => service.serviceId._id
+      );
+      const latestServiceIds = latestCart.cart.services.map(
+        (service) => service.serviceId._id
+      );
+
+      // Validate if there is a mismatch
+      const isCartUpdated = currentServiceIds.every((id) =>
+        latestServiceIds.includes(id)
+      );
+
+      if (!isCartUpdated) {
+        toast.error(
+          "Some items in your cart have been removed or updated. Please refresh your cart."
+        );
+        // Optionally, reload the cart data for the user
+        setCart(latestCart.cart);
+        return;
+      }
+
+      // Calculate total amount
+      const totalAmount = cart.services.reduce((total, service) => {
+        const numberOfPersons = service.personIds.length;
+        return total + service.serviceId.price * numberOfPersons;
+      }, 0);
+
+      // Construct booking data
+      const bookingData = {
+        userId: user.id,
+        services: cart.services.map((service) => ({
+          serviceId: service.serviceId._id,
+          personIds: service.personIds,
+        })),
+        appointmentDate: selectedDate,
+        appointmentTimeSlot: selectedTimeSlot,
+        totalAmount,
+      };
+
+      // Create Stripe session and proceed to payment
       const { sessionId } = await createBookingSession(bookingData);
 
       const stripe = await stripePromise;
@@ -134,6 +215,27 @@ const CheckoutPage = () => {
 
   if (!cart) {
     return <div>Loading checkout details...</div>;
+  }
+
+  if (!cart.services.length) {
+    return (
+      <div className="bg-gray-50 min-h-screen">
+        <Header />
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="bg-white shadow-lg rounded-lg p-6 text-center">
+            <h2 className="text-xl font-semibold text-gray-700">
+              Your cart is empty.
+            </h2>
+            <button
+              className="bg-red-500 hover:bg-red-600 text-white py-2 px-6 rounded-lg font-semibold shadow mt-4"
+              onClick={() => navigate("/service")}
+            >
+              Browse Services
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Get patient details by ID or fallback to user
@@ -252,7 +354,6 @@ const CheckoutPage = () => {
               </div>
             </div>
           ))}
-
           <div className="flex justify-between items-center mt-4 border-t pt-4">
             <h3 className="text-lg font-semibold text-gray-700">
               Total Amount:
@@ -266,7 +367,6 @@ const CheckoutPage = () => {
               }, 0)}
             </p>
           </div>
-
           <div className="flex justify-end mt-6">
             <button
               className="bg-red-500 hover:bg-red-600 text-white py-2 px-6 rounded-lg font-semibold shadow"

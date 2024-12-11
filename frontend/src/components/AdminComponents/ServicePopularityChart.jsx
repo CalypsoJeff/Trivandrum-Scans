@@ -13,9 +13,6 @@ const ServicePopularityChart = () => {
         // Fetch all bookings data
         const response = await axiosInstanceUser.get("/allbookings");
         const bookings = response.data;
-        console.log(bookings,'77777777777777');
-        
-
         // Aggregate service counts
         const serviceCounts = {};
         bookings.forEach((booking) => {

@@ -1,39 +1,53 @@
 import { Router } from "express";
 import userController from "../controllers/userController";
 import { protectUser } from "../frameworks/webserver/middleware/userAuthMiddleware";
+import authController from "../controllers/authController";
+import cartController from "../controllers/cartController";
+import serviceController from "../controllers/serviceController";
+import bookingController from "../controllers/bookingController";
+import reportController from "../controllers/reportController";
+import categoryController from "../controllers/categoryController";
 const userRouter = Router();
-userRouter.post("/signup", userController.userRegistration);
-userRouter.post("/otp-verification", userController.verifyOTP);
-userRouter.post("/resend-otp", userController.resendOTP);
-userRouter.post("/login", userController.userLogin);
-userRouter.post("/googleAuth", userController.googleAuth);
-userRouter.post("/forget-password", userController.forgotPassword);
-userRouter.post("/reset-password", userController.reset_PasswordFn);
-userRouter.post('/refreshtoken',userController.refreshToken)
-// Protected routes
-userRouter.get("/getStatus",protectUser,userController.getStatus);
-userRouter.get("/UserData/:id", protectUser, userController.getUserData);
-userRouter.get("/familyData/:id", protectUser, userController.getFamilyData);
-userRouter.put("/UserData/edit/:id", protectUser, userController.editUser);
-userRouter.post("/patients/add", protectUser, userController.addPatient);
-userRouter.post("/checkAuth", protectUser, userController.checkAuth);
-userRouter.put("/updateuser/:userId", protectUser, userController.updateUser);
-userRouter.get("/serviceList", userController.getServices);
-userRouter.get("/service/:id", userController.getServiceDetail);
-userRouter.get('/categoryList',userController.getCategory)
-userRouter.post("/cart/add", protectUser, userController.addToCart);
-userRouter.post("/cart/update/:id", protectUser, userController.updateCart);
-userRouter.get("/cart/:id", protectUser, userController.fetchCart);
-userRouter.get("/cart/latest/:id", protectUser, userController.fetchUpdatedCart);
-userRouter.post("/cart/remove", protectUser, userController.removeCartItemById);
-userRouter.post("/booknowcheckout", userController.bookNow);
-userRouter.post("/confirm-booking", protectUser, userController.booking);
-userRouter.get('/bookings/:id', protectUser, userController.getBookingList)
-userRouter.get('/booking/user/:id', protectUser, userController.getBookingDetail)
-userRouter.post('/cart/clear', protectUser, userController.clearCart);
-userRouter.post('/booking/cancel/:id',protectUser,userController.cancelBooking)
-userRouter.get('/reports/:id',protectUser,userController.reportList)
-userRouter.get('/allbookings',userController.getAllBookings)
-userRouter.put('/change-password',userController.changePassword)
+
+// Authentication routes
+userRouter.post("/signup", authController.userRegistration);//-
+userRouter.post("/otp-verification", authController.verifyOTP);//-
+userRouter.post("/resend-otp", authController.resendOTP);//-
+userRouter.post("/login", authController.userLogin);//-
+userRouter.post("/googleAuth", authController.googleAuth);//-
+userRouter.post("/forget-password", authController.forgotPassword);//-
+userRouter.post("/reset-password", authController.reset_PasswordFn);//-
+userRouter.post('/refreshtoken',authController.refreshToken)//-
+userRouter.put('/change-password',authController.changePassword)//-
+// User routes
+userRouter.get("/getStatus",protectUser,userController.getStatus);//-
+userRouter.post("/checkAuth", protectUser, userController.checkAuth);//-
+userRouter.put("/updateuser/:userId", protectUser, userController.updateUser);//-
+userRouter.get("/UserData/:id", protectUser, userController.getUserData);//-
+userRouter.get("/familyData/:id", protectUser, userController.getFamilyData);//-
+userRouter.put("/UserData/edit/:id", protectUser, userController.editUser);//-
+userRouter.post("/patients/add", protectUser, userController.addPatient);//-
+// Service routes
+userRouter.get("/serviceList", serviceController.getServices);//-
+userRouter.get("/service/:id", serviceController.getServiceDetail);//-
+// Category routes
+userRouter.get('/categoryList',categoryController.getCategory)//-
+// Cart routes
+userRouter.post("/cart/add", protectUser, cartController.addToCart);//-
+userRouter.post("/cart/update/:id", protectUser, cartController.updateCart);//-
+userRouter.get("/cart/:id", protectUser, cartController.fetchCart);//-
+userRouter.get("/cart/latest/:id", protectUser, cartController.fetchUpdatedCart);//-
+userRouter.post("/cart/remove", protectUser, cartController.removeCartItemById);//-
+userRouter.post('/cart/clear', protectUser, cartController.clearCart);//-
+// Booking routes
+userRouter.post("/booknowcheckout", bookingController.bookNow);//-
+userRouter.post("/confirm-booking", protectUser, bookingController.booking);//-
+userRouter.get('/bookings/:id', protectUser, bookingController.getBookingList)//-
+userRouter.get('/booking/user/:id', protectUser, bookingController.getBookingDetail)//-
+userRouter.post('/booking/cancel/:id',protectUser,bookingController.cancelBooking)//-
+userRouter.get('/allbookings',bookingController.getAllBookings)
+// Report routes
+userRouter.get('/reports/:id',protectUser,reportController.reportList)
+
 
 export default userRouter;

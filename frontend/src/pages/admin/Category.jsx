@@ -83,11 +83,11 @@ function Category() {
   // Handle adding a new category
   const handleSubmit = async (values, { resetForm }) => {
     try {
-      await dispatch(addCategory(values)).unwrap();
+      const newCategory = await dispatch(addCategory(values)).unwrap(); // Add category via Redux action
+      setCategories((prevCategories) => [...prevCategories, newCategory]); // Optimistically update the state
       toast.success("Category added successfully");
       closeModal();
       resetForm();
-      loadCategories(); // Refresh categories
     } catch (error) {
       console.error("Error adding category:", error);
       toast.error("Failed to add category");
@@ -97,12 +97,16 @@ function Category() {
   // Handle editing a category
   const handleEditSubmit = async (values) => {
     try {
-      await dispatch(
+      const updatedCategory = await dispatch(
         editCategory({ id: selectedCategory._id, ...values })
       ).unwrap();
+      setCategories((prevCategories) =>
+        prevCategories.map((category) =>
+          category._id === updatedCategory._id ? updatedCategory : category
+        )
+      ); // Optimistically update the state
       toast.success("Category updated successfully");
       closeEditModal();
-      loadCategories(); // Refresh categories
     } catch (error) {
       console.error("Error updating category:", error);
       toast.error("Failed to update category");
@@ -113,9 +117,13 @@ function Category() {
   const handleDelete = async () => {
     try {
       await dispatch(deleteCategory(selectedCategory._id)).unwrap();
+      setCategories((prevCategories) =>
+        prevCategories.filter(
+          (category) => category._id !== selectedCategory._id
+        )
+      ); // Optimistically update the state
       toast.success("Category deleted successfully");
       closeDeleteModal();
-      loadCategories();
     } catch (error) {
       console.error("Error deleting category:", error);
       toast.error("Failed to delete category");

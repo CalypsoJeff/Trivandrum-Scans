@@ -265,6 +265,7 @@
 //   );
 // }
 
+
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
@@ -386,7 +387,7 @@ export default function Chat() {
     try {
       const response = await axios.get(
         // `http://localhost:5000${apiBaseUrl}/chat/start/${userId}`
-        `https://trivandrumscans.online/api/users/messages/chat/start/${userId}`
+        `http://localhost:5000/api/users/messages/chat/start/${userId}`
       );
       setChatId(response.data.chat._id);
     } catch (error) {
@@ -398,7 +399,7 @@ export default function Chat() {
     try {
       const response = await axios.get(
         // `http://localhost:5000${apiBaseUrl}/chat/${chatId}/messages`
-        `https://trivandrumscans.online/api/users/messages/chat/${chatId}/messages`
+        `http://localhost:5000/api/users/messages/chat/${chatId}/messages`
       );
       setMessages(response.data.messages);
     } catch (error) {

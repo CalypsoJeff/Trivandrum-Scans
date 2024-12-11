@@ -20,7 +20,7 @@ const server = http.createServer(app);
 export const io = new Server(server, {
     cors: {
         origin: [
-            'https://trivandrum-scans.vercel.app'
+            'http://localhost:5173'
         ],
         methods: ['GET', 'POST'],
         credentials: true,
@@ -32,7 +32,7 @@ handleSocketEvents(io);
 const PORT = process.env.PORT || 5000;
 const corsOptions = {
     origin: [
-        'https://trivandrum-scans.vercel.app'
+        'http://localhost:5173'
     ],
     credentials: true,
     methods: ['GET','Head', 'POST', 'PUT', 'DELETE', "PATCH"],

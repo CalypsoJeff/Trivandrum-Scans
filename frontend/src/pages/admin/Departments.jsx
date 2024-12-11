@@ -14,7 +14,6 @@ import { toast, Toaster } from "sonner";
 
 Modal.setAppElement("#root");
 
-// Validation schema using Yup
 const DepartmentSchema = Yup.object().shape({
   name: Yup.string().required("Department Name is required"),
   description: Yup.string().optional(),
@@ -23,51 +22,60 @@ const DepartmentSchema = Yup.object().shape({
 function Departments() {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [editModalIsOpen, setEditModalIsOpen] = useState(false);
-  const [deleteModalIsOpen, setDeleteModalIsOpen] = useState(false); // For delete confirmation modal
-  const [departments, setDepartments] = useState([]); // Store departments
-  const [isSubmitting, setIsSubmitting] = useState(false); // Submission state
-  const [currentDepartment, setCurrentDepartment] = useState(null); // For editing department
-  const [departmentToDelete, setDepartmentToDelete] = useState(null); // For tracking department to delete
+  const [deleteModalIsOpen, setDeleteModalIsOpen] = useState(false);
+  const [departments, setDepartments] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentDepartment, setCurrentDepartment] = useState(null);
+  const [departmentToDelete, setDepartmentToDelete] = useState(null);
   const dispatch = useDispatch();
 
-  // Modal open/close functions
+  // Modal handlers
   const openModal = () => setModalIsOpen(true);
   const closeModal = () => setModalIsOpen(false);
 
   const openEditModal = (department) => {
-    setCurrentDepartment(department); // Set the current department to edit
+    if (!department || !department._id) {
+      toast.error("Invalid department selected for editing.");
+      return;
+    }
+    setCurrentDepartment(department);
     setEditModalIsOpen(true);
   };
-  const closeEditModal = () => setEditModalIsOpen(false);
 
-  // Open delete confirmation modal
+  const closeEditModal = () => {
+    setEditModalIsOpen(false);
+    setCurrentDepartment(null);
+  };
+
   const openDeleteModal = (department) => {
     setDepartmentToDelete(department);
     setDeleteModalIsOpen(true);
   };
-  const closeDeleteModal = () => setDeleteModalIsOpen(false);
-
-  // Fetch departments after adding/editing/deleting
-  const fetchDepartments = async () => {
-    try {
-      const data = await fetchDepartmentsService();
-      setDepartments(data);
-    } catch (error) {
-      console.error("Error fetching departments:", error);
-      toast.error("Error fetching departments");
-    }
+  const closeDeleteModal = () => {
+    setDeleteModalIsOpen(false);
+    setDepartmentToDelete(null);
   };
 
+  // Initial fetch of departments
   useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const data = await fetchDepartmentsService();
+        setDepartments(data);
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+        toast.error("Error fetching departments");
+      }
+    };
     fetchDepartments();
   }, []);
 
-  // Submit form data for adding
+  // Add department with optimistic update
   const handleSubmit = async (values, { resetForm }) => {
     setIsSubmitting(true);
     try {
-      await dispatch(addDepartment(values)).unwrap();
-      await fetchDepartments();
+      const newDepartment = await dispatch(addDepartment(values)).unwrap();
+      setDepartments((prevDepartments) => [...prevDepartments, newDepartment]);
       toast.success("Department added successfully");
       closeModal();
       resetForm();
@@ -79,18 +87,29 @@ function Departments() {
     }
   };
 
-  // Submit form data for editing
+  // Edit department with optimistic update
   const handleEditSubmit = async (values) => {
     setIsSubmitting(true);
+
+    if (!currentDepartment || !currentDepartment._id) {
+      toast.error("Invalid department selected for editing.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const updatedDepartment = {
+      _id: currentDepartment._id,
+      name: values.name,
+      description: values.description,
+    };
+
     try {
-      await dispatch(
-        editDepartment({
-          id: currentDepartment._id,
-          name: values.name,
-          description: values.description,
-        })
-      ).unwrap();
-      await fetchDepartments();
+      const result = await dispatch(editDepartment(updatedDepartment)).unwrap();
+      setDepartments((prevDepartments) =>
+        prevDepartments.map((dept) =>
+          dept._id === currentDepartment._id ? result : dept
+        )
+      );
       toast.success("Department updated successfully");
       closeEditModal();
     } catch (error) {
@@ -101,17 +120,23 @@ function Departments() {
     }
   };
 
-  // Delete department
+  // Delete department with optimistic update
   const handleDelete = async () => {
     setIsSubmitting(true);
+    const departmentId = departmentToDelete._id;
+    const departmentsCopy = [...departments]; // Backup for rollback
+
     try {
-      await dispatch(deleteDepartment(departmentToDelete._id)).unwrap();
-      await fetchDepartments();
+      setDepartments((prevDepartments) =>
+        prevDepartments.filter((dept) => dept._id !== departmentId)
+      );
+      await dispatch(deleteDepartment(departmentId)).unwrap();
       toast.success("Department deleted successfully");
-      closeDeleteModal(); // Close delete modal
+      closeDeleteModal();
     } catch (error) {
       console.error("Error deleting department:", error);
       toast.error("Failed to delete department");
+      setDepartments(departmentsCopy); // Rollback on error
     } finally {
       setIsSubmitting(false);
     }
@@ -123,7 +148,6 @@ function Departments() {
       <div className="flex-1 p-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-4xl font-bold text-gray-800">Departments</h1>
-          {/* Add Department Button */}
           <button
             onClick={openModal}
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200"
@@ -137,7 +161,7 @@ function Departments() {
           department to edit or delete.
         </p>
 
-        {/* Existing departments */}
+        {/* Departments Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {departments.map((department) => (
             <div
@@ -145,10 +169,10 @@ function Departments() {
               className="group relative bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 p-4"
             >
               <h3 className="text-lg font-semibold text-gray-800">
-                {department.name}
+                {department.name || "No Name Provided"}
               </h3>
               <p className="text-sm text-gray-500 mt-2">
-                {department.description}
+                {department.description || "No Description Available"}
               </p>
 
               <div className="mt-4 flex justify-between">
@@ -169,7 +193,7 @@ function Departments() {
           ))}
         </div>
 
-        {/* Modal for Adding a Department */}
+        {/* Add Department Modal */}
         <Modal
           isOpen={modalIsOpen}
           onRequestClose={closeModal}
@@ -237,7 +261,7 @@ function Departments() {
           </div>
         </Modal>
 
-        {/* Modal for Editing a Department */}
+        {/* Edit Department Modal */}
         {currentDepartment && (
           <Modal
             isOpen={editModalIsOpen}
@@ -251,7 +275,7 @@ function Departments() {
               <Formik
                 initialValues={{
                   name: currentDepartment.name,
-                  description: currentDepartment.description,
+                  description: currentDepartment.description || "",
                 }}
                 validationSchema={DepartmentSchema}
                 onSubmit={handleEditSubmit}
@@ -310,7 +334,7 @@ function Departments() {
           </Modal>
         )}
 
-        {/* Modal for Confirming Deletion */}
+        {/* Delete Confirmation Modal */}
         <Modal
           isOpen={deleteModalIsOpen}
           onRequestClose={closeDeleteModal}
@@ -345,7 +369,7 @@ function Departments() {
           </div>
         </Modal>
       </div>
-      <Toaster /> {/* Sonner Toaster Component */}
+      <Toaster />
     </div>
   );
 }

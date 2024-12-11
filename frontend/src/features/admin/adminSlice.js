@@ -20,7 +20,7 @@ export const loginAdmin = createAsyncThunk(
 export const fetchUsers = createAsyncThunk("admin/fetchUsers", async () => {
   const response = await axios.get(
     // "http://localhost:5000/api/admin/userlist"
-    "https://trivandrumscans.online/api/admin/userlist"
+    "http://localhost:5000/api/admin/userlist"
   );
   return response.data;
 });
@@ -29,7 +29,7 @@ export const fetchCategories = createAsyncThunk(
   async () => {
     const response = await axios.get(
       // "http://localhost:5000/api/admin/categoryList"
-      "https://trivandrumscans.online/api/admin/categoryList"
+      "http://localhost:5000/api/admin/categoryList"
     );
     return response.data;
   }
@@ -40,7 +40,7 @@ export const toggleUserStatus = createAsyncThunk(
   async ({ userId, isBlocked }) => {
     const response = await axios.post(
       // "http://localhost:5000/api/admin/block-user",
-      "https://trivandrumscans.online/api/admin/block-user",
+      "http://localhost:5000/api/admin/block-user",
 
       { userId, is_blocked: isBlocked }
     );
@@ -55,7 +55,7 @@ export const addDepartment = createAsyncThunk(
         "/add-Department",
         departmentData
       );
-      return response.data;
+      return response.data.Department;
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
@@ -64,18 +64,20 @@ export const addDepartment = createAsyncThunk(
 export const editDepartment = createAsyncThunk(
   "admin/editDepartment",
   async (departmentData, { rejectWithValue }) => {
-    const { id, ...dataaaas } = departmentData;
+    const { _id, ...data } = departmentData;
     try {
       const response = await axiosInstanceAdmin.put(
-        `/edit-department/${id}`,
-        dataaaas
+        `/edit-department/${_id}`,
+        data
       );
-      return response.data;
+      return response.data.department;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      console.error("API Error:", error.response?.data || error.message);
+      return rejectWithValue(error.response?.data || "An error occurred");
     }
   }
 );
+
 export const deleteDepartment = createAsyncThunk(
   "admin/deleteDepartment",
   async (id, { rejectWithValue }) => {
@@ -98,8 +100,8 @@ export const addCategory = createAsyncThunk(
         "/add-category",
         categoryData
       );
-      console.log(response.data,'in add slice response');
-      return response.data;
+      console.log(response.data, "in add slice response");
+      return response.data.category;
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
@@ -114,9 +116,8 @@ export const editCategory = createAsyncThunk(
         `/edit-category/${id}`,
         data
       );
-      console.log(response.data,'in edit slice response');
-      
-      return response.data;
+      console.log(response.data, "in edit slice response");
+      return response.data.updatedCategory;
     } catch (error) {
       return rejectWithValue(error.response.data);
     }

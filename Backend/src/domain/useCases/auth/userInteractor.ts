@@ -1,35 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  addPatientInDb,
-  addToCartInDb,
-  BookingListInDb,
-  cancelBookingInDb,
-  checkExistingUser,
-  clearCartInDb,
-  createUser,
-  editUserInDb,
-  findBookingById,
-  getCategories,
-  getFamilyDataInDb,
-  getPaginatedServices,
-  getService,
-  getStatus,
-  getStoredOTP,
-  getUserbyEMail,
-  getUserByResetToken,
-  googleUser,
-  removeServiceFromCartinDb,
-  reportListInDb,
-  saveBooking,
-  saveOtp,
-  updateUserPassword,
-  userCartInDb,
-  userUpdatedCartInDb,
-  verifyUserDb,
-} from "../../../infrastructure/repositories/mongoUserRepository";
 import { sendOTPEmail, sendVerifyMail } from "../../../utils/emailUtils";
 import { generateOTP } from "../../../utils/otpUtils";
-import { IUser } from "../../entities/types/userType";
 import { Encrypt } from "../../helper/hashPassword";
 import {
   generateResetToken,
@@ -38,12 +9,16 @@ import {
 } from "../../helper/jwtHelper";
 import { } from "../../../infrastructure/repositories/mongoAdminRepository";
 import { IPatientInput } from "../../entities/types/patientType";
-import Stripe from "stripe";
-import mongoose from "mongoose";
-const stripe = new Stripe(process.env.STRIPE_KEY as string, {});
+import { checkExistingUser, createUser, getStoredOTP, getUserbyEmail, getUserByResetToken, googleUser, saveOtp, updateUserPassword, verifyUserDb } from "../../../infrastructure/repositories/mongoAuthRepository";
+import { addPatientInDb, editUserInDb, getFamilyDataInDb, getStatus } from "../../../infrastructure/repositories/mongoUserRepository";
+import { getAllUsers, getPaginatedUsers, updateUserStatus } from "../../../infrastructure/repositories/mongoUserRepository";
+import { IUser, PaginatedUsers } from "../../entities/types/userType";
+
 interface ErrorWithStatus extends Error {
   status?: number;
 }
+
+// Define a type for the report objec
 function createError(message: string, status: number) {
   const error = new Error(message) as ErrorWithStatus;
   error.status = status;
@@ -121,7 +96,7 @@ export default {
     try {
       const newotp = await generateOTP();
       const generatedAt = Date.now();
-      const users = await getUserbyEMail(email);
+      const users = await getUserbyEmail(email);
       if (users && users.name) {
         await sendOTPEmail(email, newotp, users.name);
         console.log("newOtp:", newotp);
@@ -140,7 +115,7 @@ export default {
     }
   },
   loginUser: async (email: string, password: string) => {
-    const existingUser = await getUserbyEMail(email);
+    const existingUser = await getUserbyEmail(email);
     if (!existingUser || !existingUser.password) {
       throw new Error("User not found");
     }
@@ -213,7 +188,7 @@ export default {
     }
   },
   forgotPassword: async (email: string) => {
-    const user = await getUserbyEMail(email);
+    const user = await getUserbyEmail(email);
     if (!user) {
       throw new Error("User not found");
     }
@@ -246,53 +221,7 @@ export default {
     await user.save();
     return { message: "Password has been reset successfully" };
   },
-  getServiceData: async (id: string) => {
-    const service = await getService(id);
-    return service;
-  },
-  getServiceList: async (page: number, limit: number) => {
-    try {
-      const services = await getPaginatedServices(page, limit); // Update to use the new function
-      return services;
-    } catch (error) {
-      console.error("Error fetching service list:", error);
-      throw new Error("Error fetching service list");
-    }
-  },
-  addToCart: async (userId: string, serviceId: string) => {
-    try {
-      await addToCartInDb(userId, serviceId);
-    } catch (error) {
-      console.error("Unexpected error in addToCart:", error);
-      throw new Error("An unexpected error in addToCart");
-    }
-  },
-  getCart: async (id: string) => {
-    try {
-      const cartData = await userCartInDb(id);
-      return cartData;
-    } catch (error) {
-      console.error("Unexpected error in getCart:", error);
-      throw new Error("An unexpected error in getCart");
-    }
-  },
-  getUpdatedCart: async (id: string) => {
-    try {
-      const cartData = await userUpdatedCartInDb(id);
-      return cartData;
-    } catch (error) {
-      console.error("Unexpected error in getCart:", error);
-      throw new Error("An unexpected error in getCart");
-    }
-  },
-  removeCartItem: async (userId: string, serviceId: string) => {
-    try {
-      await removeServiceFromCartinDb(userId, serviceId);
-    } catch (error) {
-      console.error("Unexpected error in removing Cart:", error);
-      throw new Error("An unexpected error in removing Cart");
-    }
-  },
+
   editUser: async (id: string, fieldToChange: object) => {
     try {
       const updatedUser = await editUserInDb(id, fieldToChange);
@@ -320,125 +249,49 @@ export default {
       throw new Error("Error fetching patient");
     }
   },
+  // ##-ADMIN--##//
 
-  getCategories: async () => {
+  userList: async () => {
     try {
-      return await getCategories();
-    } catch (error) {
-      console.error("Error in userInteractor getCategories:", error);
-      throw error; // Re-throw to be handled by the controller
-    }
-  },
-  confirmBooking: async ({
-    stripe_session_id,
-    user_id,
-    booking_date,
-    services,
-    total_amount,
-    booking_time_slot,
-  }: {
-    stripe_session_id: string;
-    user_id: string;
-    booking_date: Date;
-    services: {
-      serviceId: string;
-      personIds: { _id: string }[];
-    }[];
-    total_amount: number;
-    booking_time_slot: string;
-  }): Promise<{ success: boolean; booking: unknown }> => {
-    try {
-      const session = await stripe.checkout.sessions.retrieve(stripe_session_id);
-      if (!session || session.payment_status !== "paid") {
-        throw new Error("Payment not completed or unsuccessful.");
-      }
-      const paymentIntentId = session.payment_intent
-        ? (typeof session.payment_intent === 'string'
-          ? session.payment_intent
-          : session.payment_intent.id)
-        : null;
-      if (!paymentIntentId) {
-        throw new Error("Payment Intent ID is missing.");
-      }
-      const servicesWithObjectIds = services.map((service) => ({
-        service_id: new mongoose.Types.ObjectId(service.serviceId),
-        persons: service.personIds.map(
-          (person) => new mongoose.Types.ObjectId(person._id)
-        ),
-      }));
-      const savedBooking = await saveBooking({
-        stripe_session_id,
-        paymentIntentId,
-        user_id,
-        booking_date,
-        services: servicesWithObjectIds,
-        total_amount,
-        booking_time_slot,
-      });
-      return { success: true, booking: savedBooking };
-    } catch (error) {
+      const users = await getAllUsers();
+      return users;
+    } catch (error: unknown) {
       if (error instanceof Error) {
-        throw new Error(`Error confirming booking: ${error.message}`);
+        console.error(`Error: ${error.message}`);
+        throw error;
       }
-      throw error;
+      throw new Error("An unknown error occurred while fetching user list");
     }
   },
-  getBookingList: async (id: string) => {
+  getUsers: async (page: number, limit: number): Promise<PaginatedUsers> => {
     try {
-      return await BookingListInDb(id);
-    } catch (error) {
-      console.error("Error in getBookingList:", error);
-      throw error;
-    }
-  },
-  getBookingById: async (id: string) => {
-    try {
-      const booking = await findBookingById(id); // Call repository to get booking details
-      return booking;
-    } catch (error) {
-      console.error("Error in userInteractor:", error);
-      throw new Error("Failed to fetch booking details");
-    }
-  },
-  clearCart: async (userId: string) => {
-    try {
-      await clearCartInDb(userId);
-    } catch (error) {
-      console.error("Error in clearing cart from interactor:", error);
-      throw error;
-    }
-  },
-  cancelBooking: async (id: string) => {
-    try {
-      const cancelledBooking = await cancelBookingInDb(id);
-      if (!cancelledBooking) {
-        throw new Error("Booking not found or already cancelled");
+      const users = await getPaginatedUsers(page, limit);
+      return users;
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(error.message);
       }
-      if (cancelledBooking.paymentIntentId) {
-        try {
-          const refund = await stripe.refunds.create({
-            payment_intent: cancelledBooking.paymentIntentId,
-          });
-          console.log(refund.id, 'refund successfull ');
-        } catch (error) {
-          console.error("Error in refund:", error);
-        }
+      throw new Error(
+        "An unknown error occurred while fetching paginated users"
+      );
+    }
+  },
+
+  updatedUserStatus: async (
+    userId: string,
+    is_blocked: boolean
+  ): Promise<IUser | null> => {
+    try {
+      const updatedUser = await updateUserStatus(userId, is_blocked);
+      return updatedUser;
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(error.message);
       } else {
-        console.log('no payment intent id found ');
+        throw new Error(
+          "An unknown error occurred while updating user status in userInteractor."
+        );
       }
-      return cancelledBooking;
-    } catch (error) {
-      console.error("Error in cancelBooking:", error);
-      throw error;
     }
   },
-  reportList: async (id: string) => {
-    try {
-      const reportList = await reportListInDb(id);
-      return reportList;
-    } catch (error) {
-      console.error("Error in reportList interactor:", error);
-      throw new Error("Failed to fetch report list");
-    }
-  }
-};
+}

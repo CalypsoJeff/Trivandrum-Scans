@@ -1,7 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axiosInstanceUser from "../../api/middlewares/axiosInstanceUser";
 import ProfileSidebar from "../../components/UserComponents/ProfileSidebar";
 import { toast } from "sonner";
 import {
@@ -11,55 +10,43 @@ import {
 } from "../../services/userService";
 
 function BookingDetails() {
-  const { id } = useParams(); // `id` is the bookingId passed in URL
+  const { id } = useParams(); // Booking ID from URL
   const [booking, setBooking] = useState(null);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [canCancel, setCanCancel] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
+  // Fetch booking and report data
   useEffect(() => {
-    const loadBookingDetails = async () => {
+    const loadBookingData = async () => {
       try {
-        const bookingData = await fetchBookingDetails(id);
-
-        // Check if any service is completed
-        const anyServiceCompleted = bookingData.services.some(
-          (service) => service.completed
-        );
-
-        // Set canCancel based on the completion status of services and time to appointment
-        const appointmentDate = new Date(bookingData.booking_date);
-        const currentTime = new Date();
-        const timeDifference = appointmentDate - currentTime;
-
-        setCanCancel(
-          !anyServiceCompleted && timeDifference > 24 * 60 * 60 * 1000
-        );
-
-        console.log(bookingData, "4848484848");
+        // Fetch booking and report data in parallel
+        const [bookingData, reportData] = await Promise.all([
+          fetchBookingDetails(id),
+          fetchReports(id),
+        ]);
 
         setBooking(bookingData);
-        setLoading(false);
-      } catch (err) {
-        setError("Failed to fetch booking details");
-        setLoading(false);
-      }
-    };
+        console.log(reportData, "@@@@@@@@@@");
 
-    const loadReports = async () => {
-      try {
-        const reportData = await fetchReports(id);
         setReports(reportData);
       } catch (err) {
-        console.error("Error fetching reports:", err);
+        console.error("Error fetching data:", err);
+        setError("Failed to fetch data");
+      } finally {
+        setLoading(false);
       }
     };
 
-    loadBookingDetails();
-    loadReports();
+    loadBookingData();
   }, [id]);
+
+  // Determine if the booking can be canceled
+  const canCancel =
+    booking &&
+    !booking.services.some((service) => service.completed) &&
+    new Date(booking.booking_date) - new Date() > 24 * 60 * 60 * 1000;
 
   const handleCancelBooking = async () => {
     try {
@@ -69,8 +56,11 @@ function BookingDetails() {
         status: "cancelled",
       }));
       setShowModal(false);
-      toast.success("Money refunded to bank account!");
+      toast.success(
+        "Booking canceled successfully. Money refunded to your account."
+      );
     } catch (error) {
+      console.error("Failed to cancel booking:", error);
       setShowModal(false);
     }
   };
@@ -137,58 +127,7 @@ function BookingDetails() {
               </div>
             </div>
 
-            {/* Booked Services Section */}
-            <div className="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
-              <h2 className="text-2xl font-semibold text-gray-700 mb-6 text-center border-b pb-4">
-                Booked Services
-              </h2>
-              {booking.services.length > 0 ? (
-                <div className="flex flex-col space-y-4">
-                  {booking.services.map((service, index) => (
-                    <div
-                      key={index}
-                      className="bg-white p-4 rounded-lg shadow-md border border-gray-200"
-                    >
-                      <p className="text-gray-600">
-                        <strong>Service:</strong> {service.service_id.name}
-                      </p>
-                      <p className="text-gray-600">
-                        <strong>Price:</strong> ₹{service.service_id.price}
-                      </p>
-                      <p className="text-gray-600">
-                        <strong>Completed:</strong>{" "}
-                        <span
-                          className={`font-medium ${
-                            service.completed
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {service.completed ? "Yes" : "No"}
-                        </span>
-                      </p>
-                      {service.persons?.length > 0 && (
-                        <div className="mt-2">
-                          <h3 className="text-gray-700 font-medium">
-                            Persons:
-                          </h3>
-                          <ul className="list-disc list-inside text-gray-600">
-                            {service.persons.map((person, i) => (
-                              <li key={i}>
-                                {person.name} ({person.age} years old)
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center">No services booked.</p>
-              )}
-            </div>
-
+            {/* Attached Reports Section */}
             <div className="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-200">
               <h2 className="text-2xl font-semibold text-gray-700 mb-6 text-center border-b pb-4">
                 Attached Reports
@@ -197,32 +136,44 @@ function BookingDetails() {
                 <div className="flex flex-col space-y-4">
                   {reports.map((report) => (
                     <div
-                      key={report._id}
+                      key={report.id}
                       className="bg-white p-4 rounded-lg shadow-md border border-gray-200"
                     >
+                      <p className="text-gray-600">
+                        <strong>Booking ID:</strong> {report.bookingId}
+                      </p>
+                      <p className="text-gray-600">
+                        <strong>Published:</strong>{" "}
+                        {report.published ? "Yes" : "No"}
+                      </p>
                       <p className="text-gray-600">
                         <strong>Uploaded On:</strong>{" "}
                         {new Date(report.uploadedAt).toLocaleDateString()}
                       </p>
                       <div className="mt-2">
-                        {report.reports.map((file, index) => (
-                          <a
-                            key={index}
-                            href={file.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline block mt-1"
-                          >
-                            {file.filename}
-                          </a>
-                        ))}
+                        <strong className="block text-gray-700">Files:</strong>
+                        {report.files && report.files.length > 0 ? (
+                          report.files.map((file, index) => (
+                            <a
+                              key={index}
+                              href={file.signedUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline block mt-1"
+                            >
+                              {file.filename}
+                            </a>
+                          ))
+                        ) : (
+                          <p className="text-gray-500">No files attached.</p>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
                 <p className="text-gray-500 text-center">
-                  No reports available for this booking.
+                  No reports available.
                 </p>
               )}
             </div>

@@ -248,6 +248,7 @@ function ReportList() {
         </Modal>
 
         {/* Report List Display */}
+        {/* Report List Display */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           {paginatedReports.length > 0 ? (
             paginatedReports.map((report) => (
@@ -275,10 +276,14 @@ function ReportList() {
                     {report.reports.map((file, index) => (
                       <a
                         key={index}
-                        href={file.url}
+                        href={file.signedUrl || "#"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
+                        className={`${
+                          file.signedUrl
+                            ? "text-blue-600 hover:underline"
+                            : "text-gray-500 cursor-not-allowed"
+                        }`}
                       >
                         {file.filename}
                       </a>
