@@ -6,10 +6,7 @@ import { Users } from "../../infrastructure/database/dbModel/userModel";
 import { Encrypt } from "../../domain/helper/hashPassword";
 import adminInteractor from "../../domain/useCases/auth/adminInteractor";
 import authInteractor from "../../domain/useCases/auth/authInteractor";
-
-
 export default {
-
     // ##-USER--##//
     userRegistration: async (req: Request, res: Response) => {
         try {

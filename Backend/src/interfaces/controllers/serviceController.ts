@@ -1,11 +1,6 @@
 import { Request, Response } from "express";
 import serviceInteractor from "../../domain/useCases/auth/serviceInteractor";
-// import { Service } from "../../infrastructure/database/dbModel/serviceModel";
-
-
-
 export default {
-
   // ##-USER--##//
 
   getServiceDetail: async (req: Request, res: Response) => {

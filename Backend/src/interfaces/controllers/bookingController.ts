@@ -4,18 +4,13 @@ import BookingModel from "../../infrastructure/database/dbModel/bookingModel";
 const stripe = new Stripe(process.env.STRIPE_KEY as string, {});
 import mongoose from "mongoose";
 import bookingInteractor from "../../domain/useCases/auth/bookingInteractor";
-
-
 interface IService {
     serviceId: mongoose.Types.ObjectId;
     personIds: string[];
     price: number;
 }
-
 export default {
-
     // ##-USER--##//
-
     bookNow: async (req: Request, res: Response) => {
         try {
             const {

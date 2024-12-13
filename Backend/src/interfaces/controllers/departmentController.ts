@@ -1,7 +1,5 @@
 import { Request, Response } from "express";
 import departmentInteractor from "../../domain/useCases/auth/departmentInteractor";
-
-
 export default {
     addDepartment: async (req: Request, res: Response) => {
         try {

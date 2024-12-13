@@ -5,25 +5,16 @@ import AuthRepository from "../../../infrastructure/repositories/mongoAuthReposi
 import { generateResetToken, generateToken, validateResetToken } from "../../helper/jwtHelper";
 import { IUser } from "../../entities/types/userType";
 import jwt from 'jsonwebtoken';
-
 interface ErrorWithStatus extends Error {
     status?: number;
 }
-
 // Define a type for the report objec
 function createError(message: string, status: number) {
     const error = new Error(message) as ErrorWithStatus;
     error.status = status;
     return error;
 }
-
-export class authInteractor{
-
-    
-}
-
 export default {
-
     registerUser: async (userData: IUser) => {
         try {
             if (!userData.email || !userData.name) {
@@ -254,5 +245,5 @@ export default {
             throw { status: 500, message: "An unknown error occurred" };
         }
     },
-    
+
 }

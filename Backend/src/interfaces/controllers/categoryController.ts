@@ -1,9 +1,6 @@
 import { Request, Response } from "express";
 import categoryInteractor from "../../domain/useCases/auth/categoryInteractor";
-
-
 export default {
-
     // <-----------------------------##-USER--##//----------------------------------------------------->
     getCategory: async (req: Request, res: Response) => {
         try {
@@ -17,10 +14,7 @@ export default {
             res.status(500).json({ message: "Server error" });
         }
     },
-
-
     // ##-ADMIN--##//
-
     addCategory: async (req: Request, res: Response) => {
         try {
             const { name, department } = req.body;

@@ -47,9 +47,6 @@ const handleSocketEvents = (io: Server): void => {
                     ack?.({ success: false, error: 'Message content is empty.' });
                     return;
                 }
-                console.log(data,'@@@@@@@@@@@');
-                
-
                 const newMessage = new MessageModel({
                     chat: data.chatId,
                     sender: data.sender,
@@ -58,7 +55,6 @@ const handleSocketEvents = (io: Server): void => {
                     createdAt: new Date(),
                     fileType:data.type
                 });
-
                 const savedMessage = await newMessage.save();
                 const recipientSocketId = onlineUsers.get(data.recipientId);
                 if (recipientSocketId) {

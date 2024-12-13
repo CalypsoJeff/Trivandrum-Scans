@@ -1,12 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// import { sendOTPEmail, sendVerifyMail } from "../../../utils/emailUtils";
-// import { generateOTP } from "../../../utils/otpUtils";
-// import { Encrypt } from "../../helper/hashPassword";
-// import {
-//   generateResetToken,
-//   generateToken,
-//   validateResetToken,
-// } from "../../helper/jwtHelper";
 import { IPatientInput } from "../../entities/types/patientType";
 import { IUser, PaginatedUsers } from "../../entities/types/userType";
 import UserRepository from "../../../infrastructure/repositories/mongoUserRepository";
