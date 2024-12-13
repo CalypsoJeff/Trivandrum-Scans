@@ -3,8 +3,7 @@
 import { Request, Response } from "express";
 import userInteractor from "../../domain/useCases/auth/userInteractor";
 import { Users } from "../../infrastructure/database/dbModel/userModel";
-import adminInteractor from "../../domain/useCases/auth/adminInteractor";
-import { userCount } from "../../infrastructure/repositories/mongoUserRepository";
+// import { userCount } from "../../infrastructure/repositories/mongoUserRepository";
 
 export default {
 
@@ -136,11 +135,13 @@ export default {
   },
   getUserCount: async (req: Request, res: Response) => {
     try {
-      const userCounts = await userCount();
+      const userCounts = await userInteractor.getUserCount();
+
+      // Respond with the user count
       res.json(userCounts);
     } catch (error) {
-      console.error("Failed to fetch bookings", error);
-      res.status(500).json({ message: "Failed to fetch bookings" });
+      console.error("Failed to fetch user count:", error);
+      res.status(500).json({ message: "Failed to fetch user count" });
     }
   },
 };

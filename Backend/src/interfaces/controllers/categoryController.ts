@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { categoryCount } from "../../infrastructure/repositories/mongoCategoryRepository";
 import categoryInteractor from "../../domain/useCases/auth/categoryInteractor";
 
 
@@ -8,7 +7,7 @@ export default {
     // <-----------------------------##-USER--##//----------------------------------------------------->
     getCategory: async (req: Request, res: Response) => {
         try {
-            const categories = await categoryInteractor.getCategory();
+            const categories = await categoryInteractor.getCategoryList();
             if (!categories) {
                 return res.status(404).json({ message: "No categories found" });
             }
@@ -91,7 +90,7 @@ export default {
     },
     getCategoryCount: async (req: Request, res: Response) => {
         try {
-            const categoryCounts = await categoryCount();
+            const categoryCounts = await categoryInteractor.countCategory();
             res.json(categoryCounts);
         } catch (error) {
             console.error("Failed to fetch department Count", error);

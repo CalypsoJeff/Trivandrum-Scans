@@ -87,8 +87,6 @@ export const setupInterceptors = (navigate, dispatch, logoutAction, toast) => {
           return axiosInstanceUser(originalRequest);
         }
         if (error.response.status === 403) {
-          // console.log('evidana logout povunae');
-
           dispatch(logoutAction());
           toast.error("Your account is blocked. Please contact support.");
           navigate("/login");

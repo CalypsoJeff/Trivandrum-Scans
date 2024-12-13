@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import userInteractor from "../../domain/useCases/auth/userInteractor";
 import { Request, Response } from "express";
-import jwt from 'jsonwebtoken';
 import { generateToken } from "../../domain/helper/jwtHelper";
 import { Users } from "../../infrastructure/database/dbModel/userModel";
 import { Encrypt } from "../../domain/helper/hashPassword";
 import adminInteractor from "../../domain/useCases/auth/adminInteractor";
-import { getUserbyEmail } from "../../infrastructure/repositories/mongoAuthRepository";
+import authInteractor from "../../domain/useCases/auth/authInteractor";
 
 
 export default {
@@ -15,7 +13,7 @@ export default {
     // ##-USER--##//
     userRegistration: async (req: Request, res: Response) => {
         try {
-            const user = await userInteractor.registerUser(req.body);
+            const user = await authInteractor.registerUser(req.body);
             res.status(200).json({ message: "Registration Success", user });
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -35,7 +33,7 @@ export default {
     },
     verifyOTP: async (req: Request, res: Response) => {
         try {
-            const userdata = await userInteractor.verifyUser(req.body);
+            const userdata = await authInteractor.verifyUser(req.body);
             res.status(200).json({ message: "Verify Success", userdata });
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -55,7 +53,7 @@ export default {
             if (!email) {
                 return res.status(400).json({ message: "Email is required." });
             }
-            const response = await userInteractor.otpResend(email);
+            const response = await authInteractor.otpResend(email);
             res.status(200).json({ response });
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -72,7 +70,7 @@ export default {
     userLogin: async (req: Request, res: Response) => {
         try {
             const { email, password } = req.body;
-            const response = await userInteractor.loginUser(email, password);
+            const response = await authInteractor.loginUser(email, password);
             const { token, refreshToken } = response;
             res.cookie("usertoken", token, {
                 httpOnly: true,
@@ -111,7 +109,7 @@ export default {
     },
     googleAuth: async (req: Request, res: Response) => {
         try {
-            const response = await userInteractor.googleUser(req.body);
+            const response = await authInteractor.googleUser(req.body);
             res.status(200).json({ message: "Google Auth Success", response });
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -127,7 +125,7 @@ export default {
     },
     forgotPassword: async (req: Request, res: Response) => {
         try {
-            const response = await userInteractor.forgotPassword(req.body.email);
+            const response = await authInteractor.forgotPassword(req.body.email);
             res.status(200).json(response);
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -149,7 +147,7 @@ export default {
                     .status(400)
                     .json({ message: "Token and password are required." });
             }
-            const response = await userInteractor.resetPassword(token, password);
+            const response = await authInteractor.resetPassword(token, password);
             res.status(200).json(response);
         } catch (error: unknown) {
             if (error instanceof Error) {
@@ -166,29 +164,21 @@ export default {
     refreshToken: async (req: Request, res: Response) => {
         try {
             const refreshToken = req.cookies.refreshToken;
-            if (!refreshToken) {
-                return res.status(401).json({ message: "Refresh token not provided" });
+
+            // Delegate logic to interactor
+            const { accessToken, refreshToken: newRefreshToken } = await authInteractor.refreshToken(refreshToken);
+
+            // Set the new refresh token as an HTTP-only cookie
+            res.cookie("refreshToken", newRefreshToken, { httpOnly: true, secure: true, sameSite: "strict" });
+
+            // Respond with the new access token
+            res.json({ accessToken });
+        } catch (error: any) {
+            if (error.status) {
+                res.status(error.status).json({ message: error.message });
+            } else {
+                res.status(500).json({ message: "An unexpected error occurred" });
             }
-            try {
-                const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET_KEY!) as { user: string, email: string, role: string };
-                const user = await getUserbyEmail(decoded.email);
-                if (!user) {
-                    return res.status(404).json({ message: "User not found" });
-                }
-                const { token: newAccessToken, refreshToken: newRefreshToken } = generateToken(user.id, decoded.email, 'user');
-                res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: true, sameSite: 'strict' });
-                res.json({ accessToken: newAccessToken });
-            } catch (err) {
-                if (err instanceof Error) {
-                    if (err.name === 'TokenExpiredError') {
-                        return res.status(401).json({ message: "Refresh token expired" });
-                    }
-                    return res.status(403).json({ message: "Invalid refresh token" });
-                }
-                return res.status(500).json({ message: "An unknown error occurred" });
-            }
-        } catch (error) {
-            res.status(500).json({ error: (error as Error).message });
         }
     },
     changePassword: async (req: Request, res: Response) => {
@@ -220,22 +210,22 @@ export default {
 
     adminLogin: async (req: Request, res: Response) => {
         try {
-          const { email, password } = req.body;
-          if (!email || !password) {
-            return res.status(400).json({ error: "Admin Credentials missing" });
-          }
-          const Credentials = { email, password };
-          const response = await adminInteractor.loginAdmin(Credentials);
-          res.status(200).json({ message: "Login Successful", response });
+            const { email, password } = req.body;
+            if (!email || !password) {
+                return res.status(400).json({ error: "Admin Credentials missing" });
+            }
+            const Credentials = { email, password };
+            const response = await adminInteractor.loginAdmin(Credentials);
+            res.status(200).json({ message: "Login Successful", response });
         } catch (error: unknown) {
-          console.error("Error during admin login:", error);
-          if (error instanceof Error) {
-            res.status(500).json({ error: error.message });
-          } else {
-            res.status(500).json({ error: "An unexpected error occurred" });
-          }
+            console.error("Error during admin login:", error);
+            if (error instanceof Error) {
+                res.status(500).json({ error: error.message });
+            } else {
+                res.status(500).json({ error: "An unexpected error occurred" });
+            }
         }
-      },
+    },
 
 
 

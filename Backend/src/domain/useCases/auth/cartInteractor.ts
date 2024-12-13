@@ -1,47 +1,94 @@
-import { addToCartInDb, clearCartInDb, removeServiceFromCartinDb, userCartInDb, userUpdatedCartInDb } from "../../../infrastructure/repositories/mongoCartRepository";
+// import { addToCartInDb, clearCartInDb, removeServiceFromCartinDb, userCartInDb, userUpdatedCartInDb } from "../../../infrastructure/repositories/mongoCartRepository";
+
+// export default {
+//   // ##-USER--##//
+//   addToCart: async (userId: string, serviceId: string) => {
+//     try {
+//       await addToCartInDb(userId, serviceId);
+//     } catch (error) {
+//       console.error("Unexpected error in addToCart:", error);
+//       throw new Error("An unexpected error in addToCart");
+//     }
+//   },
+//   getCart: async (id: string) => {
+//     try {
+//       const cartData = await userCartInDb(id);
+//       return cartData;
+//     } catch (error) {
+//       console.error("Unexpected error in getCart:", error);
+//       throw new Error("An unexpected error in getCart");
+//     }
+//   },
+//   getUpdatedCart: async (id: string) => {
+//     try {
+//       const cartData = await userUpdatedCartInDb(id);
+//       return cartData;
+//     } catch (error) {
+//       console.error("Unexpected error in getCart:", error);
+//       throw new Error("An unexpected error in getCart");
+//     }
+//   },
+//   removeCartItem: async (userId: string, serviceId: string) => {
+//     try {
+//       await removeServiceFromCartinDb(userId, serviceId);
+//     } catch (error) {
+//       console.error("Unexpected error in removing Cart:", error);
+//       throw new Error("An unexpected error in removing Cart");
+//     }
+//   },
+//   clearCart: async (userId: string) => {
+//     try {
+//       await clearCartInDb(userId);
+//     } catch (error) {
+//       console.error("Error in clearing cart from interactor:", error);
+//       throw error;
+//     }
+//   },
+// }
+
+
+
+import CartRepository from "../../../infrastructure/repositories/mongoCartRepository";
 
 export default {
-  // ##-USER--##//
-  addToCart: async (userId: string, serviceId: string) => {
+  async addToCart(userId: string, serviceId: string) {
     try {
-      await addToCartInDb(userId, serviceId);
+      return await CartRepository.addToCart(userId, serviceId);
     } catch (error) {
       console.error("Unexpected error in addToCart:", error);
-      throw new Error("An unexpected error in addToCart");
+      throw new Error("An unexpected error occurred in addToCart");
     }
   },
-  getCart: async (id: string) => {
+  async getCart(userId: string) {
     try {
-      const cartData = await userCartInDb(id);
-      return cartData;
+      return await CartRepository.getUserCart(userId);
     } catch (error) {
       console.error("Unexpected error in getCart:", error);
-      throw new Error("An unexpected error in getCart");
+      throw new Error("An unexpected error occurred in getCart");
     }
   },
-  getUpdatedCart: async (id: string) => {
+  async getUpdatedCart(userId: string) {
     try {
-      const cartData = await userUpdatedCartInDb(id);
-      return cartData;
+      return await CartRepository.getUserUpdatedCart(userId);
     } catch (error) {
-      console.error("Unexpected error in getCart:", error);
-      throw new Error("An unexpected error in getCart");
+      console.error("Unexpected error in getUpdatedCart:", error);
+      throw new Error("An unexpected error occurred in getUpdatedCart");
     }
   },
-  removeCartItem: async (userId: string, serviceId: string) => {
+  async removeCartItem(userId: string, serviceId: string) {
     try {
-      await removeServiceFromCartinDb(userId, serviceId);
+      return await CartRepository.removeServiceFromCart(userId, serviceId);
     } catch (error) {
-      console.error("Unexpected error in removing Cart:", error);
-      throw new Error("An unexpected error in removing Cart");
+      console.error("Unexpected error in removeCartItem:", error);
+      throw new Error("An unexpected error occurred in removeCartItem");
     }
   },
-  clearCart: async (userId: string) => {
+  async clearCart(userId: string) {
     try {
-      await clearCartInDb(userId);
+      await CartRepository.clearCart(userId);
     } catch (error) {
-      console.error("Error in clearing cart from interactor:", error);
-      throw error;
+      console.error("Error in clearing cart:", error);
+      throw new Error("Error clearing the cart");
     }
   },
-}
+};

@@ -63,12 +63,11 @@ function Bookings() {
     );
     setFilteredBookings(filtered);
   };
-
   useEffect(() => {
     loadBookings();
   }, [page]);
 
-  if (loading) return <p>Loading booking history...</p>;
+  // if (loading) return <p>Loading booking history...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (

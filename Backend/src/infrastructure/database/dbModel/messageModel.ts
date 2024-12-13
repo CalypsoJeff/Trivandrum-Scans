@@ -12,7 +12,7 @@ export interface IMessage extends Document {
     isFile?: boolean;
     delivered?: boolean;
     readAt?: Date;
-    read?: boolean; // Ensure this is a boolean
+    read?: boolean; 
     createdAt: Date;
     deleted?: boolean;
 }
@@ -49,7 +49,7 @@ const messageSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    delivered: { // New Field
+    delivered: { 
         type: Boolean,
         default: false
     },

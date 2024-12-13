@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { departmentCount } from "../../infrastructure/repositories/mongoDepartmentRepository";
 import departmentInteractor from "../../domain/useCases/auth/departmentInteractor";
 
 
@@ -92,7 +91,7 @@ export default {
     },
     getDepartmentCount: async (req: Request, res: Response) => {
         try {
-            const departmentCounts = await departmentCount();
+            const departmentCounts = await departmentInteractor.countDepartments();
             res.json(departmentCounts);
         } catch (error) {
             console.error("Failed to fetch department Count", error);
