@@ -9,8 +9,7 @@ import Cookies from "js-cookie";
 //   withCredentials: true,
 // });
 const axiosInstanceAdmin = axios.create({
-  // baseURL: "http://localhost:5000/api/admin",
-  baseURL: "http://localhost:5000/api/admin",
+  baseURL: "https://trivandrumscans.online/api/admin",
 
   
   headers: {

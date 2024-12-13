@@ -157,7 +157,7 @@ exports.sendReportPublishedEmail = exports.sendVerifyMail = exports.sendOTPEmail
 //           <div class="content">
 //             <p>Dear ${name},</p>
 //             <p>Please click this link to reset your password:</p>
-//             <a href="http://localhost:5173/reset-password?token=${token}">Reset Password</a>
+//             <a href="https://trivandrum-scans.vercel.app/reset-password?token=${token}">Reset Password</a>
 //             <p>If you did not request this, please ignore this email.</p>
 //           </div>
 //         </div>
@@ -244,7 +244,7 @@ const sendVerifyMail = (email, token, name) => __awaiter(void 0, void 0, void 0,
             <div class="content">
               <p>Hello ${name},</p>
               <p>Click the link below to reset your password:</p>
-              <a href="http://localhost:5173/reset-password?token=${token}">Reset Password</a>
+              <a href="https://trivandrum-scans.vercel.app/reset-password?token=${token}">Reset Password</a>
               <p>If you did not request this, please ignore this email.</p>
             </div>
           </div>
