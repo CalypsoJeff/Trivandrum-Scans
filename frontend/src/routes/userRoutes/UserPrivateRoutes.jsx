@@ -20,6 +20,7 @@ const UserPrivateRoutes = () => {
       return;
     }
     try {
+      console.log(user,'###########');
       const response = await axiosInstanceUser.get(`/getStatus?id=${user.id}`);
       if (response.data.response && response.data.response.is_blocked) {
         console.log(response.data.response || response.data.response.is_blocked,'11111111111111111111111');

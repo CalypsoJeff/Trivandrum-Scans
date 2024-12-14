@@ -20,7 +20,6 @@ export default function Chat() {
   const dispatch = useDispatch();
   const { socket } = useSocket();
   const userId = user.id;
-  const apiBaseUrl = "/api/users/messages";
   const messagesEndRef = useRef(null);
   const adminId = "66ee588d1e1448fbea1f40bb";
   useEffect(() => {
@@ -129,7 +128,6 @@ export default function Chat() {
   const getChatId = async () => {
     try {
       const response = await axios.get(
-        // `http://localhost:5000${apiBaseUrl}/chat/start/${userId}`
         `https://trivandrumscans.online/api/users/messages/chat/start/${userId}`
       );
       setChatId(response.data.chat._id);
@@ -141,7 +139,6 @@ export default function Chat() {
   const fetchMessages = async () => {
     try {
       const response = await axios.get(
-        // `http://localhost:5000${apiBaseUrl}/chat/${chatId}/messages`
         `https://trivandrumscans.online/api/users/messages/chat/${chatId}/messages`
       );
       setMessages(response.data.messages);
@@ -159,40 +156,6 @@ export default function Chat() {
       };
     }
   }, [socket, userId]);
-
-  // const handleSendMessage = () => {
-  //   if (messageInput.trim() && socket) {
-  //     if (!socket.connected) {
-  //       console.error("Socket is disconnected. Message not sent.");
-  //       return;
-  //     }
-
-  //     const messageData = {
-  //       _id: new Date().getTime().toString(), // Temporary unique ID
-  //       chatId,
-  //       sender: userId,
-  //       senderModel: "User",
-  //       content: messageInput.trim(),
-  //       createdAt: new Date().toISOString(),
-  //       status: "sent",
-  //     };
-
-  //     // Clear input immediately to enhance user experience
-  //     setMessageInput("");
-  //     socket.emit("sendMessage", messageData, (ack) => {
-  //       if (!ack?.success) {
-  //         console.error("Message failed to send, retrying...");
-  //         // Revert the optimistic update
-  //         setMessages((prevMessages) =>
-  //           prevMessages.filter((msg) => msg._id !== messageData._id)
-  //         );
-  //         setMessageInput(messageData.content);
-  //       }
-  //     });
-  //   } else {
-  //     console.error("Message not sent: input is empty or socket disconnected.");
-  //   }
-  // };
 
   const handleSendMessage = async (file = null) => {
     if (!messageInput.trim() && !file) {
@@ -269,151 +232,6 @@ export default function Chat() {
       year: "numeric",
     });
   }
-
-  // return (
-  //   <div className="flex min-h-screen bg-gray-100">
-  //     <ProfileSidebar />
-
-  //     <div className="flex-1 pl-64">
-  //       <div className="w-full h-screen bg-white rounded-lg shadow-lg flex flex-col">
-  //         <h2 className="text-xl font-semibold text-center py-4 border-b">
-  //           Chat with Admin{" "}
-  //           <span className="ml-2 text-sm font-normal text-gray-500">
-  //             {adminOnline ? "Online" : "Offline"}
-  //           </span>
-  //         </h2>
-
-  //         <div className="flex-1 overflow-y-auto space-y-4 p-4 border-b border-gray-200">
-  //           {messages.map((msg, index) => {
-  //             const showDateSeparator =
-  //               index === 0 ||
-  //               new Date(messages[index - 1].createdAt).toDateString() !==
-  //                 new Date(msg.createdAt).toDateString();
-
-  //             return (
-  //               <React.Fragment key={msg._id}>
-  //                 {/* Date Separator */}
-  //                 {showDateSeparator && (
-  //                   <div className="flex items-center my-4">
-  //                     <div className="flex-grow border-t border-gray-300"></div>
-  //                     <span className="mx-3 text-gray-500 text-sm">
-  //                       {formatDateSeparator(msg.createdAt)}
-  //                     </span>
-  //                     <div className="flex-grow border-t border-gray-300"></div>
-  //                   </div>
-  //                 )}
-
-  //                 {/* Message Bubble */}
-  //                 <div
-  //                   className={`flex ${
-  //                     msg.senderModel === "Admin" ? "" : "flex-row-reverse"
-  //                   } items-start space-x-3`}
-  //                 >
-  //                   {/* Sender Avatar */}
-  //                   <img
-  //                     src={
-  //                       msg.senderModel === "Admin"
-  //                         ? "https://mdbcdn.b-cdn.net/img/Photos/Avatars/avatar-1.webp"
-  //                         : "https://mdbcdn.b-cdn.net/img/Photos/Avatars/avatar-2.webp"
-  //                     }
-  //                     alt={`${msg.senderModel.toLowerCase()}-avatar`}
-  //                     className="rounded-full w-10 h-10"
-  //                   />
-
-  //                   {/* Message Bubble */}
-  //                   <div
-  //                     className={`max-w-2xl p-3 rounded-lg shadow-md break-words ${
-  //                       msg.senderModel === "Admin"
-  //                         ? "bg-gray-200"
-  //                         : "bg-blue-500 text-white"
-  //                     }`}
-  //                   >
-  //                     {/* Sender Name and Timestamp */}
-  //                     <div className="flex justify-between items-center">
-  //                       <p className="text-sm font-semibold">
-  //                         {msg.senderModel === "Admin" ? "Admin" : "You"}
-  //                       </p>
-  //                       <p
-  //                         className={`text-xs ml-2 ${
-  //                           msg.senderModel === "Admin"
-  //                             ? "text-gray-500"
-  //                             : "text-white opacity-75"
-  //                         }`}
-  //                       >
-  //                         {formatTimestamp(msg.createdAt)}
-  //                       </p>
-  //                     </div>
-
-  //                     {/* Message Content */}
-  //                     {msg.type === "image" ? (
-  //                       <img
-  //                         src={msg.content}
-  //                         alt="Chat image"
-  //                         className="mt-2 rounded-lg max-w-full max-h-60 object-contain"
-  //                       />
-  //                     ) : (
-  //                       <p className="text-sm">{msg.content}</p>
-  //                     )}
-
-  //                     {/* Status Indicator */}
-  //                     {msg.senderModel !== "Admin" && (
-  //                       <div className="flex justify-end mt-1">
-  //                         <span
-  //                           className={`text-xs font-medium ${
-  //                             msg.read
-  //                               ? "text-green-500"
-  //                               : msg.delivered
-  //                               ? "text-blue-500"
-  //                               : "text-gray-500"
-  //                           }`}
-  //                         >
-  //                           {msg.read
-  //                             ? "Read ✔✔"
-  //                             : msg.delivered
-  //                             ? "Delivered ✔"
-  //                             : "Sent ⏳"}
-  //                         </span>
-  //                       </div>
-  //                     )}
-  //                   </div>
-  //                 </div>
-  //               </React.Fragment>
-  //             );
-  //           })}
-  //           <div ref={messagesEndRef} />
-  //         </div>
-
-  //         {typing && (
-  //           <p className="text-sm text-gray-500 px-4 py-2">
-  //             Admin is typing...
-  //           </p>
-  //         )}
-
-  //         <div className="p-4 border-t flex items-center space-x-3">
-  //           <textarea
-  //             placeholder="Type your message..."
-  //             value={messageInput}
-  //             onChange={(e) => setMessageInput(e.target.value)}
-  //             onKeyDown={(e) => {
-  //               if (e.key === "Enter" && !e.shiftKey) {
-  //                 e.preventDefault();
-  //                 handleSendMessage();
-  //               }
-  //             }}
-  //             className="flex-1 p-3 rounded-lg border border-gray-300 focus:ring focus:ring-blue-200 resize-none"
-  //             rows={2}
-  //           />
-  //           <button
-  //             onClick={handleSendMessage}
-  //             className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-  //           >
-  //             Send
-  //           </button>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   </div>
-  // );
 
   return (
     <div className="flex min-h-screen bg-gray-100">
