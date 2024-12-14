@@ -34,16 +34,16 @@ const UserOtp = () => {
       console.log(token ,'and',refreshToken,'uuu');
       
 
-      // if (token && refreshToken) {
-      //   // Set tokens in cookies
-      //   Cookies.set("token", token);
-      //   Cookies.set("refreshToken", refreshToken);
-      // } else {
-      //   throw new Error("Token generation failed after verification.");
-      // }
+      if (token && refreshToken) {
+        // Set tokens in cookies
+        Cookies.set("token", token);
+        Cookies.set("refreshToken", refreshToken);
+      } else {
+        throw new Error("Token generation failed after verification.");
+      }
 
       const message = apiResponse?.message || "Verification successful!";
-      navigate("/login");
+      navigate("/home");
       toast.success(message, {
         style: {
           backgroundColor: "#4CAF50",
