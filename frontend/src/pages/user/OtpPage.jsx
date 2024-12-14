@@ -43,7 +43,7 @@ const UserOtp = () => {
       }
 
       const message = apiResponse?.message || "Verification successful!";
-      navigate("/home");
+      navigate("/login");
       toast.success(message, {
         style: {
           backgroundColor: "#4CAF50",
