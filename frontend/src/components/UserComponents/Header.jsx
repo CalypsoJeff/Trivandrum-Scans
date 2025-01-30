@@ -87,7 +87,7 @@ const Header = () => {
           className="hover:text-teal-500 transition relative"
           onClick={() => navigate("/service")}
         >
-          Health Packages
+          Services
         </button>
         <button className="hover:text-teal-500 transition relative">
           Gallery
