@@ -6,8 +6,8 @@ export const bookAppointment = createAsyncThunk(
   async (bookingData, { rejectWithValue }) => {
     try {
       const response = await axios.post(
-        // "https://trivandrumscans.online/api/users/booking",
-        "https://trivandrumscans.online/api/users/booking",
+        // "https://trivandrum-scans.onrender.com/api/users/booking",
+        "https://trivandrum-scans.onrender.com/api/users/booking",
 
         bookingData
       );

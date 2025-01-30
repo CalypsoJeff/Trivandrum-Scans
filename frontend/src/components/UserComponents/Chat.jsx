@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5000");
+const socket = io("https://trivandrum-scans.onrender.com/api:5000");
 
 // eslint-disable-next-line react/prop-types
 const Chat = ({ conversationId, userId }) => {

@@ -128,7 +128,7 @@ export default function Chat() {
   const getChatId = async () => {
     try {
       const response = await axios.get(
-        `https://trivandrumscans.online/api/users/messages/chat/start/${userId}`
+        `https://trivandrum-scans.onrender.com/api/users/messages/chat/start/${userId}`
       );
       setChatId(response.data.chat._id);
     } catch (error) {
@@ -139,7 +139,7 @@ export default function Chat() {
   const fetchMessages = async () => {
     try {
       const response = await axios.get(
-        `https://trivandrumscans.online/api/users/messages/chat/${chatId}/messages`
+        `https://trivandrum-scans.onrender.com/api/users/messages/chat/${chatId}/messages`
       );
       setMessages(response.data.messages);
     } catch (error) {

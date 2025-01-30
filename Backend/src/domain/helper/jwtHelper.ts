@@ -21,14 +21,13 @@ export const validateResetToken = (token: string, email: string): boolean => {
     try {
         const decoded = jwt.verify(token, SECRET_KEY) as { email: string };
 
-        // Check if the token's email matches the user's email
         if (decoded.email !== email) {
             throw new Error("Token validation failed: Email mismatch");
         }
 
-        return true; // Token is valid
+        return true;
     } catch (error) {
         console.error("Token validation error:", error);
-        return false; // Token is invalid
+        return false;
     }
 };

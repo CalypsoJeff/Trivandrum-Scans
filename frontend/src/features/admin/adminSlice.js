@@ -19,8 +19,8 @@ export const loginAdmin = createAsyncThunk(
 );
 export const fetchUsers = createAsyncThunk("admin/fetchUsers", async () => {
   const response = await axios.get(
-    // "https://trivandrumscans.online/api/admin/userlist"
-    "https://trivandrumscans.online/api/admin/userlist"
+    // "https://trivandrum-scans.onrender.com/api/admin/userlist"
+    "https://trivandrum-scans.onrender.com/api/admin/userlist"
   );
   return response.data;
 });
@@ -28,8 +28,8 @@ export const fetchCategories = createAsyncThunk(
   "admin/fetchCategories",
   async () => {
     const response = await axios.get(
-      // "https://trivandrumscans.online/api/admin/categoryList"
-      "https://trivandrumscans.online/api/admin/categoryList"
+      // "https://trivandrum-scans.onrender.com/api/admin/categoryList"
+      "https://trivandrum-scans.onrender.com/api/admin/categoryList"
     );
     return response.data;
   }
@@ -39,8 +39,8 @@ export const toggleUserStatus = createAsyncThunk(
   "admin/toggleUserStatus",
   async ({ userId, isBlocked }) => {
     const response = await axios.post(
-      // "https://trivandrumscans.online/api/admin/block-user",
-      "https://trivandrumscans.online/api/admin/block-user",
+      // "https://trivandrum-scans.onrender.com/api/admin/block-user",
+      "https://trivandrum-scans.onrender.com/api/admin/block-user",
 
       { userId, is_blocked: isBlocked }
     );
