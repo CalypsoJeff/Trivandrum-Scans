@@ -10,7 +10,7 @@ import {
 } from "../../services/userService";
 
 function BookingDetails() {
-  const { id } = useParams(); // Booking ID from URL
+  const { id } = useParams(); 
   const [booking, setBooking] = useState(null);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,10 +26,7 @@ function BookingDetails() {
           fetchBookingDetails(id),
           fetchReports(id),
         ]);
-
         setBooking(bookingData);
-        console.log(reportData, "@@@@@@@@@@");
-
         setReports(reportData);
       } catch (err) {
         console.error("Error fetching data:", err);
